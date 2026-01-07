@@ -108,17 +108,19 @@ Remove-Item -Recurse -Force .\digital-courses-temp
 
 ## Alterações importantes no banco (resumo)
 
-- Tabelas presentes / adicionadas:
-	- `users` (id, name, email UNIQUE, password, email_verified_at, remember_token, timestamps)
-	- `password_reset_tokens`, `sessions`
-	- `cache`, `cache_locks`
-	- `jobs`, `job_batches`, `failed_jobs`
-	- `categories` (id, name, timestamps) — criada em 2026-01-07
+-   Tabelas presentes / adicionadas:
 
-- Seeders:
-	- `DatabaseSeeder` cria um usuário de teste (email: `test@example.com`).
+    -   `users` (id, name, email UNIQUE, password, email_verified_at, remember_token, timestamps)
+    -   `password_reset_tokens`, `sessions`
+    -   `cache`, `cache_locks`
+    -   `jobs`, `job_batches`, `failed_jobs`
+    -   `categories` (id, name, timestamps) — criada em 2026-01-07
+
+-   Seeders:
+    -   `DatabaseSeeder` cria um usuário de teste (email: `test@example.com`).
 
 Comandos rápidos para garantir o banco pronto:
+
 ```powershell
 php artisan migrate
 php artisan db:seed
