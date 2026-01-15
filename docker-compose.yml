@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # Aplicação Laravel (PHP-FPM)
   app:
@@ -84,7 +82,7 @@ services:
 
   # Node.js para Vite (desenvolvimento frontend)
   node:
-    image: node:18-alpine
+    image: node:20-alpine
     container_name: digital-courses-node
     restart: unless-stopped
     working_dir: /var/www
