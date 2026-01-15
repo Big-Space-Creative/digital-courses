@@ -64,6 +64,24 @@ services:
     networks:
       - digital-courses-network
 
+  # phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: digital-courses-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: ${DB_USERNAME:-laravel}
+      PMA_PASSWORD: ${DB_PASSWORD:-secret}
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8080:80"
+    networks:
+      - digital-courses-network
+    depends_on:
+      - db
+
   # Node.js para Vite (desenvolvimento frontend)
   node:
     image: node:18-alpine

@@ -98,6 +98,7 @@ docker-compose exec app php artisan migrate --seed
 
 -   Backend: http://localhost:8000
 -   Frontend (Vite): http://localhost:5173
+-   phpMyAdmin: http://localhost:8080
 -   MySQL: localhost:3306
 -   Redis: localhost:6379
 

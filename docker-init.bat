@@ -63,6 +63,7 @@ echo ✅ Setup completo!
 echo.
 echo 🌐 Aplicação disponível em: http://localhost:8000
 echo 🎨 Vite (frontend) em: http://localhost:5173
+echo 🗄️ phpMyAdmin em: http://localhost:8080
 echo 🗄️ MySQL em: localhost:3306
 echo 🔴 Redis em: localhost:6379
 echo.
