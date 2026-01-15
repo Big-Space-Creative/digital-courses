@@ -6,13 +6,22 @@ Instruções diretas para inicializar o projeto Laravel localmente (PowerShell /
 
 ## Requisitos
 
+### Opção 1: Local (sem Docker)
+
 -   PHP 8.1+
 -   Composer
 -   Node.js 16+ e npm
 -   Git
--   (Opcional) Docker & Docker Compose — para Laravel Sail
 
-## Passos rápidos (PowerShell)
+### Opção 2: Docker (recomendado)
+
+-   Docker Desktop
+-   Docker Compose
+-   Git
+
+## Passos rápidos (local - PowerShell)
+
+**Use esta opção apenas se NÃO for usar Docker.** Para Docker, veja a seção acima.
 
 Siga estritamente nesta ordem para evitar problemas comuns.
 
@@ -58,13 +67,58 @@ php artisan serve --host=0.0.0.0 --port=8000
 # Acesse: http://localhost:8000
 ```
 
-## Alternativa: Laravel Sail (Docker)
+## Opção Docker (recomendado para desenvolvimento)
 
-Se não tem PHP/Composer local, use Sail:
+Este projeto inclui configuração Docker completa (PHP-FPM, Nginx, MySQL, Redis, Node/Vite).
+
+**Setup rápido (Windows):**
+
+```powershell
+# Executar script de inicialização (faz tudo automaticamente)
+.\docker-init.bat
+```
+
+**Setup manual:**
+
+```powershell
+# 1. Copiar arquivo de ambiente
+Copy-Item .env.docker.example .env
+
+# 2. Build e iniciar containers
+docker-compose build
+docker-compose up -d
+
+# 3. Instalar dependências e configurar
+docker-compose exec app composer install --no-interaction
+docker-compose exec app php artisan key:generate
+docker-compose exec app php artisan migrate --seed
+```
+
+**Acessar aplicação:**
+
+-   Backend: http://localhost:8000
+-   Frontend (Vite): http://localhost:5173
+-   MySQL: localhost:3306
+-   Redis: localhost:6379
+
+**Comandos úteis Docker:**
+
+```powershell
+docker-compose up -d              # Iniciar containers
+docker-compose down               # Parar containers
+docker-compose logs -f app        # Ver logs
+docker-compose exec app bash      # Acessar container
+docker-compose exec app php artisan migrate
+docker-compose exec app php artisan test
+```
+
+## Alternativa: Laravel Sail (Docker oficial)
+
+Se preferir usar Sail ao invés da configuração customizada:
 
 ```powershell
 composer require laravel/sail --dev --no-interaction
-php artisan sail:install --with=mysql,redis # ajustar conforme necessário
+php artisan sail:install --with=mysql,redis
 vendor\bin\artisan sail:up -d
 ```
 
