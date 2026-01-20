@@ -15,10 +15,15 @@ if %errorlevel% neq 0 (
 echo ✅ Docker está rodando
 echo.
 
-REM Copiar .env.example se .env não existir
+REM Copiar .env.docker.example se .env não existir (preferir config de Docker)
 if not exist .env (
-    echo 📝 Criando arquivo .env...
-    copy .env.example .env
+    if exist .env.docker.example (
+        echo 📝 Criando arquivo .env a partir de .env.docker.example...
+        copy .env.docker.example .env
+    ) else (
+        echo ⚠️  .env.docker.example não encontrado, usando .env.example...
+        copy .env.example .env
+    )
     echo ✅ Arquivo .env criado
 ) else (
     echo ✅ Arquivo .env já existe
@@ -33,8 +38,8 @@ REM Subir containers
 echo 🚀 Iniciando containers...
 docker-compose up -d
 
-REM Aguardar MySQL iniciar
-echo ⏳ Aguardando MySQL iniciar (15s)...
+REM Aguardar PostgreSQL iniciar
+echo ⏳ Aguardando PostgreSQL iniciar (15s)...
 timeout /t 15 /nobreak >nul
 
 REM Instalar dependências do Composer
@@ -63,8 +68,9 @@ echo ✅ Setup completo!
 echo.
 echo 🌐 Aplicação disponível em: http://localhost:8000
 echo 🎨 Vite (frontend) em: http://localhost:5173
-echo 🗄️ phpMyAdmin em: http://localhost:8080
-echo 🗄️ MySQL em: localhost:3306
+echo 🗄️ pgAdmin em: http://localhost:8080
+echo 🗄️ PostgreSQL em: localhost:5432
+echo 📦 MinIO (S3) em: http://localhost:9000 (console: http://localhost:9001)
 echo 🔴 Redis em: localhost:6379
 echo.
 echo Comandos úteis:

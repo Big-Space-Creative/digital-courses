@@ -11,6 +11,9 @@ services:
     volumes:
       - ./:/var/www
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+      # Virtualização para performance:
+      - /var/www/vendor
+      - /var/www/node_modules
     networks:
       - digital-courses-network
     depends_on:
@@ -27,28 +30,27 @@ services:
     volumes:
       - ./:/var/www
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      # O Nginx também precisa ignorar essas pastas para não tentar ler do host
+      - /var/www/vendor
+      - /var/www/node_modules
     networks:
       - digital-courses-network
     depends_on:
       - app
 
-  # MySQL Database
+  # PostgreSQL Database
   db:
-    image: mysql:8.0
+    image: postgres:16-alpine
     container_name: digital-courses-db
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE:-digital_courses}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
-      MYSQL_USER: ${DB_USERNAME:-laravel}
-      SERVICE_TAGS: dev
-      SERVICE_NAME: mysql
+      POSTGRES_DB: ${DB_DATABASE:-digital_courses}
+      POSTGRES_USER: ${DB_USERNAME:-laravel}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
     volumes:
-      - dbdata:/var/lib/mysql
-      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - pgdata:/var/lib/postgresql/data
     ports:
-      - "3306:3306"
+      - "5432:5432"
     networks:
       - digital-courses-network
 
@@ -62,17 +64,14 @@ services:
     networks:
       - digital-courses-network
 
-  # phpMyAdmin
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: digital-courses-phpmyadmin
+  # pgAdmin (UI para PostgreSQL)
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: digital-courses-pgadmin
     restart: unless-stopped
     environment:
-      PMA_HOST: db
-      PMA_PORT: 3306
-      PMA_USER: ${DB_USERNAME:-laravel}
-      PMA_PASSWORD: ${DB_PASSWORD:-secret}
-      UPLOAD_LIMIT: 64M
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
     ports:
       - "8080:80"
     networks:
@@ -80,7 +79,24 @@ services:
     depends_on:
       - db
 
-  # Node.js para Vite (desenvolvimento frontend)
+  # MinIO (S3 self-hosted)
+  minio:
+    image: minio/minio:latest
+    container_name: digital-courses-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000" # S3 API
+      - "9001:9001" # Console
+    command: server /data --console-address ":9001"
+    networks:
+      - digital-courses-network
+
+  # Node.js para Vite
   node:
     image: node:20-alpine
     container_name: digital-courses-node
@@ -88,6 +104,8 @@ services:
     working_dir: /var/www
     volumes:
       - ./:/var/www
+      # Virtualiza a node_modules para o npm rodar na velocidade do Linux
+      - /var/www/node_modules
     ports:
       - "5173:5173"
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
@@ -99,5 +117,7 @@ networks:
     driver: bridge
 
 volumes:
-  dbdata:
+  pgdata:
+    driver: local
+  minio_data:
     driver: local

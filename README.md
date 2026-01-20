@@ -8,16 +8,16 @@ Instruções diretas para inicializar o projeto Laravel localmente (PowerShell /
 
 ### Opção 1: Local (sem Docker)
 
--   PHP 8.1+
--   Composer
--   Node.js 16+ e npm
--   Git
+- PHP 8.1+
+- Composer
+- Node.js 16+ e npm
+- Git
 
 ### Opção 2: Docker (recomendado)
 
--   Docker Desktop
--   Docker Compose
--   Git
+- Docker Desktop
+- Docker Compose
+- Git
 
 ## Passos rápidos (local - PowerShell)
 
@@ -69,7 +69,7 @@ php artisan serve --host=0.0.0.0 --port=8000
 
 ## Opção Docker (recomendado para desenvolvimento)
 
-Este projeto inclui configuração Docker completa (PHP-FPM, Nginx, MySQL, Redis, Node/Vite).
+Este projeto inclui configuração Docker completa (PHP-FPM, Nginx, PostgreSQL, Redis, MinIO, Node/Vite, pgAdmin).
 
 **Setup rápido (Windows):**
 
@@ -96,11 +96,12 @@ docker-compose exec app php artisan migrate --seed
 
 **Acessar aplicação:**
 
--   Backend: http://localhost:8000
--   Frontend (Vite): http://localhost:5173
--   phpMyAdmin: http://localhost:8080
--   MySQL: localhost:3306
--   Redis: localhost:6379
+- Backend: http://localhost:8000
+- Frontend (Vite): http://localhost:5173
+- pgAdmin: http://localhost:8080 (email/pwd: definidos em `.env`)
+- PostgreSQL: localhost:5432
+- MinIO: http://localhost:9000 (API S3) | http://localhost:9001 (console)
+- Redis: localhost:6379
 
 **Comandos úteis Docker:**
 
@@ -119,14 +120,14 @@ Se preferir usar Sail ao invés da configuração customizada:
 
 ```powershell
 composer require laravel/sail --dev --no-interaction
-php artisan sail:install --with=mysql,redis
+php artisan sail:install --with=pgsql,redis
 vendor\bin\artisan sail:up -d
 ```
 
 ## Notas rápidas sobre autenticação (Sanctum) e SPA
 
--   Para SPA: antes de chamadas autenticadas, chame `/sanctum/csrf-cookie`.
--   Use fetch/axios com credenciais (cookies):
+- Para SPA: antes de chamadas autenticadas, chame `/sanctum/csrf-cookie`.
+- Use fetch/axios com credenciais (cookies):
 
 ```js
 fetch("http://localhost:8000/sanctum/csrf-cookie", { credentials: "include" });
@@ -135,7 +136,7 @@ fetch("http://localhost:8000/sanctum/csrf-cookie", { credentials: "include" });
 
 ## Problemas comuns e soluções
 
--   "Project directory is not empty" ao rodar `composer create-project` no root com arquivos: crie em pasta temporária e copie para o root ou crie em `backend/` dentro do repo. Exemplo (Windows):
+- "Project directory is not empty" ao rodar `composer create-project` no root com arquivos: crie em pasta temporária e copie para o root ou crie em `backend/` dentro do repo. Exemplo (Windows):
 
 ```powershell
 composer create-project --prefer-dist -n laravel/laravel digital-courses-temp
@@ -143,36 +144,35 @@ robocopy .\digital-courses-temp .\digital-courses /E /XF README.md
 Remove-Item -Recurse -Force .\digital-courses-temp
 ```
 
--   Composer pedindo confirmação durante instalação: use `-n` ou `--no-interaction`.
--   CORS/Sanctum: ajustar `config/cors.php` e `config/sanctum.php` com o origin do frontend (ex.: `http://localhost:5173`).
+- Composer pedindo confirmação durante instalação: use `-n` ou `--no-interaction`.
+- CORS/Sanctum: ajustar `config/cors.php` e `config/sanctum.php` com o origin do frontend (ex.: `http://localhost:5173`).
 
 ## Scripts úteis
 
--   `php artisan migrate`
--   `php artisan db:seed`
--   `php artisan test`
--   `npm run dev` (desenvolvimento frontend)
--   `npm run build` (build produção frontend)
+- `php artisan migrate`
+- `php artisan db:seed`
+- `php artisan test`
+- `npm run dev` (desenvolvimento frontend)
+- `npm run build` (build produção frontend)
 
 ## Contato / responsáveis
 
--   Dono do repositório / responsável: <nome/email>
--   Canal de comunicação: Slack / Teams / etc.
+- Dono do repositório / responsável: <nome/email>
+- Canal de comunicação: Slack / Teams / etc.
 
 ---
 
 ## Alterações importantes no banco (resumo)
 
--   Tabelas presentes / adicionadas:
+- Tabelas presentes / adicionadas:
+  - `users` (id, name, email UNIQUE, password, email_verified_at, remember_token, timestamps)
+  - `password_reset_tokens`, `sessions`
+  - `cache`, `cache_locks`
+  - `jobs`, `job_batches`, `failed_jobs`
+  - `categories` (id, name, timestamps) — criada em 2026-01-07
 
-    -   `users` (id, name, email UNIQUE, password, email_verified_at, remember_token, timestamps)
-    -   `password_reset_tokens`, `sessions`
-    -   `cache`, `cache_locks`
-    -   `jobs`, `job_batches`, `failed_jobs`
-    -   `categories` (id, name, timestamps) — criada em 2026-01-07
-
--   Seeders:
-    -   `DatabaseSeeder` cria um usuário de teste (email: `test@example.com`).
+- Seeders:
+  - `DatabaseSeeder` cria um usuário de teste (email: `test@example.com`).
 
 Comandos rápidos para garantir o banco pronto:
 
@@ -196,13 +196,13 @@ Coloque abaixo informações adicionais do projeto (variáveis `.env` obrigatór
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
--   [Simple, fast routing engine](https://laravel.com/docs/routing).
--   [Powerful dependency injection container](https://laravel.com/docs/container).
--   Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
--   Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
--   Database agnostic [schema migrations](https://laravel.com/docs/migrations).
--   [Robust background job processing](https://laravel.com/docs/queues).
--   [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- [Simple, fast routing engine](https://laravel.com/docs/routing).
+- [Powerful dependency injection container](https://laravel.com/docs/container).
+- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
+- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
+- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
+- [Robust background job processing](https://laravel.com/docs/queues).
+- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
@@ -218,14 +218,14 @@ We would like to extend our thanks to the following sponsors for funding Laravel
 
 ### Premium Partners
 
--   **[Vehikl](https://vehikl.com)**
--   **[Tighten Co.](https://tighten.co)**
--   **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
--   **[64 Robots](https://64robots.com)**
--   **[Curotec](https://www.curotec.com/services/technologies/laravel)**
--   **[DevSquad](https://devsquad.com/hire-laravel-developers)**
--   **[Redberry](https://redberry.international/laravel-development)**
--   **[Active Logic](https://activelogic.com)**
+- **[Vehikl](https://vehikl.com)**
+- **[Tighten Co.](https://tighten.co)**
+- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
+- **[64 Robots](https://64robots.com)**
+- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
+- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
+- **[Redberry](https://redberry.international/laravel-development)**
+- **[Active Logic](https://activelogic.com)**
 
 ## Contributing
 
