@@ -35,8 +35,8 @@ RUN mkdir -p /home/$user/.composer && \
 # Configurar diretório de trabalho
 WORKDIR /var/www
 
-# Copiar arquivos existentes da aplicação
-COPY --chown=$user:$user . /var/www
+# Copiar arquivos existentes da aplicação (apenas backend)
+COPY --chown=$user:$user backend/ /var/www
 
 # Ajustar permissões
 RUN chown -R $user:$user /var/www \

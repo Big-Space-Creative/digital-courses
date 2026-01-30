@@ -2,6 +2,8 @@
 REM Script de inicialização do projeto Docker para Windows
 REM Use: docker-init.bat
 
+set BACKEND_DIR=backend
+
 echo 🐳 Iniciando setup Docker para digital-courses...
 echo.
 
@@ -16,13 +18,13 @@ echo ✅ Docker está rodando
 echo.
 
 REM Copiar .env.docker.example se .env não existir (preferir config de Docker)
-if not exist .env (
-    if exist .env.docker.example (
+if not exist %BACKEND_DIR%\.env (
+    if exist %BACKEND_DIR%\.env.docker.example (
         echo 📝 Criando arquivo .env a partir de .env.docker.example...
-        copy .env.docker.example .env
+        copy %BACKEND_DIR%\.env.docker.example %BACKEND_DIR%\.env
     ) else (
         echo ⚠️  .env.docker.example não encontrado, usando .env.example...
-        copy .env.example .env
+        copy %BACKEND_DIR%\.env.example %BACKEND_DIR%\.env
     )
     echo ✅ Arquivo .env criado
 ) else (
@@ -66,8 +68,7 @@ docker-compose exec -T app chown -R www-data:www-data storage bootstrap/cache
 echo.
 echo ✅ Setup completo!
 echo.
-echo 🌐 Aplicação disponível em: http://localhost:8000
-echo 🎨 Vite (frontend) em: http://localhost:5173
+echo 🌐 API disponível em: http://localhost:8000
 echo 🗄️ pgAdmin em: http://localhost:8080
 echo 🗄️ PostgreSQL em: localhost:5432
 echo 📦 MinIO (S3) em: http://localhost:9000 (console: http://localhost:9001)
@@ -79,5 +80,7 @@ echo   docker-compose down           # Parar containers
 echo   docker-compose logs -f app    # Ver logs do app
 echo   docker-compose exec app bash  # Acessar container
 echo   docker-compose exec app php artisan migrate
+echo.
+echo Lembrete: o frontend React/Next.js roda em .\frontend (container "frontend").
 echo.
 pause

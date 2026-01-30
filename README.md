@@ -1,35 +1,38 @@
 # digital-courses
 
-Instruções diretas para inicializar o projeto Laravel localmente (PowerShell / Windows).
+Monorepo com backend Laravel agrupado em `backend/` e pasta dedicada (`frontend/`) para o futuro app React/Next.js que consumirá essa API.
+
+Instruções diretas para inicializar o backend Laravel localmente (PowerShell / Windows).
 
 ---
 
 ## Requisitos
 
-### Opção 1: Local (sem Docker)
+### Backend (Laravel API)
 
-- PHP 8.1+
+- PHP 8.2+
 - Composer
-- Node.js 16+ e npm
 - Git
 
-### Opção 2: Docker (recomendado)
+### Frontend (Next.js, opcional neste momento)
+
+- Node.js 20+
+- npm ou pnpm
+
+### Docker (recomendado para o backend)
 
 - Docker Desktop
 - Docker Compose
-- Git
 
-## Passos rápidos (local - PowerShell)
+## Passos rápidos (backend local - PowerShell)
 
-**Use esta opção apenas se NÃO for usar Docker.** Para Docker, veja a seção acima.
-
-Siga estritamente nesta ordem para evitar problemas comuns.
+**Use esta opção apenas se NÃO for usar Docker.** Para Docker, veja a seção abaixo.
 
 1. Clonar o repositório (se necessário)
 
 ```powershell
 git clone <REPO_URL> digital-courses
-cd C:\Users\Administrator\source\repos\digital-courses
+cd C:\Users\Administrator\source\repos\digital-courses\backend
 ```
 
 2. Instalar dependências PHP e criar `.env`
@@ -53,23 +56,16 @@ New-Item -ItemType File -Path database\database.sqlite -Force
 php artisan migrate --seed
 ```
 
-5. Dependências JS e rodar Vite (frontend)
-
-```powershell
-npm install
-npm run dev
-```
-
-6. Rodar backend local
+5. Rodar backend local
 
 ```powershell
 php artisan serve --host=0.0.0.0 --port=8000
-# Acesse: http://localhost:8000
+# API: http://localhost:8000
 ```
 
 ## Opção Docker (recomendado para desenvolvimento)
 
-Este projeto inclui configuração Docker completa (PHP-FPM, Nginx, PostgreSQL, Redis, MinIO, Node/Vite, pgAdmin).
+Este projeto inclui configuração Docker completa (PHP-FPM, Nginx, PostgreSQL, Redis, MinIO e pgAdmin).
 
 **Setup rápido (Windows):**
 
@@ -81,14 +77,14 @@ Este projeto inclui configuração Docker completa (PHP-FPM, Nginx, PostgreSQL, 
 **Setup manual:**
 
 ```powershell
-# 1. Copiar arquivo de ambiente
-Copy-Item .env.docker.example .env
+# 1. Copiar arquivo de ambiente para o backend
+Copy-Item .ackend\.env.example .ackend\.env
 
 # 2. Build e iniciar containers
 docker-compose build
 docker-compose up -d
 
-# 3. Instalar dependências e configurar
+# 3. Instalar dependências e configurar (executa dentro do container app)
 docker-compose exec app composer install --no-interaction
 docker-compose exec app php artisan key:generate
 docker-compose exec app php artisan migrate --seed
@@ -96,8 +92,8 @@ docker-compose exec app php artisan migrate --seed
 
 **Acessar aplicação:**
 
-- Backend: http://localhost:8000
-- Frontend (Vite): http://localhost:5173
+- API: http://localhost:8000
+- Frontend dev (quando houver Next.js): http://localhost:3000
 - pgAdmin: http://localhost:8080 (email/pwd: definidos em `.env`)
 - PostgreSQL: localhost:5432
 - MinIO: http://localhost:9000 (API S3) | http://localhost:9001 (console)
@@ -136,24 +132,39 @@ fetch("http://localhost:8000/sanctum/csrf-cookie", { credentials: "include" });
 
 ## Problemas comuns e soluções
 
-- "Project directory is not empty" ao rodar `composer create-project` no root com arquivos: crie em pasta temporária e copie para o root ou crie em `backend/` dentro do repo. Exemplo (Windows):
+- "Project directory is not empty" ao rodar `composer create-project` no root com arquivos: crie em pasta temporária e copie para `backend/`. Exemplo (Windows):
 
 ```powershell
 composer create-project --prefer-dist -n laravel/laravel digital-courses-temp
-robocopy .\digital-courses-temp .\digital-courses /E /XF README.md
+robocopy .\digital-courses-temp .\digital-courses\backend /E /XF README.md
 Remove-Item -Recurse -Force .\digital-courses-temp
 ```
 
 - Composer pedindo confirmação durante instalação: use `-n` ou `--no-interaction`.
-- CORS/Sanctum: ajustar `config/cors.php` e `config/sanctum.php` com o origin do frontend (ex.: `http://localhost:5173`).
+- CORS/Sanctum: ajustar `config/cors.php` e `config/sanctum.php` com o origin do frontend (ex.: `http://localhost:3000`).
 
 ## Scripts úteis
 
 - `php artisan migrate`
 - `php artisan db:seed`
 - `php artisan test`
-- `npm run dev` (desenvolvimento frontend)
-- `npm run build` (build produção frontend)
+
+> O frontend Next.js terá seus próprios scripts (`npm run dev`, `npm run build`, etc.) dentro da pasta `frontend/` assim que for criado.
+
+## Frontend (Next.js) – organização
+
+1. Entre na pasta `frontend/` e inicialize o projeto (ex.: `npx create-next-app@latest .`).
+2. Mantenha o servidor dev na porta 3000 (já exposta no `docker-compose`).
+3. Utilize variáveis de ambiente dedicadas (`frontend/.env.local`) para configurar a URL do backend (`http://localhost:8000`).
+4. O serviço `frontend` no `docker-compose` monta essa pasta automaticamente; se `package.json` não existir o container apenas ficará em espera.
+
+> Não instalei o Next.js por você para manter o repositório limpo, mas toda a estrutura e containers já estão preparados.
+
+## Estrutura do repositório
+
+- `backend/` — contém todo o projeto Laravel (app, bootstrap, config, routes, docker configs etc.)
+- `frontend/` — pasta reservada para o app React/Next.js; inicialize com `npx create-next-app frontend` quando estiver pronto
+- `Dockerfile`, `docker-compose.yml`, `docker-init.bat` — orquestram backend e frontend via containers
 
 ## Contato / responsáveis
 
@@ -181,7 +192,7 @@ php artisan migrate
 php artisan db:seed
 ```
 
-Coloque abaixo informações adicionais do projeto (variáveis `.env` obrigatórias, endpoints importantes ou decisões sobre onde ficará o frontend: `resources/views` (Blade), `resources/js` (SPA integrada) ou `frontend/` (repo/pasta separada)).
+Coloque abaixo informações adicionais do projeto (variáveis `.env` obrigatórias, endpoints importantes e decisões sobre o app em `frontend/`).
 
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
