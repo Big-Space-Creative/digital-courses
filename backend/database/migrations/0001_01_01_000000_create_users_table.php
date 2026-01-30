@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('password');
             $table->enum('role', ['student', 'instructor', 'admin']);
             $table->string('avatar_url');
+            $table->softDeletes();
             $table->rememberToken();
             $table->timestamps();
         });

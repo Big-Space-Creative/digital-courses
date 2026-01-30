@@ -110,6 +110,56 @@ docker-compose exec app php artisan migrate
 docker-compose exec app php artisan test
 ```
 
+## Testando os endpoints de registro e login
+
+1. Suba o backend (local ou Docker) e garanta que o `.env` já possui a `JWT_SECRET` (o comando `php artisan jwt:secret` já foi executado anteriormente). A API deve responder em `http://localhost:8000`.
+2. Crie/limpe o banco (`php artisan migrate:fresh --seed`) caso queira começar com uma base previsível antes dos testes.
+
+### Fluxo manual rápido (cURL ou Postman)
+
+```powershell
+# Registrar um novo usuário
+curl -X POST http://localhost:8000/api/register `
+  -H "Content-Type: application/json" `
+  -d '{
+    "name": "Alice Test",
+    "email": "alice@example.com",
+    "password": "Password123",
+    "password_confirmation": "Password123",
+    "role": "student",
+    "avatar_url": "https://example.com/avatar.png"
+     }'
+
+# Fazer login e recuperar o token JWT
+curl -X POST http://localhost:8000/api/login `
+  -H "Content-Type: application/json" `
+  -d '{
+    "email": "alice@example.com",
+    "password": "Password123"
+     }'
+
+# Consultar o perfil autenticado com o token retornado
+curl http://localhost:8000/api/me `
+  -H "Authorization: Bearer <TOKEN_AQUI>"
+```
+
+Dicas para Postman/Insomnia:
+
+- Crie uma coleção e configure a variável `{{baseUrl}} = http://localhost:8000`.
+- Requests:
+  - `POST {{baseUrl}}/api/register` com o corpo JSON acima.
+  - `POST {{baseUrl}}/api/login` para obter o token.
+  - `GET {{baseUrl}}/api/me` com o header `Authorization: Bearer {{token}}`.
+- Aproveite o recurso "Tests" do Postman para salvar automaticamente o token em uma variável de ambiente após o login.
+
+### Testes automatizados
+
+O pacote já inclui um teste de feature cobrindo registro, login e `GET /api/me`. Execute:
+
+```powershell
+php artisan test --filter=AuthEndpointsTest
+```
+
 ## Alternativa: Laravel Sail (Docker oficial)
 
 Se preferir usar Sail ao invés da configuração customizada:
