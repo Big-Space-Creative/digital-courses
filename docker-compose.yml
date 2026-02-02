@@ -1,0 +1,126 @@
+services:
+  # Aplicação Laravel (PHP-FPM)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: digital-courses-app
+    container_name: digital-courses-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./backend:/var/www
+      - ./backend/docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+      - /var/www/vendor
+    networks:
+      - digital-courses-network
+    depends_on:
+      - db
+      - redis
+
+  # Nginx Web Server
+  nginx:
+    image: nginx:alpine
+    container_name: digital-courses-nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend:/var/www
+      - ./backend/docker/nginx/conf.d:/etc/nginx/conf.d
+      - /var/www/vendor
+    networks:
+      - digital-courses-network
+    depends_on:
+      - app
+
+  # Frontend Next.js (opcional)
+  frontend:
+    image: node:20-alpine
+    container_name: digital-courses-frontend
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    environment:
+      NEXT_TELEMETRY_DISABLED: "1"
+    command: >-
+      sh -c "if [ -f package.json ]; then npm install && npm run dev -- --hostname 0.0.0.0 --port 3000; else tail -f /dev/null; fi"
+    ports:
+      - "3000:3000"
+    networks:
+      - digital-courses-network
+
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: digital-courses-db
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - digital-courses-network
+
+  # Redis Cache
+  redis:
+    image: redis:alpine
+    container_name: digital-courses-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - digital-courses-network
+
+  # pgAdmin (UI para PostgreSQL)
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: digital-courses-pgadmin
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      - PGADMIN_DEFAULT_EMAIL
+      - PGADMIN_DEFAULT_PASSWORD
+    ports:
+      - "8080:80"
+    networks:
+      - digital-courses-network
+    depends_on:
+      - db
+
+  # MinIO (S3 self-hosted)
+  minio:
+    image: minio/minio:latest
+    container_name: digital-courses-minio
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      - MINIO_ROOT_USER
+      - MINIO_ROOT_PASSWORD
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000" # S3 API
+      - "9001:9001" # Console
+    command: server /data --console-address ":9001"
+    networks:
+      - digital-courses-network
+
+networks:
+  digital-courses-network:
+    driver: bridge
+
+volumes:
+  pgdata:
+    driver: local
+  minio_data:
+    driver: local
