@@ -1,7 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\v1\UserController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\Admin\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -11,10 +11,6 @@ Route::get('/status', function (Request $request) {
         'environment' => app()->environment(),
         'timestamp' => now()->toIso8601String(),
     ]);
-});
-
-Route::prefix('admin')->group(function (): void {
-    Route::get('users', [UserController::class, 'index']);
 });
 
 // ============================================================================
@@ -35,3 +31,5 @@ Route::middleware('auth:api')->group(function (): void {
     // GET /api/me - retorna o usuário autenticado a partir do token JWT
     Route::get('/me', [AuthController::class, 'me']);
 });
+
+Route::get('/users', [UserController::class, 'index']);

@@ -16,10 +16,12 @@ class Lesson extends Model
         'description',
         'video_url',
         'duration_in_minutes',
+        'is_free_preview',
     ];
 
     protected $casts = [
         'duration_in_minutes' => 'integer',
+        'is_free_preview' => 'boolean',
     ];
 
     public function module()

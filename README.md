@@ -119,16 +119,16 @@ docker-compose exec app php artisan test
 
 ```powershell
 # Registrar um novo usuário
-curl -X POST http://localhost:8000/api/register `
-  -H "Content-Type: application/json" `
-  -d '{
-    "name": "Alice Test",
-    "email": "alice@example.com",
-    "password": "Password123",
-    "password_confirmation": "Password123",
-    "role": "student",
-    "avatar_url": "https://example.com/avatar.png"
-     }'
+  curl -X POST http://localhost:8000/api/register `
+    -H "Content-Type: application/json" `
+    -d '{
+      "name": "Alice Test",
+      "email": "alice@example.com",
+      "password": "Password123",
+      "password_confirmation": "Password123",
+      "role": "student",
+      "avatar_url": "https://example.com/avatar.png"
+      }'
 
 # Fazer login e recuperar o token JWT
 curl -X POST http://localhost:8000/api/login `
@@ -159,6 +159,35 @@ O pacote já inclui um teste de feature cobrindo registro, login e `GET /api/me`
 ```powershell
 php artisan test --filter=AuthEndpointsTest
 ```
+
+## Planos de estudantes (free vs premium)
+
+- Todo usuário com `role = student` possui o campo `subscription_type` (`free` ou `premium`).
+- Estudantes **premium** têm acesso a todas as aulas do catálogo.
+- Estudantes **free** só visualizam aulas marcadas como prévia (`lessons.is_free_preview = true`).
+- Instructors/Admins sempre podem ver tudo, independente desse campo.
+
+### Como configurar
+
+1. Defina o plano do estudante (exemplos):
+
+```powershell
+php artisan tinker
+>>> $user = \App\Models\User::find(1);
+>>> $user->subscription_type = 'premium';
+>>> $user->save();
+```
+
+2. Marque as aulas liberadas para contas free:
+
+```powershell
+php artisan tinker
+>>> $lesson = \App\Models\Lesson::find(10);
+>>> $lesson->is_free_preview = true;
+>>> $lesson->save();
+```
+
+A lógica de negócio está centralizada em `User::canAccessLesson($lesson)` e coberta pelo teste `UserLessonAccessTest`.
 
 ## Alternativa: Laravel Sail (Docker oficial)
 
@@ -227,10 +256,12 @@ Remove-Item -Recurse -Force .\digital-courses-temp
 
 - Tabelas presentes / adicionadas:
   - `users` (id, name, email UNIQUE, password, email_verified_at, remember_token, timestamps)
+    - Colunas extras: `role` (student|instructor|admin), `subscription_type` (free|premium), `avatar_url`, `deleted_at`
   - `password_reset_tokens`, `sessions`
   - `cache`, `cache_locks`
   - `jobs`, `job_batches`, `failed_jobs`
   - `categories` (id, name, timestamps) — criada em 2026-01-07
+  - `lessons` inclui `is_free_preview` para liberar aulas a contas free
 
 - Seeders:
   - `DatabaseSeeder` cria um usuário de teste (email: `test@example.com`).

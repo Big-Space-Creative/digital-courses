@@ -11,6 +11,13 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
 {
+    public const ROLE_STUDENT = 'student';
+    public const ROLE_INSTRUCTOR = 'instructor';
+    public const ROLE_ADMIN = 'admin';
+
+    public const SUBSCRIPTION_FREE = 'free';
+    public const SUBSCRIPTION_PREMIUM = 'premium';
+
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
 
@@ -25,6 +32,7 @@ class User extends Authenticatable implements JWTSubject
         'password',
         'role',
         'avatar_url',
+        'subscription_type',
     ];
 
     /**
@@ -47,6 +55,7 @@ class User extends Authenticatable implements JWTSubject
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'subscription_type' => 'string',
         ];
     }
 
@@ -89,6 +98,21 @@ class User extends Authenticatable implements JWTSubject
      |-----------------------------------------------------------
      */
 
+    public function isStudent(): bool
+    {
+        return $this->role === self::ROLE_STUDENT;
+    }
+
+    public function isPremiumStudent(): bool
+    {
+        return $this->isStudent() && $this->subscription_type === self::SUBSCRIPTION_PREMIUM;
+    }
+
+    public function isFreeStudent(): bool
+    {
+        return $this->isStudent() && $this->subscription_type === self::SUBSCRIPTION_FREE;
+    }
+
     public function hasActiveEnrollment(int|Course $course): bool
     {
         $courseId = $course instanceof Course ? $course->id : $course;
@@ -101,6 +125,19 @@ class User extends Authenticatable implements JWTSubject
                     ->orWhere('expires_at', '>', now());
             })
             ->exists();
+    }
+
+    public function canAccessLesson(Lesson $lesson): bool
+    {
+        if (! $this->isStudent()) {
+            return true;
+        }
+
+        if ($this->isPremiumStudent()) {
+            return true;
+        }
+
+        return (bool) $lesson->is_free_preview;
     }
 
     public function getJWTIdentifier(): mixed

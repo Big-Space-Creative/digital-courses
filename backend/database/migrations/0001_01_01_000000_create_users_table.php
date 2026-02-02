@@ -18,6 +18,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->enum('role', ['student', 'instructor', 'admin']);
+            $table->enum('subscription_type', ['free', 'premium'])->default('free');
             $table->string('avatar_url');
             $table->softDeletes();
             $table->rememberToken();
