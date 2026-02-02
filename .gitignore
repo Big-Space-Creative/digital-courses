@@ -19,6 +19,10 @@
 /storage/*.key
 /storage/pail
 /vendor
+/backend/vendor
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Laravel compiled views (backend)
+/backend/storage/framework/views/
