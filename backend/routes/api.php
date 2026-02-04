@@ -14,7 +14,6 @@ Route::get('/status', function (Request $request) {
 });
 
 Route::prefix('v1')->group(function(){
-    
     // ============================================================================
     // ROTAS DE AUTENTICAÇÃO (Públicas)
     // ============================================================================
@@ -28,9 +27,13 @@ Route::prefix('v1')->group(function(){
     // Response: { "token": "jwt_token_aqui", "user": { "id": 1, "name": "João Silva", "email": "joao@email.com", "tipo": "contratante" } }
     Route::post('/login', [AuthController::class, 'login']);
     
+    
     //Get /api/v1/users
     Route::middleware('auth:api')->group(function(){
+        
+        Route::get('/users', [UserController::class, 'index']);
+        //Ela só pode ser acessível para o token do usuario admin
+        
         Route::get('/me', [AuthController::class, 'me']);
-        Route::post('/users', [UserController::class, 'index']);
     });
 });
