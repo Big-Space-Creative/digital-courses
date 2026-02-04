@@ -13,23 +13,24 @@ Route::get('/status', function (Request $request) {
     ]);
 });
 
-// ============================================================================
-// ROTAS DE AUTENTICAÇÃO (Públicas)
-// ============================================================================
-
-// POST /api/register - Cadastro de novo usuário
-// Request: { "name": "João Silva", "email": "joao@email.com", "password": "Senha123", "password_confirmation": "Senha123", "role": "student|instructor|admin", "avatar_url": "https://..." }
-// Response: { "user": { "id": 1, "name": "João Silva", "email": "joao@email.com", "role": "student" }, "token": "jwt_token_aqui" }
-Route::post('/register', [AuthController::class, 'register']);
-
-// POST /api/login - Login de usuário existente
-// Request: { "email": "joao@email.com", "password": "senha123" }
-// Response: { "token": "jwt_token_aqui", "user": { "id": 1, "name": "João Silva", "email": "joao@email.com", "tipo": "contratante" } }
-Route::post('/login', [AuthController::class, 'login']);
-
-Route::middleware('auth:api')->group(function (): void {
-    // GET /api/me - retorna o usuário autenticado a partir do token JWT
-    Route::get('/me', [AuthController::class, 'me']);
+Route::prefix('v1')->group(function(){
+    
+    // ============================================================================
+    // ROTAS DE AUTENTICAÇÃO (Públicas)
+    // ============================================================================
+    // POST /api/register - Cadastro de novo usuário
+    // Request: { "name": "João Silva", "email": "joao@email.com", "password": "Senha123", "password_confirmation": "Senha123", "role": "student|instructor|admin", "avatar_url": "https://..." }
+    // Response: { "user": { "id": 1, "name": "João Silva", "email": "joao@email.com", "role": "student" }, "token": "jwt_token_aqui" }
+    Route::post('/register', [AuthController::class, 'register']);
+    
+    // POST /api/login - Login de usuário existente
+    // Request: { "email": "joao@email.com", "password": "senha123" }
+    // Response: { "token": "jwt_token_aqui", "user": { "id": 1, "name": "João Silva", "email": "joao@email.com", "tipo": "contratante" } }
+    Route::post('/login', [AuthController::class, 'login']);
+    
+    //Get /api/v1/users
+    Route::middleware('auth:api')->group(function(){
+        Route::get('/me', [AuthController::class, 'me']);
+        Route::post('/users', [UserController::class, 'index']);
+    });
 });
-
-Route::get('/users', [UserController::class, 'index']);
