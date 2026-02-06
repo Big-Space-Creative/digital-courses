@@ -7,8 +7,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
+use Symfony\Component\HttpFoundation\JsonResponse as HttpFoundationJsonResponse;
 
 class AuthController extends Controller
 {
@@ -83,4 +85,43 @@ class AuthController extends Controller
             'user' => $user,
         ]);
     }
+
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+
+        $validated = $request->validate([
+            'name'=>['required', 'string', 'max:255'],
+            'email'=>[
+                'required', 
+                'email', 
+                'max:255', 
+                Rule::unique('users')->ignore($user->id),
+        ],
+        'avatar_url'=> ['nullable','url','max:2048'],
+    ]);
+    
+     $emailChanged = isset($validated['email']) && $validated['email'] !== $user->email;
+
+        $user->name = $validated['name'];
+        $user->avatar_url = $validated['avatar_url'] ?? $user->avatar_url;
+
+        if ($emailChanged) {
+            $user->email = $validated['email'];
+            // zera verificação para forçar re-verificação do e-mail
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
+
+        // dispara verificação de e-mail se o model suportar (MustVerifyEmail)
+        if ($emailChanged && method_exists($user, 'sendEmailVerificationNotification')) {
+            $user->sendEmailVerificationNotification();
+        }
+
+        return response()->json([
+            'message' => 'Perfil atualizado com sucesso',
+            'user' => $user->fresh(),
+        ]);
+}
 }

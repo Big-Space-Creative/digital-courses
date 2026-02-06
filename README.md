@@ -119,19 +119,21 @@ docker-compose exec app php artisan test
 
 ```powershell
 # Registrar um novo usuário
-  curl -X POST http://localhost:8000/api/register `
+# As roles podem ser 'student', 'instructor', 'admin'
+  curl -X POST http://localhost:8000/api/v1/register `
     -H "Content-Type: application/json" `
     -d '{
       "name": "Alice Test",
       "email": "alice@example.com",
       "password": "Password123",
       "password_confirmation": "Password123",
-      "role": "student",
+      "role": "student", 
       "avatar_url": "https://example.com/avatar.png"
       }'
 
+
 # Fazer login e recuperar o token JWT
-curl -X POST http://localhost:8000/api/login `
+curl -X POST http://localhost:8000/api/v1/login `
   -H "Content-Type: application/json" `
   -d '{
     "email": "alice@example.com",
@@ -139,7 +141,7 @@ curl -X POST http://localhost:8000/api/login `
      }'
 
 # Consultar o perfil autenticado com o token retornado
-curl http://localhost:8000/api/me `
+curl http://localhost:8000/api/v1/me `
   -H "Authorization: Bearer <TOKEN_AQUI>"
 ```
 

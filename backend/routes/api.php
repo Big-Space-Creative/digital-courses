@@ -25,7 +25,7 @@ Route::prefix('v1')->group(function(){
     // POST /api/login - Login de usuário existente
     // Request: { "email": "joao@email.com", "password": "senha123" }
     // Response: { "token": "jwt_token_aqui", "user": { "id": 1, "name": "João Silva", "email": "joao@email.com", "tipo": "contratante" } }
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login']); 
     
     
     //Get /api/v1/users
@@ -35,5 +35,7 @@ Route::prefix('v1')->group(function(){
         //Ela só pode ser acessível para o token do usuario admin
         
         Route::get('/me', [AuthController::class, 'me']);
+        Route::post('/me', [AuthController::class, 'updateProfile']);
+        
     });
 });
