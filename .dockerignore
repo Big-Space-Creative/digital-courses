@@ -1,0 +1,21 @@
+# Reduzir o contexto de build e evitar problemas com symlinks do Laravel
+
+# Backend Laravel
+backend/vendor
+backend/node_modules
+backend/storage
+backend/public/storage
+backend/.git
+backend/.gitignore
+
+# Frontend (quando existir)
+frontend/node_modules
+frontend/.next
+frontend/dist
+
+# Arquivos de sistema/IDE
+.git
+.gitignore
+.vscode
+.DS_Store
+Thumbs.db

@@ -1,5 +1,5 @@
-# Dockerfile para Laravel (PHP 8.2 com FPM)
-FROM php:8.2-fpm
+# Dockerfile para Laravel (PHP 8.4 com FPM, alinhado com composer.lock)
+FROM php:8.4-fpm
 
 # Argumentos de build
 ARG user=laravel
@@ -38,8 +38,9 @@ WORKDIR /var/www
 # Copiar arquivos existentes da aplicação (apenas backend)
 COPY --chown=$user:$user backend/ /var/www
 
-# Ajustar permissões
-RUN chown -R $user:$user /var/www \
+# Ajustar permissões (criar pastas se nao existirem para evitar erro no build)
+RUN mkdir -p /var/www/storage /var/www/bootstrap/cache \
+    && chown -R $user:$user /var/www \
     && chmod -R 755 /var/www/storage \
     && chmod -R 755 /var/www/bootstrap/cache
 

@@ -1,86 +1,186 @@
 @echo off
-REM Script de inicialização do projeto Docker para Windows
+setlocal ENABLEDELAYEDEXPANSION
+REM Script de inicializacao do projeto Docker para Windows
 REM Use: docker-init.bat
 
-set BACKEND_DIR=backend
+set "BACKEND_DIR=backend"
+set "COMPOSE_CMD="
 
-echo 🐳 Iniciando setup Docker para digital-courses...
+echo ====================================================
+echo   Digital Courses - Setup Docker (Windows CMD)
+echo ====================================================
 echo.
 
-REM Verificar se Docker está rodando
+echo [1/9] Verificando se o Docker esta em execucao...
 docker info >nul 2>&1
 if %errorlevel% neq 0 (
-    echo ❌ Docker não está rodando. Inicie o Docker Desktop e tente novamente.
-    exit /b 1
+    echo ERRO: Docker nao esta rodando. Inicie o Docker Desktop e tente novamente.
+    goto :error
 )
-
-echo ✅ Docker está rodando
+echo OK: Docker esta rodando.
 echo.
 
-REM Copiar .env.docker.example se .env não existir (preferir config de Docker)
-if not exist %BACKEND_DIR%\.env (
-    if exist %BACKEND_DIR%\.env.docker.example (
-        echo 📝 Criando arquivo .env a partir de .env.docker.example...
-        copy %BACKEND_DIR%\.env.docker.example %BACKEND_DIR%\.env
+echo [2/9] Verificando pasta do backend (%BACKEND_DIR%)...
+if not exist "%BACKEND_DIR%" (
+    echo ERRO: Pasta "%BACKEND_DIR%" nao encontrada. Verifique se o clone foi feito corretamente.
+    goto :error
+)
+echo OK: Pasta do backend encontrada.
+echo.
+
+echo [3/9] Detectando comando do Docker Compose...
+docker compose version >nul 2>&1
+if %errorlevel%==0 (
+    set "COMPOSE_CMD=docker compose"
+    goto :compose_ok
+)
+
+docker-compose version >nul 2>&1
+if %errorlevel%==0 (
+    set "COMPOSE_CMD=docker-compose"
+    goto :compose_ok
+)
+
+echo ERRO: Docker Compose nao encontrado. Certifique-se de que o Docker Desktop esta instalado com o Docker Compose habilitado.
+goto :error
+
+:compose_ok
+echo OK: Usando comando: %COMPOSE_CMD%
+echo.
+
+echo [4/9] Garantindo que o arquivo de configuracao .env existe...
+REM Copiar .env.docker.example se .env nao existir (preferir config de Docker)
+if not exist "%BACKEND_DIR%\.env" (
+    if exist "%BACKEND_DIR%\.env.docker.example" (
+        echo Criando arquivo .env a partir de .env.docker.example...
+        copy "%BACKEND_DIR%\.env.docker.example" "%BACKEND_DIR%\.env" >nul
     ) else (
-        echo ⚠️  .env.docker.example não encontrado, usando .env.example...
-        copy %BACKEND_DIR%\.env.example %BACKEND_DIR%\.env
+        echo Aviso: .env.docker.example nao encontrado, usando .env.example...
+        if exist "%BACKEND_DIR%\.env.example" (
+            copy "%BACKEND_DIR%\.env.example" "%BACKEND_DIR%\.env" >nul
+        ) else (
+            echo ERRO: Nenhum arquivo de exemplo de .env encontrado em "%BACKEND_DIR%".
+            goto :error
+        )
     )
-    echo ✅ Arquivo .env criado
+    if %errorlevel% neq 0 (
+        echo ERRO: Falha ao criar o arquivo .env.
+        goto :error
+    )
+    echo OK: Arquivo .env criado.
 ) else (
-    echo ✅ Arquivo .env já existe
+    echo OK: Arquivo .env ja existe.
 )
 echo.
 
-REM Build das imagens
-echo 🔨 Construindo imagens Docker...
-docker-compose build
+REM Sincronizar .env do backend com .env na raiz (usado pelo docker compose para variaveis DB_*, PGADMIN_* etc.)
+echo Sincronizando variaveis de ambiente para docker-compose (.env na raiz)...
+copy "%BACKEND_DIR%\.env" ".env" >nul
+if %errorlevel% neq 0 (
+    echo ERRO: Falha ao copiar %%BACKEND_DIR%%\.env para .env na raiz.
+    goto :error
+)
+echo OK: Arquivo .env na raiz atualizado.
+echo.
 
-REM Subir containers
-echo 🚀 Iniciando containers...
-docker-compose up -d
+echo [5/9] Construindo imagens Docker (pode demorar)...
+%COMPOSE_CMD% -f docker-compose.yml build
+if %errorlevel% neq 0 (
+    echo ERRO: Falha ao construir as imagens Docker.
+    goto :error
+)
+echo OK: Imagens construidas.
+echo.
 
-REM Aguardar PostgreSQL iniciar
-echo ⏳ Aguardando PostgreSQL iniciar (15s)...
+echo [6/9] Subindo containers em segundo plano...
+%COMPOSE_CMD% -f docker-compose.yml up -d
+if %errorlevel% neq 0 (
+    echo ERRO: Falha ao iniciar os containers.
+    goto :error
+)
+echo OK: Containers iniciados.
+echo.
+
+echo Aguardando o banco de dados PostgreSQL iniciar (15 segundos)...
 timeout /t 15 /nobreak >nul
-
-REM Instalar dependências do Composer
-echo 📦 Instalando dependências do Composer...
-docker-compose exec -T app composer install --no-interaction
-
-REM Gerar chave da aplicação
-echo 🔑 Gerando chave da aplicação...
-docker-compose exec -T app php artisan key:generate
-
-REM Rodar migrations
-echo 🗄️ Rodando migrations...
-docker-compose exec -T app php artisan migrate --force
-
-REM Rodar seeders
-echo 🌱 Rodando seeders...
-docker-compose exec -T app php artisan db:seed --force
-
-REM Ajustar permissões
-echo 🔧 Ajustando permissões...
-docker-compose exec -T app chmod -R 775 storage bootstrap/cache
-docker-compose exec -T app chown -R www-data:www-data storage bootstrap/cache
-
 echo.
-echo ✅ Setup completo!
+
+echo [7/9] Instalando dependencias PHP com Composer dentro do container app...
+%COMPOSE_CMD% -f docker-compose.yml exec -T -u root app composer install --no-interaction --prefer-dist --no-progress
+if %errorlevel% neq 0 (
+    echo ERRO: Falha ao instalar dependencias do Composer.
+    goto :error
+)
+echo OK: Dependencias PHP instaladas.
 echo.
-echo 🌐 API disponível em: http://localhost:8000
-echo 🗄️ pgAdmin em: http://localhost:8080
-echo 🗄️ PostgreSQL em: localhost:5432
-echo 📦 MinIO (S3) em: http://localhost:9000 (console: http://localhost:9001)
-echo 🔴 Redis em: localhost:6379
+
+echo [8/9] Preparando aplicacao Laravel (key, migrations, seeders, caches)...
+echo - Gerando chave da aplicacao...
+%COMPOSE_CMD% -f docker-compose.yml exec -T app php artisan key:generate --force
+if %errorlevel% neq 0 (
+    echo ERRO: Falha ao gerar a chave da aplicacao.
+    goto :error
+)
+
+echo - Rodando migrations...
+%COMPOSE_CMD% -f docker-compose.yml exec -T app php artisan migrate --force
+if %errorlevel% neq 0 (
+    echo ERRO: Falha ao rodar as migrations.
+    goto :error
+)
+
+echo - Rodando seeders...
+%COMPOSE_CMD% -f docker-compose.yml exec -T app php artisan db:seed --force
+if %errorlevel% neq 0 (
+    echo ERRO: Falha ao rodar os seeders.
+    goto :error
+)
+
+echo - Gerando caches de configuracao e rotas (quando aplicavel)...
+%COMPOSE_CMD% -f docker-compose.yml exec -T app php artisan config:cache
+if %errorlevel% neq 0 (
+    echo Aviso: Nao foi possivel gerar o cache de configuracao (config:cache).
+)
+%COMPOSE_CMD% -f docker-compose.yml exec -T app php artisan route:cache
+
+echo - Verificando link simbolico de storage...
+%COMPOSE_CMD% -f docker-compose.yml exec -T app php artisan storage:link 2>nul
+
+echo - Ajustando permissoes de storage e cache...
+%COMPOSE_CMD% -f docker-compose.yml exec -T app sh -c "chmod -R 775 storage bootstrap/cache 2>/dev/null || true"
+%COMPOSE_CMD% -f docker-compose.yml exec -T app sh -c "chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true"
+echo OK: Aplicacao Laravel preparada.
 echo.
-echo Comandos úteis:
-echo   docker-compose up -d          # Iniciar containers
-echo   docker-compose down           # Parar containers
-echo   docker-compose logs -f app    # Ver logs do app
-echo   docker-compose exec app bash  # Acessar container
-echo   docker-compose exec app php artisan migrate
+
+echo [9/9] Finalizando setup...
 echo.
-echo Lembrete: o frontend React/Next.js roda em .\frontend (container "frontend").
+echo Setup completo com sucesso.
+echo.
+echo Servicos principais:
+echo   API (Laravel + Nginx): http://localhost:8000
+echo   PostgreSQL:            localhost:5432
+echo   pgAdmin:               http://localhost:8080
+echo   MinIO (S3 API):        http://localhost:9000
+echo   MinIO Console:         http://localhost:9001
+echo   Redis:                 localhost:6379
+echo   Frontend Next.js:      http://localhost:3000  (quando pasta frontend existir com package.json)
+echo.
+echo Comandos uteis (executar na pasta do projeto):
+echo   %COMPOSE_CMD% up -d          ^# Iniciar todos os containers
+echo   %COMPOSE_CMD% down           ^# Parar e remover containers
+echo   %COMPOSE_CMD% logs -f app    ^# Ver logs do app Laravel
+echo   %COMPOSE_CMD% exec app bash  ^# Acessar o container app
+echo   %COMPOSE_CMD% exec app php artisan migrate
+echo.
+echo Observacao: o container "frontend" so executara o servidor Next.js
+echo quando a pasta .\frontend existir e tiver um arquivo package.json.
 echo.
 pause
+exit /b 0
+
+:error
+echo.
+echo ERRO: Ocorreu um problema durante o setup. Verifique as mensagens acima.
+echo.
+pause
+exit /b 1
