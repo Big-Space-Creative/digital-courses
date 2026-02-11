@@ -111,15 +111,8 @@ if (-not (Test-Path $envPath)) {
 }
 else {
     Write-Host "OK: Arquivo .env ja existe." -ForegroundColor Green
-}
-Write-Host ""
-
-# Sincronizar .env do backend com .env na raiz (usado pelo docker compose para variaveis DB_*, PGADMIN_*, etc.)
-$rootEnvPath = Join-Path $ProjectRoot ".env"
-Write-Host "Sincronizando variaveis de ambiente para docker-compose (.env na raiz)..."
-Copy-Item $envPath $rootEnvPath -Force
-Write-Host "OK: Arquivo .env na raiz atualizado." -ForegroundColor Green
-Write-Host ""
+    }
+    Write-Host ""
 
 # Passo 5: Build imagens
 Write-Host "[5/9] Construindo imagens Docker (pode demorar)..."
@@ -131,10 +124,10 @@ if (-not (Test-Path $ComposeFile)) {
 }
 Write-Host "Usando arquivo de compose: $ComposeFile"
 if ($script:UseDockerSubcommand) {
-    docker compose -f $ComposeFile build
+    docker compose --env-file $envPath -f $ComposeFile build
 }
 else {
-    docker-compose -f $ComposeFile build
+    docker-compose --env-file $envPath -f $ComposeFile build
 }
 Check-LastExitCode -StepDescription "build das imagens Docker"
 Write-Host "OK: Imagens construidas." -ForegroundColor Green
@@ -143,10 +136,10 @@ Write-Host ""
 # Passo 6: Subir containers
 Write-Host "[6/9] Subindo containers em segundo plano..."
 if ($script:UseDockerSubcommand) {
-    docker compose -f $ComposeFile up -d
+    docker compose --env-file $envPath -f $ComposeFile up -d
 }
 else {
-    docker-compose -f $ComposeFile up -d
+    docker-compose --env-file $envPath -f $ComposeFile up -d
 }
 Check-LastExitCode -StepDescription "subir containers"
 Write-Host "OK: Containers iniciados." -ForegroundColor Green
@@ -159,10 +152,10 @@ Write-Host ""
 # Passo 7: Composer install
 Write-Host "[7/9] Instalando dependencias PHP com Composer dentro do container app..."
 if ($script:UseDockerSubcommand) {
-    docker compose -f $ComposeFile exec -T -u root app composer install --no-interaction --prefer-dist --no-progress
+    docker compose --env-file $envPath -f $ComposeFile exec -T -u root app composer install --no-interaction --prefer-dist --no-progress
 }
 else {
-    docker-compose -f $ComposeFile exec -T -u root app composer install --no-interaction --prefer-dist --no-progress
+    docker-compose --env-file $envPath -f $ComposeFile exec -T -u root app composer install --no-interaction --prefer-dist --no-progress
 }
 Check-LastExitCode -StepDescription "composer install"
 Write-Host "OK: Dependencias PHP instaladas." -ForegroundColor Green
@@ -173,64 +166,64 @@ Write-Host "[8/9] Preparando aplicacao Laravel (key, migrations, seeders, caches
 
 Write-Host "- Gerando chave da aplicacao..."
 if ($script:UseDockerSubcommand) {
-    docker compose -f $ComposeFile exec -T app php artisan key:generate --force
+    docker compose --env-file $envPath -f $ComposeFile exec -T app php artisan key:generate --force
 }
 else {
-    docker-compose -f $ComposeFile exec -T app php artisan key:generate --force
+    docker-compose --env-file $envPath -f $ComposeFile exec -T app php artisan key:generate --force
 }
 Check-LastExitCode -StepDescription "php artisan key:generate"
 
 Write-Host "- Rodando migrations..."
 if ($script:UseDockerSubcommand) {
-    docker compose -f $ComposeFile exec -T app php artisan migrate --force
+    docker compose --env-file $envPath -f $ComposeFile exec -T app php artisan migrate --force
 }
 else {
-    docker-compose -f $ComposeFile exec -T app php artisan migrate --force
+    docker-compose --env-file $envPath -f $ComposeFile exec -T app php artisan migrate --force
 }
 Check-LastExitCode -StepDescription "php artisan migrate"
 
 Write-Host "- Rodando seeders..."
 if ($script:UseDockerSubcommand) {
-    docker compose -f $ComposeFile exec -T app php artisan db:seed --force
+    docker compose --env-file $envPath -f $ComposeFile exec -T app php artisan db:seed --force
 }
 else {
-    docker-compose -f $ComposeFile exec -T app php artisan db:seed --force
+    docker-compose --env-file $envPath -f $ComposeFile exec -T app php artisan db:seed --force
 }
 Check-LastExitCode -StepDescription "php artisan db:seed"
 
 Write-Host "- Gerando caches de configuracao e rotas (quando aplicavel)..."
 if ($script:UseDockerSubcommand) {
-    docker compose -f $ComposeFile exec -T app php artisan config:cache
+    docker compose --env-file $envPath -f $ComposeFile exec -T app php artisan config:cache
 }
 else {
-    docker-compose -f $ComposeFile exec -T app php artisan config:cache
+    docker-compose --env-file $envPath -f $ComposeFile exec -T app php artisan config:cache
 }
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Aviso: Nao foi possivel gerar o cache de configuracao (config:cache)." -ForegroundColor Yellow
 }
 if ($script:UseDockerSubcommand) {
-    docker compose -f $ComposeFile exec -T app php artisan route:cache
+    docker compose --env-file $envPath -f $ComposeFile exec -T app php artisan route:cache
 }
 else {
-    docker-compose -f $ComposeFile exec -T app php artisan route:cache
+    docker-compose --env-file $envPath -f $ComposeFile exec -T app php artisan route:cache
 }
 
 Write-Host "- Verificando link simbolico de storage..."
 if ($script:UseDockerSubcommand) {
-    docker compose -f $ComposeFile exec -T app php artisan storage:link *> $null
+    docker compose --env-file $envPath -f $ComposeFile exec -T app php artisan storage:link *> $null
 }
 else {
-    docker-compose -f $ComposeFile exec -T app php artisan storage:link *> $null
+    docker-compose --env-file $envPath -f $ComposeFile exec -T app php artisan storage:link *> $null
 }
 
 Write-Host "- Ajustando permissoes de storage e cache..."
 if ($script:UseDockerSubcommand) {
-    docker compose -f $ComposeFile exec -T app sh -c "chmod -R 775 storage bootstrap/cache 2>/dev/null || true"
-    docker compose -f $ComposeFile exec -T app sh -c "chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true"
+    docker compose --env-file $envPath -f $ComposeFile exec -T app sh -c "chmod -R 775 storage bootstrap/cache 2>/dev/null || true"
+    docker compose --env-file $envPath -f $ComposeFile exec -T app sh -c "chown -R www-data:www-data storage/bootstrap/cache 2>/dev/null || true"
 }
 else {
-    docker-compose -f $ComposeFile exec -T app sh -c "chmod -R 775 storage bootstrap/cache 2>/dev/null || true"
-    docker-compose -f $ComposeFile exec -T app sh -c "chown -R www-data:www-data storage/bootstrap/cache 2>/dev/null || true"
+    docker-compose --env-file $envPath -f $ComposeFile exec -T app sh -c "chmod -R 775 storage bootstrap/cache 2>/dev/null || true"
+    docker-compose --env-file $envPath -f $ComposeFile exec -T app sh -c "chown -R www-data-www-data storage/bootstrap/cache 2>/dev/null || true"
 }
 Write-Host "OK: Aplicacao Laravel preparada." -ForegroundColor Green
 Write-Host ""
