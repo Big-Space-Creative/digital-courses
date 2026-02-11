@@ -17,11 +17,13 @@ class Course extends Model
         'price',
         'thumbnail',
         'is_published',
+        'published_at'
     ];
 
     protected $casts = [
         'is_published' => 'bool',
         'price' => 'decimal:2',
+        'published_at'=>'datetime'
     ];
 
     public function modules()

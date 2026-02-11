@@ -14,6 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         //
     })
+    ->withProviders([
+        App\Providers\AppServiceProvider::class,
+        App\Providers\AuthServiceProvider::class, // <— adicione esta linha
+    ])
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
