@@ -31,8 +31,7 @@ Route::prefix('v1')->group(function(){
     //Get /api/v1/users
     Route::middleware('auth:api')->group(function(){
         
-        Route::get('/users', [UserController::class, 'index']);
-        //Ela só pode ser acessível para o token do usuario admin
+        Route::get('/users', [UserController::class, 'index'])->middleware('admin');
         
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/me', [AuthController::class, 'updateProfile']);
