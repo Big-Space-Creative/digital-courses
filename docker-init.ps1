@@ -145,8 +145,8 @@ Check-LastExitCode -StepDescription "subir containers"
 Write-Host "OK: Containers iniciados." -ForegroundColor Green
 Write-Host ""
 
-Write-Host "Aguardando o banco de dados PostgreSQL iniciar (15 segundos)..."
-Start-Sleep -Seconds 15
+Write-Host "Aguardando o banco de dados PostgreSQL iniciar (3 segundos)..."
+Start-Sleep -Seconds 3
 Write-Host ""
 
 # Passo 7: Composer install

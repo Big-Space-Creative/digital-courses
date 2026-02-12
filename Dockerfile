@@ -7,6 +7,7 @@ ARG uid=1000
 
 # Instalar dependências do sistema
 RUN apt-get update && apt-get install -y \
+    gosu \
     git \
     curl \
     libpng-dev \
@@ -37,6 +38,8 @@ WORKDIR /var/www
 
 # Copiar arquivos existentes da aplicação (apenas backend)
 COPY --chown=$user:$user backend/ /var/www
+COPY --chown=$user:$user backend/docker/php/entrypoint.sh /usr/local/bin/app-entrypoint
+RUN chmod +x /usr/local/bin/app-entrypoint
 
 # Ajustar permissões (criar pastas se nao existirem para evitar erro no build)
 RUN mkdir -p /var/www/storage /var/www/bootstrap/cache \
@@ -45,9 +48,10 @@ RUN mkdir -p /var/www/storage /var/www/bootstrap/cache \
     && chmod -R 755 /var/www/bootstrap/cache
 
 # Mudar para o usuário criado
-USER $user
+USER root
 
 # Expor porta 9000 para PHP-FPM
 EXPOSE 9000
 
+ENTRYPOINT ["app-entrypoint"]
 CMD ["php-fpm"]
