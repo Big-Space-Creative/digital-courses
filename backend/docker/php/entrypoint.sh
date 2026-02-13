@@ -23,6 +23,17 @@ if [ ! -f vendor/autoload.php ]; then
 fi
 
 if [ -x artisan ]; then
+  # Verificar se APP_KEY está vazia e gerar se necessário
+  if ! grep -q "^APP_KEY=base64:" .env 2>/dev/null; then
+    echo "[entrypoint] Generating application key..."
+    gosu "$WEB_USER" php artisan key:generate --force
+  fi
+  
+  # Rodar migrations
+  echo "[entrypoint] Running migrations..."
+  gosu "$WEB_USER" php artisan migrate --force
+  
+  # Storage link
   gosu "$WEB_USER" php artisan storage:link >/dev/null 2>&1 || true
 fi
 
