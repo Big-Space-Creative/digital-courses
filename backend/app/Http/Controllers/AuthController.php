@@ -16,30 +16,66 @@ class AuthController extends Controller
 {
     public function register(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|in:student,instructor,admin',
-            'avatar_url' => 'nullable|url|max:2048',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users,email',
+                'password' => 'required|string|min:8|confirmed',
+                'role' => 'required|in:student,instructor,admin',
+                'avatar_url' => 'nullable|url|max:2048',
+            ], [
+                // Mensagens customizadas em português
+                'name.required' => 'O nome é obrigatório.',
+                'name.max' => 'O nome não pode ter mais de 255 caracteres.',
+                'email.required' => 'O e-mail é obrigatório.',
+                'email.email' => 'O e-mail deve ser um endereço válido.',
+                'email.unique' => 'Este e-mail já está cadastrado.',
+                'password.required' => 'A senha é obrigatória.',
+                'password.min' => 'A senha deve ter no mínimo 8 caracteres.',
+                'password.confirmed' => 'A confirmação de senha não confere.',
+                'role.required' => 'O tipo de usuário é obrigatório.',
+                'role.in' => 'O tipo de usuário deve ser: student, instructor ou admin.',
+                'avatar_url.url' => 'A URL do avatar deve ser válida.',
+            ]);
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            //'password_confirmation' = $password
-            'role' => $validated['role'],
-            'avatar_url' => $validated['avatar_url'] ?? '',
-        ]);
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => $validated['role'],
+                'avatar_url' => $validated['avatar_url'] ?? '',
+            ]);
 
-        $token = JWTAuth::fromUser($user);
+            $token = JWTAuth::fromUser($user);
 
-        return response()->json([
-            'message' => 'Usuário registrado com sucesso',
-            'user' => $user,
-            'token' => $token,
-        ], 201);
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuário registrado com sucesso',
+                'data' => [
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'role' => $user->role,
+                        'avatar_url' => $user->avatar_url,
+                        'created_at' => $user->created_at,
+                    ],
+                    'token' => $token,
+                ],
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro de validação',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao registrar usuário',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function login(Request $request): JsonResponse
