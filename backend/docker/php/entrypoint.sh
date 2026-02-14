@@ -29,6 +29,12 @@ if [ -x artisan ]; then
     gosu "$WEB_USER" php artisan key:generate --force
   fi
   
+  # Verificar se JWT_SECRET está vazia e gerar se necessário
+  if ! grep -q "^JWT_SECRET=" .env 2>/dev/null || grep -q "^JWT_SECRET=$" .env 2>/dev/null; then
+    echo "[entrypoint] Generating JWT secret..."
+    gosu "$WEB_USER" php artisan jwt:secret --force
+  fi
+  
   # Rodar migrations
   echo "[entrypoint] Running migrations..."
   gosu "$WEB_USER" php artisan migrate --force
