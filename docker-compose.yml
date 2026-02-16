@@ -42,6 +42,7 @@ services:
     volumes:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
+      - frontend_next:/app/.next
     environment:
       NEXT_TELEMETRY_DISABLED: "1"
       NEXT_PUBLIC_API_URL: "http://localhost:8000/api"
@@ -121,4 +122,6 @@ volumes:
   backend_vendor:
     driver: local
   frontend_node_modules:
+    driver: local
+  frontend_next:
     driver: local
