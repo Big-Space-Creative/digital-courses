@@ -42,12 +42,13 @@ services:
     volumes:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
+      - frontend_next:/app/.next
     environment:
       NEXT_TELEMETRY_DISABLED: "1"
       NEXT_PUBLIC_API_URL: "http://localhost:8000/api"
       WATCHPACK_POLLING: "true"
     command: >-
-      sh -c "npm install && npm run dev -- --hostname 0.0.0.0 --port 3000"
+      sh -c "npm install && npm run build && npm run start -- --hostname 0.0.0.0 --port 3000"
     ports:
       - "3000:3000"
     depends_on:
@@ -62,10 +63,6 @@ services:
     restart: unless-stopped
     env_file:
       - ./backend/.env
-    environment:
-      - POSTGRES_DB=${DB_DATABASE}
-      - POSTGRES_USER=${DB_USERNAME}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
@@ -90,9 +87,6 @@ services:
     restart: unless-stopped
     env_file:
       - ./backend/.env
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
     ports:
       - "8080:80"
     networks:
@@ -107,9 +101,6 @@ services:
     restart: unless-stopped
     env_file:
       - ./backend/.env
-    environment:
-      - MINIO_ROOT_USER=${AWS_ACCESS_KEY_ID}
-      - MINIO_ROOT_PASSWORD=${AWS_SECRET_ACCESS_KEY}
     volumes:
       - minio_data:/data
     ports:
@@ -131,4 +122,6 @@ volumes:
   backend_vendor:
     driver: local
   frontend_node_modules:
+    driver: local
+  frontend_next:
     driver: local
