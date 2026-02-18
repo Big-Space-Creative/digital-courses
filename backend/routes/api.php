@@ -27,6 +27,7 @@ Route::prefix('v1')->group(function()
     });
     Route::middleware('auth:api')->group(function(){
         Route::get('/users', [UserController::class, 'index'])->middleware('admin');
+        Route::put('/users/{id}', [UserController::class, 'update'])->middleware('admin');
         Route::post('/me', [AuthController::class, 'updateProfile']);
     });
 });
