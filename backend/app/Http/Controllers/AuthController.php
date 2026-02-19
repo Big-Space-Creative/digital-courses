@@ -175,5 +175,21 @@ class AuthController extends Controller
             'message' => 'Perfil atualizado com sucesso',
             'user' => $user->fresh(),
         ]);
+} public function refresh(): JsonResponse
+{
+    try {
+        $token = JWTAuth::getToken();
+        $newToken = JWTAuth::refresh($token);
+        
+        return response()->json([
+            'message' => 'Token refreshed successfully',
+            'token' => $newToken,
+        ]);
+    } catch (JWTException $exception) {
+        return response()->json([
+            'message' => 'Error refreshing token',
+            'error' => $exception->getMessage(),
+        ], 500);
+    }
 }
 }

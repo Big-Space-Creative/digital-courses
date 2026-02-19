@@ -180,6 +180,23 @@ Base URL (dev): `http://localhost:8000/api/v1`
 }
 ```
 
+### POST `/refresh` — Refresh Token
+
+> **Observação:** O token expirado pode ser usado aqui se estiver dentro do período de "refresh_ttl" (padrão de 2 semanas). O backend irá invalidar o token antigo e retornar um novo.
+
+**Headers**
+
+- `Authorization: Bearer <TOKEN_JWT_EXPIRADO_OU_VALIDO>`
+
+**Response (200/201)**
+
+```json
+{
+  "message": "Token refreshed successfully",
+  "token": "eyJ0eXAiOiJKV1Qi..."
+}
+```
+
 ### GET `/users` — Listagem (admin)
 
 **Headers**

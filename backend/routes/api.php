@@ -142,6 +142,24 @@ Route::prefix('v1')->group(function()
              * }
              */
             Route::post('/logout', 'logout')->middleware('auth:api');
+            /**
+             * ROTA DE REFRESH TOKEN DO USUÁRIO
+             *
+             * POST /api/v1/refresh
+             * Headers:
+             *   - Content-Type: application/json
+             *   - Accept: application/json
+             *   - Authorization: Bearer <TOKEN_JWT>
+             * 
+             * Body (JSON): none
+             * 
+             * Response (201):
+             * {
+             *   "status": "success",
+             *   "message": "Successfully refreshed token"
+             * }
+             */
+            Route::post('/refresh', 'refresh')->middleware('auth:api');
         });
     });
     Route::middleware('auth:api')->group(function(){
