@@ -19,76 +19,23 @@ Instruções diretas para inicializar o backend Laravel localmente (PowerShell /
 - Node.js 20+
 - npm ou pnpm
 
-### Docker (recomendado para o backend)
+### Setup Docker
 
 - Docker Desktop
 - Docker Compose
-
-## Passos rápidos (backend local - PowerShell)
-
-**Use esta opção apenas se NÃO for usar Docker.** Para Docker, veja a seção abaixo.
-
-1. Clonar o repositório (se necessário)
-
-```powershell
-git clone <REPO_URL> digital-courses
-cd C:\Users\Administrator\source\repos\digital-courses\backend
-```
-
-2. Instalar dependências PHP e criar `.env`
-
-```powershell
-composer install --no-interaction
-Copy-Item .env.example .env
-php artisan key:generate
-```
-
-3. Banco de dados rápido para dev (SQLite)
-
-```powershell
-New-Item -ItemType File -Path database\database.sqlite -Force
-# Editar .env: DB_CONNECTION=sqlite e DB_DATABASE=database/database.sqlite
-```
-
-4. Migrations e seeders
-
-```powershell
-php artisan migrate --seed
-```
-
-5. Rodar backend local
-
-```powershell
-php artisan serve --host=0.0.0.0 --port=8000
-# API: http://localhost:8000
-```
-
-## Opção Docker (recomendado para desenvolvimento)
 
 Este projeto inclui configuração Docker completa (PHP-FPM, Nginx, PostgreSQL, Redis, MinIO e pgAdmin).
 
 **Setup rápido (Windows):**
 
+````powershell
+# 1. Copiar arquivo de ambiente para o backend
+Copy-Item .backend\.env.example .backend\.env
+
 ```powershell
 # Executar script de inicialização (faz tudo automaticamente)
-.\docker-init.bat
-```
-
-**Setup manual:**
-
-```powershell
-# 1. Copiar arquivo de ambiente para o backend
-Copy-Item .ackend\.env.example .ackend\.env
-
-# 2. Build e iniciar containers
-docker-compose build
-docker-compose up -d
-
-# 3. Instalar dependências e configurar (executa dentro do container app)
-docker-compose exec app composer install --no-interaction
-docker-compose exec app php artisan key:generate
-docker-compose exec app php artisan migrate --seed
-```
+docker compose up -d --build
+````
 
 **Acessar aplicação:**
 
@@ -110,56 +57,173 @@ docker-compose exec app php artisan migrate
 docker-compose exec app php artisan test
 ```
 
-## Testando os endpoints de registro e login
-
-1. Suba o backend (local ou Docker) e garanta que o `.env` já possui a `JWT_SECRET` (o comando `php artisan jwt:secret` já foi executado anteriormente). A API deve responder em `http://localhost:8000`.
-2. Crie/limpe o banco (`php artisan migrate:fresh --seed`) caso queira começar com uma base previsível antes dos testes.
-
-### Fluxo manual rápido (cURL ou Postman)
-
-```powershell
-# Registrar um novo usuário
-# As roles podem ser 'student', 'instructor', 'admin'
-  curl -X POST http://localhost:8000/api/v1/register `
-    -H "Content-Type: application/json" `
-    -d '{
-      "name": "Alice Test",
-      "email": "alice@example.com",
-      "password": "Password123",
-      "password_confirmation": "Password123",
-      "role": "student", 
-      "avatar_url": "https://example.com/avatar.png"
-      }'
-
-
-# Fazer login e recuperar o token JWT
-curl -X POST http://localhost:8000/api/v1/login `
-  -H "Content-Type: application/json" `
-  -d '{
-    "email": "alice@example.com",
-    "password": "Password123"
-     }'
-
-# Consultar o perfil autenticado com o token retornado
-curl http://localhost:8000/api/v1/me `
-  -H "Authorization: Bearer <TOKEN_AQUI>"
-```
-
-Dicas para Postman/Insomnia:
-
-- Crie uma coleção e configure a variável `{{baseUrl}} = http://localhost:8000`.
-- Requests:
-  - `POST {{baseUrl}}/api/register` com o corpo JSON acima.
-  - `POST {{baseUrl}}/api/login` para obter o token.
-  - `GET {{baseUrl}}/api/me` com o header `Authorization: Bearer {{token}}`.
-- Aproveite o recurso "Tests" do Postman para salvar automaticamente o token em uma variável de ambiente após o login.
-
 ### Testes automatizados
 
 O pacote já inclui um teste de feature cobrindo registro, login e `GET /api/me`. Execute:
 
 ```powershell
 php artisan test --filter=AuthEndpointsTest
+```
+
+## 📡 Guia rápido da API (para o frontend) / Fluxo manual rápido (cURL ou Postman)
+
+Base URL (dev): `http://localhost:8000/api/v1`
+
+### Autenticação (JWT)
+
+- Após o login, use o token retornado no header:
+  - `Authorization: Bearer <TOKEN_JWT>`
+
+### POST `/register` — Registro
+
+**Body (JSON)**
+
+```json
+{
+  "name": "Alice",
+  "email": "alice@example.com",
+  "password": "Password123",
+  "password_confirmation": "Password123",
+  "role": "student",
+  "avatar_url": ""
+}
+```
+
+**Response (201)**
+
+```json
+{
+  "success": true,
+  "message": "Usuário registrado com sucesso",
+  "data": {
+    "user": { "id", "name", "email", "role", "avatar_url", "created_at" },
+    "token": "..."
+  }
+}
+```
+
+### POST `/login` — Login
+
+**Body (JSON)**
+
+```json
+{
+  "email": "alice@example.com",
+  "password": "Password123"
+}
+```
+
+**Response (200/201)**
+
+```json
+{
+  "message": "Login bem-sucedido",
+  "user": { "id", "name", "email", "email_verified_at", "role", "subscription_type", "avatar_url", "deleted_at", "created_at", "updated_at" },
+  "token": "..."
+}
+```
+
+### GET `/me` — Perfil autenticado
+
+**Headers**
+
+- `Authorization: Bearer <TOKEN_JWT>`
+
+**Response (200/201)**
+
+```json
+{
+  "message": "Usuário autenticado",
+  "user": { "id", "name", "email", "email_verified_at", "role", "subscription_type", "avatar_url", "deleted_at", "created_at", "updated_at" }
+}
+```
+
+### POST `/me` — Atualizar perfil
+
+> **Observação:** o e-mail **não** pode ser alterado nesse endpoint. Apenas `name`, `phone` e `avatar_url`.
+
+**Headers**
+
+- `Authorization: Bearer <TOKEN_JWT>`
+
+**Body (JSON)**
+
+```json
+{
+  "name": "Novo Nome",
+  "phone": "+55 11 99999-9999",
+  "avatar_url": "https://imagem.com/foto.png"
+}
+```
+
+**Response (201)**
+
+```json
+{
+  "message": "Perfil atualizado com sucesso. Observação: o e-mail não pode ser alterado por este endpoint, apenas nome e número.",
+  "user": { "id", "name", "email", "email_verified_at", "role", "subscription_type", "avatar_url", "deleted_at", "created_at", "updated_at" }
+}
+```
+
+### POST `/logout` — Logout
+
+**Headers**
+
+- `Authorization: Bearer <TOKEN_JWT>`
+
+**Response (200/201)**
+
+```json
+{
+  "status": "success",
+  "message": "Successfully logged out"
+}
+```
+
+### GET `/users` — Listagem (admin)
+
+**Headers**
+
+- `Authorization: Bearer <TOKEN_JWT>`
+
+**Response (200)**
+
+```json
+{
+  "message": "Lista de usuários",
+  "data": [
+    { "id", "name", "email", "role", "subscription_type", "avatar_url", "created_at", "updated_at" }
+  ]
+}
+```
+
+### PUT `/users/{id}` — Atualização (admin)
+
+**Headers**
+
+- `Authorization: Bearer <TOKEN_JWT>`
+
+**Body (JSON)**
+
+```json
+{
+  "name": "Novo Nome",
+  "email": "usuario@exemplo.com",
+  "role": "student",
+  "subscription_type": "premium",
+  "avatar_url": "https://imagem.com/foto.png"
+}
+```
+
+**Response (200)**
+
+```json
+{
+  "message": "Usuário atualizado com sucesso",
+  "data": {
+    "user": { "id", "name", "email", "role", "subscription_type", "avatar_url", "created_at", "updated_at" }
+  }
+}
 ```
 
 ## Planos de estudantes (free vs premium)
@@ -190,16 +254,6 @@ php artisan tinker
 ```
 
 A lógica de negócio está centralizada em `User::canAccessLesson($lesson)` e coberta pelo teste `UserLessonAccessTest`.
-
-## Alternativa: Laravel Sail (Docker oficial)
-
-Se preferir usar Sail ao invés da configuração customizada:
-
-```powershell
-composer require laravel/sail --dev --no-interaction
-php artisan sail:install --with=pgsql,redis
-vendor\bin\artisan sail:up -d
-```
 
 ## Notas rápidas sobre autenticação (Sanctum) e SPA
 
