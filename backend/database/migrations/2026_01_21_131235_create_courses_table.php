@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('thumbnail', 255)->nullable();
             $table->boolean('is_published');
             $table->softDeletes();
+            $table->timestamps();
             $table->timestamp('published_at')->nullable()->after('is_published');
         });
     }
