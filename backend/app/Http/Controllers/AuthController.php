@@ -47,7 +47,7 @@ class AuthController extends Controller
             ]);
 
             $token = JWTAuth::fromUser($user);
-
+            $refreshToken = JWTAuth::claims(['type' => 'refresh'])->setTTL(config('jwt.refresh_ttl', 20160))->fromUser($user);
             return response()->json([
                 'success' => true,
                 'message' => 'Usuário registrado com sucesso',
@@ -60,7 +60,10 @@ class AuthController extends Controller
                         'avatar_url' => $user->avatar_url,
                         'created_at' => $user->created_at,
                     ],
-                    'token' => $token,
+                    'access_token' => $token,
+                    'refresh_token' => $refreshToken,
+                    'token_type' => 'bearer',
+                    'expires_in' => config('jwt.ttl') * 60,
                 ],
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -88,21 +91,32 @@ class AuthController extends Controller
         try {
             if (! $token = JWTAuth::attempt($credentials)) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Credenciais inválidas',
                 ], 401);
             }
+
+            $user = Auth::user();
+            $refreshToken = JWTAuth::claims(['type' => 'refresh'])->setTTL(config('jwt.refresh_ttl', 20160))->fromUser($user);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Login bem-sucedido',
+                'data' => [
+                    'user' => $user,
+                    'access_token' => $token,
+                    'refresh_token' => $refreshToken,
+                    'token_type' => 'bearer',
+                    'expires_in' => config('jwt.ttl') * 60,
+                ],
+            ]);
         } catch (JWTException $exception) {
             return response()->json([
+                'success' => false,
                 'message' => 'Erro ao gerar token',
                 'error' => $exception->getMessage(),
             ], 500);
         }
-
-        return response()->json([
-            'message' => 'Login bem-sucedido',
-            'user' => Auth::user(),
-            'token' => $token,
-        ]);
     }
     public function logout(): JsonResponse
     {
@@ -175,21 +189,51 @@ class AuthController extends Controller
             'message' => 'Perfil atualizado com sucesso',
             'user' => $user->fresh(),
         ]);
-} public function refresh(): JsonResponse
-{
-    try {
-        $token = JWTAuth::getToken();
-        $newToken = JWTAuth::refresh($token);
-        
-        return response()->json([
-            'message' => 'Token refreshed successfully',
-            'token' => $newToken,
-        ]);
-    } catch (JWTException $exception) {
-        return response()->json([
-            'message' => 'Error refreshing token',
-            'error' => $exception->getMessage(),
-        ], 500);
+    
+    public function refresh(Request $request): JsonResponse
+    {
+        try {
+            // Pega o refresh token do header ou body
+            $refreshToken = $request->bearerToken() ?? $request->input('refresh_token');
+            
+            if (!$refreshToken) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Refresh token não fornecido'
+                ], 400);
+            }
+
+            // Valida que é um refresh token
+            JWTAuth::setToken($refreshToken);
+            $payload = JWTAuth::getPayload();
+            
+            if ($payload->get('type') !== 'refresh') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token inválido'
+                ], 401);
+            }
+
+            // Gera novo access token
+            $user = JWTAuth::authenticate($refreshToken);
+            $newAccessToken = JWTAuth::fromUser($user);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Token renovado com sucesso',
+                'data' => [
+                    'access_token' => $newAccessToken,
+                    'token_type' => 'bearer',
+                    'expires_in' => config('jwt.ttl') * 60,
+                ],
+            ]);
+        } catch (JWTException $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao renovar token',
+                'error' => $exception->getMessage(),
+            ], 401);
+        }
     }
 }
 }

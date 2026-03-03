@@ -41,7 +41,10 @@ Route::prefix('v1')->group(function()
          *   "message": "Usuário registrado com sucesso",
          *   "data": {
          *     "user": { "id", "name", "email", "role", "avatar_url", "created_at" },
-         *     "token": "..."
+         *     "access_token": "...",
+         *     "refresh_token": "...",
+         *     "token_type": "bearer",
+         *     "expires_in": 3600
          *   }
          * }
          */
@@ -60,13 +63,16 @@ Route::prefix('v1')->group(function()
          *   "password": "Password123",
          * }
          *
-         * Response (201):
+         * Response (200):
          * {
          *   "success": true,
          *   "message": "Login bem-sucedido",
          *   "data": {
          *     "user": { "id", "name", "email", "email_verified_at", "role", "subscription_type", "avatar_url","deleted_at", "created_at", "updated_at" },
-         *     "token": "..."
+         *     "access_token": "...",
+         *     "refresh_token": "...",
+         *     "token_type": "bearer",
+         *     "expires_in": 3600
          *   }
          * }
          */
@@ -149,17 +155,25 @@ Route::prefix('v1')->group(function()
              * Headers:
              *   - Content-Type: application/json
              *   - Accept: application/json
-             *   - Authorization: Bearer <TOKEN_JWT>
+             *   - Authorization: Bearer <REFRESH_TOKEN> (opcional)
              * 
-             * Body (JSON): none
-             * 
-             * Response (201):
+             * Body (JSON) - opcional se o token estiver no header:
              * {
-             *   "status": "success",
-             *   "message": "Successfully refreshed token"
+             *   "refresh_token": "<REFRESH_TOKEN>"
+             * }
+             * 
+             * Response (200):
+             * {
+             *   "success": true,
+             *   "message": "Token renovado com sucesso",
+             *   "data": {
+             *     "access_token": "...",
+             *     "token_type": "bearer",
+             *     "expires_in": 3600
+             *   }
              * }
              */
-            Route::post('/refresh', 'refresh')->middleware('auth:api');
+            Route::post('/refresh', 'refresh');
         });
     });
     Route::middleware('auth:api')->group(function(){
