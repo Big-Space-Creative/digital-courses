@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   MdLockOutline,
   MdMusicNote,
@@ -14,15 +15,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 //Components
 import { Input } from "@/components/form/Input";
+import { registerAction } from "@/app/actions/auth";
+import { toast } from "@/components/ui/toast";
 
 const registerSchema = z
   .object({
     nome: z.string().min(2, "O nome deve conter pelo menos 2 caracteres"),
     email: z.string().email("Email inválido"),
-    senha: z.string().min(6, "A senha deve conter pelo menos 6 caracteres"),
+    senha: z.string().min(8, "A senha deve conter pelo menos 8 caracteres"),
     confirmaSenha: z
       .string()
-      .min(6, "A senha deve conter pelo menos 6 caracteres"),
+      .min(8, "A senha deve conter pelo menos 8 caracteres"),
   })
   .refine((data) => data.senha === data.confirmaSenha, {
     message: "Senhas não conhecidem",
@@ -30,9 +33,11 @@ const registerSchema = z
   });
 
 export default function Register() {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(registerSchema),
@@ -40,13 +45,32 @@ export default function Register() {
 
   type RegisterData = z.infer<typeof registerSchema>;
 
+  const handleFillRandom = () => {
+    const rand = Math.random().toString(36).slice(2, 8);
+    const senha = `Aula@${rand}`;
+
+    setValue("nome", `Teste ${rand}`);
+    setValue("email", `teste.${rand}@example.com`);
+    setValue("senha", senha);
+    setValue("confirmaSenha", senha);
+  };
+
   const handleRegister = async (data: RegisterData) => {
-    console.log("Iniciando cadastro...", data);
+    const res = await registerAction(data);
 
-    // Simula envio de API por 3 segundos
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    if (res.error) {
+      toast("Nao foi possivel cadastrar", {
+        description: res.error,
+        variant: "error",
+      });
+      return;
+    }
 
-    alert(`Bem-vindo ${data.nome},Cadastro finalizado!`);
+    toast("Cadastro realizado", {
+      description: "Agora voce pode entrar com sua conta.",
+      variant: "success",
+    });
+    router.push("/login");
   };
 
   return (
@@ -97,6 +121,13 @@ export default function Register() {
               error={errors.confirmaSenha?.message}
               {...register("confirmaSenha")}
             />
+            <button
+              type="button"
+              onClick={handleFillRandom}
+              className="text-primary hover:text-primary-dark active:text-primary-dark border-primary/20 rounded-lg border px-4 py-2 text-xs font-semibold transition-colors"
+            >
+              Preencher dados de teste
+            </button>
             <button
               type="submit"
               className="bg-primary hover:bg-primary-dark active:bg-primary-dark rounded-lg py-5 text-sm font-semibold text-white transition-colors duration-300"

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   MdLockOutline,
   MdMusicNote,
@@ -13,13 +14,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 //Components
 import { Input } from "@/components/form/Input";
+import { loginAction } from "@/app/actions/auth";
+import { toast } from "@/components/ui/toast";
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
-  senha: z.string().min(6, "A senha deve conter pelo menos 6 caracteres"),
+  senha: z.string().min(8, "A senha deve conter pelo menos 8 caracteres"),
 });
 
 export default function Login() {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -31,12 +35,21 @@ export default function Login() {
   type LoginData = z.infer<typeof loginSchema>;
 
   const handleLogin = async (data: LoginData) => {
-    console.log("Iniciando cadastro...", data);
+    const res = await loginAction(data);
 
-    // Simula envio de API por 3 segundos
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    if (res.error) {
+      toast("Nao foi possivel realizar Login", {
+        description: res.error,
+        variant: "error",
+      });
+      return;
+    }
 
-    alert(`Bem-vindo, logado!`);
+    toast("Login realizado com sucessoo", {
+      description: "Agora voce pode acessar seus cursos.",
+      variant: "success",
+    });
+    router.push("/curso");
   };
 
   return (
