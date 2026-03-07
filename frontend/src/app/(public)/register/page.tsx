@@ -16,7 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 //Components
 import { Input } from "@/components/form/Input";
 import { registerAction } from "@/app/actions/auth";
-import { toast } from "@/components/ui/toast";
+import { toast } from "@/components/ui/Toast";
 
 const registerSchema = z
   .object({
@@ -74,7 +74,7 @@ export default function Register() {
   };
 
   return (
-    <div className="flex min-h-dvh justify-between bg-white">
+    <div className="flex min-h-dvh justify-between">
       <div className="flex flex-1 flex-col justify-center gap-10 px-5 md:items-center">
         <div className="flex items-center md:hidden">
           <MdMusicNote className="text-primary size-6" />
