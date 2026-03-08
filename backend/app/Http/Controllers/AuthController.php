@@ -158,38 +158,42 @@ class AuthController extends Controller
     public function updateProfile(Request $request): JsonResponse
     {
         $user = JWTAuth::parseToken()->authenticate();
+
+        // Permitir atualizações parciais. Proibimos alteração de e-mail por este endpoint.
+        // Campos disponíveis na tabela users: name, avatar_url, password.
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => [
-                'required',
-                'email',
-                'max:255',
-                Rule::unique('users')->ignore($user->id),
-            ],
+            'name'       => ['sometimes', 'required', 'string', 'max:255'],
+            'email'      => ['prohibited'],
             'avatar_url' => ['nullable', 'url', 'max:2048'],
+            'password'   => ['sometimes', 'required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'name.required'     => 'O nome é obrigatório.',
+            'name.max'          => 'O nome não pode ter mais de 255 caracteres.',
+            'email.prohibited'  => 'O e-mail não pode ser alterado por este endpoint. Apenas nome, avatar e senha podem ser atualizados.',
+            'avatar_url.url'    => 'A URL do avatar deve ser válida.',
+            'password.min'      => 'A senha deve ter no mínimo 8 caracteres.',
+            'password.confirmed'=> 'A confirmação de senha não confere.',
         ]);
 
-        $emailChanged = isset($validated['email']) && $validated['email'] !== $user->email;
+        // Atualiza somente os campos enviados na requisição
+        if (array_key_exists('name', $validated)) {
+            $user->name = $validated['name'];
+        }
 
-        $user->name = $validated['name'];
-        $user->avatar_url = $validated['avatar_url'] ?? $user->avatar_url;
+        if (array_key_exists('avatar_url', $validated)) {
+            $user->avatar_url = $validated['avatar_url'];
+        }
 
-        if ($emailChanged) {
-            $user->email = $validated['email'];
-            // zera verificação para forçar re-verificação do e-mail
-            $user->email_verified_at = null;
+        if (array_key_exists('password', $validated)) {
+            $user->password = Hash::make($validated['password']);
         }
 
         $user->save();
 
-        // dispara verificação de e-mail se o model suportar (MustVerifyEmail)
-        if ($emailChanged && method_exists($user, 'sendEmailVerificationNotification')) {
-            $user->sendEmailVerificationNotification();
-        }
-
         return response()->json([
+            'success' => true,
             'message' => 'Perfil atualizado com sucesso',
-            'user' => $user->fresh(),
+            'user'    => $user->fresh(),
         ]);
     }
 
