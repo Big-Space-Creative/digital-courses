@@ -14,6 +14,10 @@ import {
 export default function Home() {
   const user = {
     name: "João Silva",
+    email: "jãozin@gmail.com",
+    plan: "Premium",
+    urlPhoto:
+      "https://images.unsplash.com/photo-1654110455429-cf322b40a906?q=80&w=880&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   };
 
   const Curso = {
@@ -132,11 +136,11 @@ export default function Home() {
   };
 
   return (
-    <>
-      <div className="bg-secondary flex max-w-4xl flex-col-reverse items-center justify-between gap-10 rounded-2xl p-6 md:flex-row">
+    <div className="flex w-full max-w-4xl flex-col gap-10">
+      <div className="bg-secondary flex w-full flex-col-reverse items-center justify-between gap-10 rounded-2xl p-6 md:flex-row">
         <div className="flex flex-col gap-2 md:w-2xl">
           <h1 className="text-3xl font-bold text-white">
-            Bem-vindo de volta, {user.name}!
+            Bem-vindo de volta, {user.name}
           </h1>
           <p className="text-base text-white/60">
             Continue firme! Você já completou quase metade do curso.
@@ -157,7 +161,7 @@ export default function Home() {
           />
         </div>
       </div>
-      <div className="flex w-full max-w-4xl flex-col gap-5">
+      <div className="flex w-full flex-col gap-5">
         <h1 className="text-secondary border-b-2 border-black/20 pb-5 text-xl font-bold">
           Seus Módulos
         </h1>
@@ -291,6 +295,6 @@ export default function Home() {
           );
         })}
       </div>
-    </>
+    </div>
   );
 }

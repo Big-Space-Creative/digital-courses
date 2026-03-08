@@ -8,9 +8,7 @@ export default function StudentLayout({
   return (
     <div>
       <Header />
-      <main className="my-10 flex flex-col items-center gap-10 px-6">
-        {children}
-      </main>
+      <main className="my-10 flex justify-center px-6">{children}</main>
     </div>
   );
 }
