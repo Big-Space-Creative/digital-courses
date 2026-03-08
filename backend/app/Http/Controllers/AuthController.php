@@ -47,7 +47,9 @@ class AuthController extends Controller
             ]);
 
             $token = JWTAuth::fromUser($user);
-            $refreshToken = JWTAuth::claims(['type' => 'refresh'])->setTTL(config('jwt.refresh_ttl', 20160))->fromUser($user);
+            // Some JWT driver implementations don't expose setTTL on the claims builder.
+            // Create a refresh token with a claim type instead and rely on server-side validation.
+            $refreshToken = JWTAuth::claims(['type' => 'refresh'])->fromUser($user);
             return response()->json([
                 'success' => true,
                 'message' => 'Usuário registrado com sucesso',
@@ -97,7 +99,8 @@ class AuthController extends Controller
             }
 
             $user = Auth::user();
-            $refreshToken = JWTAuth::claims(['type' => 'refresh'])->setTTL(config('jwt.refresh_ttl', 20160))->fromUser($user);
+            // See note above: avoid calling setTTL on the claims builder to keep compatibility
+            $refreshToken = JWTAuth::claims(['type' => 'refresh'])->fromUser($user);
             
             return response()->json([
                 'success' => true,
@@ -155,19 +158,18 @@ class AuthController extends Controller
     public function updateProfile(Request $request): JsonResponse
     {
         $user = JWTAuth::parseToken()->authenticate();
-
         $validated = $request->validate([
-            'name'=>['required', 'string', 'max:255'],
-            'email'=>[
-                'required', 
-                'email', 
-                'max:255', 
+            'name' => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
                 Rule::unique('users')->ignore($user->id),
-        ],
-        'avatar_url'=> ['nullable','url','max:2048'],
-    ]);
-    
-     $emailChanged = isset($validated['email']) && $validated['email'] !== $user->email;
+            ],
+            'avatar_url' => ['nullable', 'url', 'max:2048'],
+        ]);
+
+        $emailChanged = isset($validated['email']) && $validated['email'] !== $user->email;
 
         $user->name = $validated['name'];
         $user->avatar_url = $validated['avatar_url'] ?? $user->avatar_url;
@@ -196,22 +198,22 @@ class AuthController extends Controller
         try {
             // Pega o refresh token do header ou body
             $refreshToken = $request->bearerToken() ?? $request->input('refresh_token');
-            
-            if (!$refreshToken) {
+
+            if (! $refreshToken) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Refresh token não fornecido'
+                    'message' => 'Refresh token não fornecido',
                 ], 400);
             }
 
             // Valida que é um refresh token
             JWTAuth::setToken($refreshToken);
             $payload = JWTAuth::getPayload();
-            
+
             if ($payload->get('type') !== 'refresh') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Token inválido'
+                    'message' => 'Token inválido',
                 ], 401);
             }
 
@@ -236,4 +238,5 @@ class AuthController extends Controller
             ], 401);
         }
     }
+
 }
