@@ -189,7 +189,8 @@ class AuthController extends Controller
             'message' => 'Perfil atualizado com sucesso',
             'user' => $user->fresh(),
         ]);
-    
+    }
+
     public function refresh(Request $request): JsonResponse
     {
         try {
@@ -235,5 +236,4 @@ class AuthController extends Controller
             ], 401);
         }
     }
-}
 }
