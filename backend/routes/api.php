@@ -41,7 +41,10 @@ Route::prefix('v1')->group(function()
          *   "message": "Usuário registrado com sucesso",
          *   "data": {
          *     "user": { "id", "name", "email", "role", "avatar_url", "created_at" },
-         *     "token": "..."
+         *     "access_token": "...",
+         *     "refresh_token": "...",
+         *     "token_type": "bearer",
+         *     "expires_in": 3600
          *   }
          * }
          */
@@ -60,13 +63,16 @@ Route::prefix('v1')->group(function()
          *   "password": "Password123",
          * }
          *
-         * Response (201):
+         * Response (200):
          * {
          *   "success": true,
          *   "message": "Login bem-sucedido",
          *   "data": {
          *     "user": { "id", "name", "email", "email_verified_at", "role", "subscription_type", "avatar_url","deleted_at", "created_at", "updated_at" },
-         *     "token": "..."
+         *     "access_token": "...",
+         *     "refresh_token": "...",
+         *     "token_type": "bearer",
+         *     "expires_in": 3600
          *   }
          * }
          */
@@ -142,6 +148,32 @@ Route::prefix('v1')->group(function()
              * }
              */
             Route::post('/logout', 'logout')->middleware('auth:api');
+            /**
+             * ROTA DE REFRESH TOKEN DO USUÁRIO
+             *
+             * POST /api/v1/refresh
+             * Headers:
+             *   - Content-Type: application/json
+             *   - Accept: application/json
+             *   - Authorization: Bearer <REFRESH_TOKEN> (opcional)
+             * 
+             * Body (JSON) - opcional se o token estiver no header:
+             * {
+             *   "refresh_token": "<REFRESH_TOKEN>"
+             * }
+             * 
+             * Response (200):
+             * {
+             *   "success": true,
+             *   "message": "Token renovado com sucesso",
+             *   "data": {
+             *     "access_token": "...",
+             *     "token_type": "bearer",
+             *     "expires_in": 3600
+             *   }
+             * }
+             */
+            Route::post('/refresh', 'refresh');
         });
     });
     Route::middleware('auth:api')->group(function(){
@@ -221,5 +253,95 @@ Route::prefix('v1')->group(function()
          * }
          */
         Route::post('/me', [AuthController::class, 'updateProfile']);
+    });
+    
+    // ==========================================
+    // COURSE MANAGEMENT
+    // ==========================================
+
+    Route::middleware('auth:api')->group(function() {
+        /**
+         * ROTA DE LISTAGEM DE CURSOS
+         *
+         * GET /api/v1/courses
+         * Headers: Authorization: Bearer <TOKEN>
+         * Response (200): Lista de cursos com os módulos e aulas (sem `video_url`).
+         * Usado por estudantes para ver a vitrine/ementa geral.
+         */
+        Route::get('/courses', [App\Http\Controllers\Api\v1\CourseController::class, 'index']);
+
+        /**
+         * ROTA DE DETALHES DO CURSO
+         *
+         * GET /api/v1/courses/{course_id}
+         * Headers: Authorization: Bearer <TOKEN>
+         * Response (200): Detalha os dados do curso, módulos e lista de aulas associadas.
+         */
+        Route::get('/courses/{course}', [App\Http\Controllers\Api\v1\CourseController::class, 'show']);
+
+        /**
+         * ROTA DE ACESSO À AULA (VIDEO)
+         *
+         * GET /api/v1/lessons/{lesson_id}
+         * Headers: Authorization: Bearer <TOKEN>
+         * Comportamento: 
+         *  - Se admin/instrutor: Retorna aula completa (video, comments, materials).
+         *  - Se estudante: Apenas se for `is_free_preview: true` OU usuário Premium (HTTP 403 caso contrário).
+         */
+        Route::get('/lessons/{lesson}', [App\Http\Controllers\Api\v1\LessonController::class, 'show']);
+
+        // Privado (Apenas Admins gerenciam cursos)
+        Route::middleware('admin')->group(function() {
+            /**
+             * ROTA DE CRIAÇÃO DE CURSO [Apenas Admin]
+             *
+             * POST /api/v1/courses
+             * Body: { "title": "...", "description": "...", "price": 0.00, "is_published": true }
+             */
+            Route::post('/courses', [App\Http\Controllers\Api\v1\CourseController::class, 'store']);
+
+            /**
+             * ROTA DE EDIÇÃO DE CURSO [Apenas Admin]
+             *
+             * PUT /api/v1/courses/{course_id}
+             * Body: { "title": "Novo nome..." } // Enviar apenas os campos a atualizar.
+             */
+            Route::put('/courses/{course}', [App\Http\Controllers\Api\v1\CourseController::class, 'update']);
+
+            /**
+             * ROTA DE EXCLUSÃO DE CURSO [Apenas Admin]
+             * DELETE /api/v1/courses/{course_id}
+             */
+            Route::delete('/courses/{course}', [App\Http\Controllers\Api\v1\CourseController::class, 'destroy']);
+        });
+
+        // Privado (Admins e Instrutores gerenciam módulos e aulas dentro de um curso)
+        Route::middleware('role:admin,instructor')->group(function() {
+            /**
+             * CRIAÇÃO/EDIÇÃO/EXCLUSÃO DE MÓDULOS [Admin, Instrutor]
+             *
+             * POST /api/v1/courses/{course_id}/modules -> Body: { "order": 1 }
+             * PUT /api/v1/courses/{course_id}/modules/{module_id} -> Body: { "order": 2 }
+             * DELETE /api/v1/courses/{course_id}/modules/{module_id}
+             */
+            Route::post('/courses/{course}/modules', [App\Http\Controllers\Api\v1\ModuleController::class, 'store']);
+            Route::put('/courses/{course}/modules/{module}', [App\Http\Controllers\Api\v1\ModuleController::class, 'update']);
+            Route::delete('/courses/{course}/modules/{module}', [App\Http\Controllers\Api\v1\ModuleController::class, 'destroy']);
+            
+            /**
+             * CRIAÇÃO/EDIÇÃO/EXCLUSÃO DE AULAS [Admin, Instrutor]
+             *
+             * POST /api/v1/modules/{module_id}/lessons
+             * Body: { "title": "Aula 1", "video_url": "https...", "is_free_preview": false, "duration_in_minutes": 10 }
+             * 
+             * PUT /api/v1/lessons/{lesson_id} 
+             * Body: { "title": "Novo Titulo" }
+             * 
+             * DELETE /api/v1/lessons/{lesson_id}
+             */
+            Route::post('/modules/{module}/lessons', [App\Http\Controllers\Api\v1\LessonController::class, 'store']);
+            Route::put('/lessons/{lesson}', [App\Http\Controllers\Api\v1\LessonController::class, 'update']);
+            Route::delete('/lessons/{lesson}', [App\Http\Controllers\Api\v1\LessonController::class, 'destroy']);
+        });
     });
 });

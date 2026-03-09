@@ -180,6 +180,23 @@ Base URL (dev): `http://localhost:8000/api/v1`
 }
 ```
 
+### POST `/refresh` — Refresh Token
+
+> **Observação:** O token expirado pode ser usado aqui se estiver dentro do período de "refresh_ttl" (padrão de 2 semanas). O backend irá invalidar o token antigo e retornar um novo.
+
+**Headers**
+
+- `Authorization: Bearer <TOKEN_JWT_EXPIRADO_OU_VALIDO>`
+
+**Response (200/201)**
+
+```json
+{
+  "message": "Token refreshed successfully",
+  "token": "eyJ0eXAiOiJKV1Qi..."
+}
+```
+
 ### GET `/users` — Listagem (admin)
 
 **Headers**
@@ -225,6 +242,29 @@ Base URL (dev): `http://localhost:8000/api/v1`
   }
 }
 ```
+
+### 📚 Gestão de Cursos (Course Management)
+
+#### GET `/courses` — Listar Ementa
+*   **Headers:** `Authorization: Bearer <TOKEN>`
+*   **Acesso:** Qualquer autenticado (estudantes, instrutores, admins).
+*   **Retorno:** Retorna os cursos ativos, com seus módulos e aulas integradas na mesma árvore JSON.
+*   **Nota Frontend:** Este endpoint **não** retorna o `video_url` por motivos de segurança. Use-o para montar a sidebar ou listagem visual do curso.
+
+#### GET `/lessons/{lesson_id}` — Visualizar Aula e Vídeo
+*   **Headers:** `Authorization: Bearer <TOKEN>`
+*   **Acesso:** O Backend faz a checagem cruzada.
+    *   Se `role` for `admin` ou `instructor`, libera direto.
+    *   Se for estudante, só libera se a aula tiver `is_free_preview: true` OU o usuário possuir `subscription_type: 'premium'`.
+    *   Caso seja estudante Free tentando ver aula Premium, retorna erro HTTP `403 Forbidden`.
+*   **Retorno:** JSON com os dados completos da aula (`video_url`, materiais extras, etc).
+
+#### Endpoints Administrativos (Criação e Edição)
+
+*   **POST/PUT/DELETE `/courses` e `/courses/{id}`:** Apenas `admin`.
+*   **POST/PUT/DELETE Módulos (`/courses/{course}/modules`):** `admin` e `instructor`.
+*   **POST/PUT/DELETE Aulas (`/modules/{module}/lessons`):** `admin` e `instructor`.
+    *   **Importante para o front de criação:** Ao criar/editar a aula, envie o campo booleano `is_free_preview` (`true`/`false`) para determinar se a aula será aberta ao público Free ou restrita aos assinantes Premium.
 
 ## Planos de estudantes (free vs premium)
 

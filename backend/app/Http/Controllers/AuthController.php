@@ -47,7 +47,9 @@ class AuthController extends Controller
             ]);
 
             $token = JWTAuth::fromUser($user);
-
+            // Some JWT driver implementations don't expose setTTL on the claims builder.
+            // Create a refresh token with a claim type instead and rely on server-side validation.
+            $refreshToken = JWTAuth::claims(['type' => 'refresh'])->fromUser($user);
             return response()->json([
                 'success' => true,
                 'message' => 'Usuário registrado com sucesso',
@@ -60,7 +62,10 @@ class AuthController extends Controller
                         'avatar_url' => $user->avatar_url,
                         'created_at' => $user->created_at,
                     ],
-                    'token' => $token,
+                    'access_token' => $token,
+                    'refresh_token' => $refreshToken,
+                    'token_type' => 'bearer',
+                    'expires_in' => config('jwt.ttl') * 60,
                 ],
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -88,21 +93,33 @@ class AuthController extends Controller
         try {
             if (! $token = JWTAuth::attempt($credentials)) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Credenciais inválidas',
                 ], 401);
             }
+
+            $user = Auth::user();
+            // See note above: avoid calling setTTL on the claims builder to keep compatibility
+            $refreshToken = JWTAuth::claims(['type' => 'refresh'])->fromUser($user);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Login bem-sucedido',
+                'data' => [
+                    'user' => $user,
+                    'access_token' => $token,
+                    'refresh_token' => $refreshToken,
+                    'token_type' => 'bearer',
+                    'expires_in' => config('jwt.ttl') * 60,
+                ],
+            ]);
         } catch (JWTException $exception) {
             return response()->json([
+                'success' => false,
                 'message' => 'Erro ao gerar token',
                 'error' => $exception->getMessage(),
             ], 500);
         }
-
-        return response()->json([
-            'message' => 'Login bem-sucedido',
-            'user' => Auth::user(),
-            'token' => $token,
-        ]);
     }
     public function logout(): JsonResponse
     {
@@ -142,38 +159,88 @@ class AuthController extends Controller
     {
         $user = JWTAuth::parseToken()->authenticate();
 
+        // Permitir atualizações parciais. Proibimos alteração de e-mail por este endpoint.
+        // Campos disponíveis na tabela users: name, avatar_url, password.
         $validated = $request->validate([
-            'name'=>['required', 'string', 'max:255'],
-            'email'=>[
-                'required', 
-                'email', 
-                'max:255', 
-                Rule::unique('users')->ignore($user->id),
-        ],
-        'avatar_url'=> ['nullable','url','max:2048'],
-    ]);
-    
-     $emailChanged = isset($validated['email']) && $validated['email'] !== $user->email;
+            'name'       => ['sometimes', 'required', 'string', 'max:255'],
+            'email'      => ['prohibited'],
+            'avatar_url' => ['nullable', 'url', 'max:2048'],
+            'password'   => ['sometimes', 'required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'name.required'     => 'O nome é obrigatório.',
+            'name.max'          => 'O nome não pode ter mais de 255 caracteres.',
+            'email.prohibited'  => 'O e-mail não pode ser alterado por este endpoint. Apenas nome, avatar e senha podem ser atualizados.',
+            'avatar_url.url'    => 'A URL do avatar deve ser válida.',
+            'password.min'      => 'A senha deve ter no mínimo 8 caracteres.',
+            'password.confirmed'=> 'A confirmação de senha não confere.',
+        ]);
 
-        $user->name = $validated['name'];
-        $user->avatar_url = $validated['avatar_url'] ?? $user->avatar_url;
+        // Atualiza somente os campos enviados na requisição
+        if (array_key_exists('name', $validated)) {
+            $user->name = $validated['name'];
+        }
 
-        if ($emailChanged) {
-            $user->email = $validated['email'];
-            // zera verificação para forçar re-verificação do e-mail
-            $user->email_verified_at = null;
+        if (array_key_exists('avatar_url', $validated)) {
+            $user->avatar_url = $validated['avatar_url'];
+        }
+
+        if (array_key_exists('password', $validated)) {
+            $user->password = Hash::make($validated['password']);
         }
 
         $user->save();
 
-        // dispara verificação de e-mail se o model suportar (MustVerifyEmail)
-        if ($emailChanged && method_exists($user, 'sendEmailVerificationNotification')) {
-            $user->sendEmailVerificationNotification();
-        }
-
         return response()->json([
+            'success' => true,
             'message' => 'Perfil atualizado com sucesso',
-            'user' => $user->fresh(),
+            'user'    => $user->fresh(),
         ]);
-}
+    }
+
+    public function refresh(Request $request): JsonResponse
+    {
+        try {
+            // Pega o refresh token do header ou body
+            $refreshToken = $request->bearerToken() ?? $request->input('refresh_token');
+
+            if (! $refreshToken) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Refresh token não fornecido',
+                ], 400);
+            }
+
+            // Valida que é um refresh token
+            JWTAuth::setToken($refreshToken);
+            $payload = JWTAuth::getPayload();
+
+            if ($payload->get('type') !== 'refresh') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token inválido',
+                ], 401);
+            }
+
+            // Gera novo access token
+            $user = JWTAuth::authenticate($refreshToken);
+            $newAccessToken = JWTAuth::fromUser($user);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Token renovado com sucesso',
+                'data' => [
+                    'access_token' => $newAccessToken,
+                    'token_type' => 'bearer',
+                    'expires_in' => config('jwt.ttl') * 60,
+                ],
+            ]);
+        } catch (JWTException $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao renovar token',
+                'error' => $exception->getMessage(),
+            ], 401);
+        }
+    }
+
 }
