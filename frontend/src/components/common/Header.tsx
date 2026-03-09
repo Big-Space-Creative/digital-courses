@@ -3,16 +3,38 @@ import Image from "next/image";
 import Logo from "./Logo";
 import { useState } from "react";
 import Link from "next/link";
+import { logoutAction } from "@/app/actions/auth";
+import { toast } from "../ui/Toast";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 
 export default function Header() {
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const user = {
-    name: "João Silva",
-    email: "jãozin@gmail.com",
-    plan: "Premium",
+  const { user, setUser } = useUser();
+
+  const profile = {
+    name: user?.name ?? "Aluno",
+    plan: user?.plan ?? "Free",
     urlPhoto:
-      "https://images.unsplash.com/photo-1654110455429-cf322b40a906?q=80&w=880&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      user?.urlPhoto ||
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  };
+
+  const handleLogout = async () => {
+    const res = await logoutAction();
+
+    toast(res.message, {
+      description: "Volte logo! Seus cursos estarão te esperando.",
+      variant: "success",
+    });
+
+    setUser(null);
+
+    setIsMenuOpen(false);
+    router.push("/login");
+    router.refresh();
   };
 
   return (
@@ -20,8 +42,8 @@ export default function Header() {
       <Logo />
       <div className="flex items-center gap-4">
         <div className="flex flex-col items-end">
-          <p className="text-base text-white">Arthur</p>
-          <p className="text-sm text-white/60">Plano premium</p>
+          <p className="text-base text-white">{profile.name}</p>
+          <p className="text-sm text-white/60">Plano {profile.plan}</p>
         </div>
         <div className="relative">
           <div
@@ -29,7 +51,7 @@ export default function Header() {
             className="border-primary relative size-12 cursor-pointer overflow-hidden rounded-full border-2"
           >
             <Image
-              src={user.urlPhoto}
+              src={profile.urlPhoto}
               alt="foto"
               fill
               className="object-cover"
@@ -50,8 +72,8 @@ export default function Header() {
                 <hr className="border-gray-100" />
 
                 <button
-                  onClick={() => console.log("Logout")}
-                  className="px-4 py-3 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                  onClick={() => handleLogout()}
+                  className="cursor-pointer px-4 py-3 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
                 >
                   Sair da conta
                 </button>

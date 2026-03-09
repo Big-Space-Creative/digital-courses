@@ -16,6 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/form/Input";
 import { loginAction } from "@/app/actions/auth";
 import { toast } from "@/components/ui/Toast";
+import { useUser } from "@/context/UserContext";
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -24,6 +25,7 @@ const loginSchema = z.object({
 
 export default function Login() {
   const router = useRouter();
+  const { setUser } = useUser();
   const {
     register,
     handleSubmit,
@@ -49,7 +51,9 @@ export default function Login() {
       description: "Agora voce pode acessar seus cursos.",
       variant: "success",
     });
-    router.push("/curso");
+
+    setUser(res.user ?? null);
+    router.push("/aluno/home");
   };
 
   return (

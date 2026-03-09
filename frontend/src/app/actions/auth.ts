@@ -3,21 +3,33 @@ import { cookies } from "next/headers";
 
 //Services
 import { login, register } from "@/services/api/auth";
+import { normalizeUserFromApi } from "@/libs/normalizeUser";
 
 //Types
 import { LoginData, RegisterData } from "@/types/auth";
 
 export async function loginAction(formData: LoginData) {
   const res = await login(formData);
-  console.log("Resposta do login:", res);
 
-  if (!("token" in res)) {
+  if (!("data" in res)) {
+    return { error: res.message || "Falha ao autenticar" };
+  }
+
+  if (!("access_token" in res.data) || !("refresh_token" in res.data)) {
     return { error: res.message || "Falha ao autenticar" };
   }
 
   const cookieStore = await cookies();
 
-  cookieStore.set("auth_Token", res.token, {
+  cookieStore.set("access_token", res.data.access_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60, // 1 hora
+    path: "/",
+  });
+
+  cookieStore.set("refresh_token", res.data.refresh_token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -25,7 +37,10 @@ export async function loginAction(formData: LoginData) {
     path: "/",
   });
 
-  return { message: res.message, user: res.user };
+  return {
+    message: res.message,
+    user: normalizeUserFromApi(res.data.user),
+  };
 }
 
 export async function registerAction(formData: RegisterData) {
@@ -46,4 +61,13 @@ export async function registerAction(formData: RegisterData) {
   }
 
   return { success: res.success, message: res.message, user: res.data.user };
+}
+
+export async function logoutAction() {
+  const cookieStore = await cookies();
+
+  cookieStore.delete("access_token");
+  cookieStore.delete("refresh_token");
+
+  return { message: "Saiu da conta com sucesso" };
 }

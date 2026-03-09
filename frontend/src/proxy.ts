@@ -10,7 +10,7 @@ const REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE = "/login";
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const publicRoute = publicRoutes.find((route) => route.path === path);
-  const authToken = request.cookies.get("auth_token");
+  const authToken = request.cookies.get("access_token")?.value;
 
   //Cliente não autenticado tentando acessar rota pública
   if (!authToken && publicRoute) {
@@ -32,7 +32,7 @@ export async function proxy(request: NextRequest) {
   ) {
     const redirectUrl = request.nextUrl.clone();
 
-    redirectUrl.pathname = "/";
+    redirectUrl.pathname = "/aluno/home";
 
     return NextResponse.redirect(redirectUrl);
   }

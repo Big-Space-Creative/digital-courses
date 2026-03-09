@@ -1,6 +1,8 @@
+"use client";
+
 import { Input } from "@/components/form/Input";
+import { useUser } from "@/context/UserContext";
 import Image from "next/image";
-import Link from "next/link";
 import {
   MdLockOutline,
   MdOutlineEmail,
@@ -11,12 +13,15 @@ import {
 } from "react-icons/md";
 
 export default function Profile() {
-  const user = {
-    name: "João Silva",
-    email: "jãozin@gmail.com",
-    plan: "Premium",
+  const { user } = useUser();
+
+  const profile = {
+    name: user?.name ?? "Aluno",
+    email: user?.email ?? "",
+    plan: user?.plan ?? "Free",
     urlPhoto:
-      "https://images.unsplash.com/photo-1654110455429-cf322b40a906?q=80&w=880&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      user?.urlPhoto ||
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   };
 
   return (
@@ -32,7 +37,7 @@ export default function Profile() {
       <div className="bg-secondary flex items-center gap-4 rounded-2xl p-6">
         <div className="group border-primary relative size-32 cursor-pointer overflow-hidden rounded-full border-4">
           <Image
-            src={user.urlPhoto}
+            src={profile.urlPhoto}
             alt="foto"
             fill
             className="object-cover hover:hidden"
@@ -46,13 +51,13 @@ export default function Profile() {
         </div>
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-white">{user.name}</h1>
+            <h1 className="text-2xl font-bold text-white">{profile.name}</h1>
             <div className="bg-primary/20 text-primary border-primary/50 flex items-center gap-1 rounded-full border px-3 py-1 font-bold">
               <MdOutlineStarBorder className="size-4" />
-              <p className="text-xs uppercase">{user.plan}</p>
+              <p className="text-xs uppercase">{profile.plan}</p>
             </div>
           </div>
-          <p className="text-primary">{user.email}</p>
+          <p className="text-primary">{profile.email}</p>
           <p className="text-white/50">Membro desde Março de 2023</p>
         </div>
       </div>
@@ -71,13 +76,13 @@ export default function Profile() {
                   label="Nome Completo"
                   icon={MdOutlinePersonOutline}
                   type="text"
-                  placeholder={user.name}
+                  placeholder={profile.name}
                 />
                 <Input
                   label="Email"
                   icon={MdOutlineEmail}
                   type="email"
-                  placeholder={user.name}
+                  placeholder={profile.email}
                 />
               </div>
             </div>
