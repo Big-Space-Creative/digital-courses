@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\v1\AdminController;
 use App\Http\Controllers\Api\v1\UserController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Auth\Events\Login;
@@ -344,4 +345,103 @@ Route::prefix('v1')->group(function()
             Route::delete('/lessons/{lesson}', [App\Http\Controllers\Api\v1\LessonController::class, 'destroy']);
         });
     });
+
+    // ==========================================
+    // ADMIN — Painel Administrativo
+    // Requer: auth:api + role = admin
+    // ==========================================
+
+    Route::middleware(['auth:api', 'admin'])
+        ->prefix('admin')
+        ->controller(AdminController::class)
+        ->group(function () {
+
+            /**
+             * DASHBOARD ADMINISTRATIVO
+             *
+             * GET /api/v1/admin/dashboard
+             * Headers: Authorization: Bearer <TOKEN_ADMIN>
+             *
+             * Response (200):
+             * {
+             *   "success": true,
+             *   "data": {
+             *     "users": { "total", "students", "instructors", "admins", "premium", "free" },
+             *     "courses": { "total", "published", "draft" },
+             *     "enrollments": { "total", "active" }
+             *   }
+             * }
+             */
+            Route::get('/dashboard', 'dashboard');
+
+            // ------------------------------------------
+            // Usuários
+            // ------------------------------------------
+
+            /**
+             * LISTAR USUÁRIOS
+             *
+             * GET /api/v1/admin/users
+             * Query: ?role=student &search=alice &per_page=20
+             *
+             * Response (200): Paginação com todos os usuários (filtros opcionais).
+             */
+            Route::get('/users', 'listUsers');
+
+            /**
+             * DETALHE DE UM USUÁRIO
+             *
+             * GET /api/v1/admin/users/{id}
+             *
+             * Response (200): Dados completos do usuário + cursos matriculados.
+             */
+            Route::get('/users/{id}', 'showUser');
+
+            /**
+             * ALTERAR ROLE DO USUÁRIO
+             *
+             * PATCH /api/v1/admin/users/{id}/role
+             * Body: { "role": "instructor" }
+             *   - Valores aceitos: student | instructor | admin
+             *   - Não é possível alterar a própria role.
+             *
+             * Response (200): { "success", "message", "data": { "id", "name", "email", "role" } }
+             */
+            Route::patch('/users/{id}/role', 'updateUserRole');
+
+            /**
+             * ALTERAR PLANO DO ALUNO
+             *
+             * PATCH /api/v1/admin/users/{id}/subscription
+             * Body: { "subscription_type": "premium" }
+             *   - Valores aceitos: free | premium
+             *   - Só funciona para usuários com role = student.
+             *
+             * Response (200): { "success", "message", "data": { "id", "name", "email", "subscription_type" } }
+             */
+            Route::patch('/users/{id}/subscription', 'updateUserSubscription');
+
+            // ------------------------------------------
+            // Cursos (visão administrativa)
+            // ------------------------------------------
+
+            /**
+             * LISTAR CURSOS (ADMIN)
+             *
+             * GET /api/v1/admin/courses
+             * Query: ?search=laravel &is_published=true &per_page=20
+             *
+             * Response (200): Paginação de cursos (incluindo rascunhos) com contagem de alunos e aulas.
+             */
+            Route::get('/courses', 'listCourses');
+
+            /**
+             * DETALHE DE UM CURSO (ADMIN)
+             *
+             * GET /api/v1/admin/courses/{id}
+             *
+             * Response (200): Curso com módulos, aulas e lista de alunos matriculados.
+             */
+            Route::get('/courses/{id}', 'showCourse');
+        });
 });

@@ -13,8 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'admin' => \App\Http\Middleware\IsAdmin::class,
-            'role' => \App\Http\Middleware\CheckRole::class,
+            'admin'        => \App\Http\Middleware\IsAdmin::class,
+            'role'         => \App\Http\Middleware\CheckRole::class,
+            'swagger.auth' => \App\Http\Middleware\SwaggerAuth::class,
         ]);
     })
     ->withProviders([

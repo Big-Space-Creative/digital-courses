@@ -40,6 +40,7 @@ docker compose up -d --build
 **Acessar aplicação:**
 
 - API: http://localhost:8000
+- **Swagger UI: http://localhost:8000/api/documentation** ← documentação interativa
 - Frontend dev (quando houver Next.js): http://localhost:3000
 - pgAdmin: http://localhost:8080 (email/pwd: definidos em `.env`)
 - PostgreSQL: localhost:5432
@@ -65,7 +66,46 @@ O pacote já inclui um teste de feature cobrindo registro, login e `GET /api/me`
 php artisan test --filter=AuthEndpointsTest
 ```
 
-## 📡 Guia rápido da API (para o frontend) / Fluxo manual rápido (cURL ou Postman)
+## � Documentação Swagger / OpenAPI
+
+A API possui documentação interativa gerada automaticamente via **L5-Swagger** (swagger-php v6 + Swagger UI v5).
+
+### Acessar
+
+| URL | Descrição |
+|-----|-----------|
+| http://localhost:8000/api/documentation | Swagger UI — interface interativa |
+| http://localhost:8000/docs | JSON da spec OpenAPI 3.0 |
+
+### Autenticar no Swagger UI
+
+1. Faça login via `POST /api/v1/auth/login` dentro do próprio Swagger UI
+2. Copie o `access_token` retornado
+3. Clique em **Authorize** (cadeado 🔒) no topo da página
+4. Cole o token no campo **Value**: `Bearer <seu_token>`
+5. Clique em **Authorize** → **Close**
+
+A partir daí, todos os endpoints protegidos serão autenticados automaticamente.
+
+### Regenerar a spec manualmente
+
+```powershell
+docker exec digital-courses-app php artisan l5-swagger:generate
+```
+
+> Em ambiente de desenvolvimento, a spec é **regerada automaticamente** a cada requisição (`L5_SWAGGER_GENERATE_ALWAYS=true`).
+
+### Variáveis de ambiente relevantes
+
+```env
+L5_SWAGGER_GENERATE_ALWAYS=true          # Regenera automaticamente (dev)
+L5_SWAGGER_CONST_HOST=http://localhost:8000  # URL base exibida na spec
+L5_SWAGGER_BASE_PATH=/api/v1            # Prefixo das rotas
+```
+
+---
+
+## �📡 Guia rápido da API (para o frontend) / Fluxo manual rápido (cURL ou Postman)
 
 Base URL (dev): `http://localhost:8000/api/v1`
 
@@ -243,28 +283,149 @@ Base URL (dev): `http://localhost:8000/api/v1`
 }
 ```
 
+---
+
+## 🔐 Painel Administrativo — `/api/v1/admin`
+
+> Todas as rotas abaixo exigem:
+>
+> - `Authorization: Bearer <TOKEN_JWT>` de um usuário com `role: admin`
+> - Caso contrário: `403 Forbidden`
+
+### GET `/admin/dashboard` — Métricas gerais
+
+**Response (200)**
+
+```json
+{
+  "success": true,
+  "data": {
+    "users": {
+      "total": 50,
+      "students": 40,
+      "instructors": 7,
+      "admins": 3,
+      "premium": 15,
+      "free": 25
+    },
+    "courses": { "total": 12, "published": 9, "draft": 3 },
+    "enrollments": { "total": 100, "active": 80 }
+  }
+}
+```
+
+---
+
+### GET `/admin/users` — Listar usuários
+
+**Query params opcionais**
+
+| Param      | Exemplo   | Descrição                                          |
+| ---------- | --------- | -------------------------------------------------- |
+| `role`     | `student` | Filtra por role (`student`, `instructor`, `admin`) |
+| `search`   | `alice`   | Busca por nome ou e-mail                           |
+| `per_page` | `20`      | Itens por página (padrão: 20)                      |
+
+**Response (200):** Paginação Laravel com array de usuários.
+
+---
+
+### GET `/admin/users/{id}` — Detalhe de usuário
+
+**Response (200):** Dados completos do usuário + cursos nos quais está matriculado.
+
+---
+
+### PATCH `/admin/users/{id}/role` — Alterar role
+
+**Body (JSON)**
+
+```json
+{ "role": "instructor" }
+```
+
+- Valores aceitos: `student`, `instructor`, `admin`
+- Um admin não pode alterar a própria role
+
+**Response (200)**
+
+```json
+{
+  "success": true,
+  "message": "Role do usuário atualizada de 'student' para 'instructor' com sucesso.",
+  "data": { "id", "name", "email", "role" }
+}
+```
+
+---
+
+### PATCH `/admin/users/{id}/subscription` — Alterar plano do aluno
+
+**Body (JSON)**
+
+```json
+{ "subscription_type": "premium" }
+```
+
+- Valores aceitos: `free`, `premium`
+- Só funciona para usuários com `role: student`
+
+**Response (200)**
+
+```json
+{
+  "success": true,
+  "message": "Plano do aluno atualizado para 'premium' com sucesso.",
+  "data": { "id", "name", "email", "subscription_type" }
+}
+```
+
+---
+
+### GET `/admin/courses` — Listar cursos (admin)
+
+Retorna **todos** os cursos, inclusive rascunhos não publicados.
+
+**Query params opcionais**
+
+| Param          | Exemplo  | Descrição                       |
+| -------------- | -------- | ------------------------------- |
+| `search`       | `violão` | Busca no título ou descrição    |
+| `is_published` | `true`   | Filtra por status de publicação |
+| `per_page`     | `20`     | Itens por página (padrão: 20)   |
+
+**Response (200):** Paginação com `enrollments_count` e `lessons_count` incluídos em cada curso.
+
+---
+
+### GET `/admin/courses/{id}` — Detalhe de curso (admin)
+
+**Response (200):** Curso completo com módulos, aulas e lista de alunos matriculados (id, name, email, subscription_type).
+
 ### 📚 Gestão de Cursos (Course Management)
 
 #### GET `/courses` — Listar Ementa
-*   **Headers:** `Authorization: Bearer <TOKEN>`
-*   **Acesso:** Qualquer autenticado (estudantes, instrutores, admins).
-*   **Retorno:** Retorna os cursos ativos, com seus módulos e aulas integradas na mesma árvore JSON.
-*   **Nota Frontend:** Este endpoint **não** retorna o `video_url` por motivos de segurança. Use-o para montar a sidebar ou listagem visual do curso.
+
+- **Headers:** `Authorization: Bearer <TOKEN>`
+- **Acesso:** Qualquer autenticado (estudantes, instrutores, admins).
+- **Retorno:** Retorna os cursos ativos, com seus módulos e aulas integradas na mesma árvore JSON.
+- **Nota Frontend:** Este endpoint **não** retorna o `video_url` por motivos de segurança. Use-o para montar a sidebar ou listagem visual do curso.
 
 #### GET `/lessons/{lesson_id}` — Visualizar Aula e Vídeo
-*   **Headers:** `Authorization: Bearer <TOKEN>`
-*   **Acesso:** O Backend faz a checagem cruzada.
-    *   Se `role` for `admin` ou `instructor`, libera direto.
-    *   Se for estudante, só libera se a aula tiver `is_free_preview: true` OU o usuário possuir `subscription_type: 'premium'`.
-    *   Caso seja estudante Free tentando ver aula Premium, retorna erro HTTP `403 Forbidden`.
-*   **Retorno:** JSON com os dados completos da aula (`video_url`, materiais extras, etc).
+
+- **Headers:** `Authorization: Bearer <TOKEN>`
+- **Acesso:** O Backend faz a checagem cruzada.
+  - Se `role` for `admin` ou `instructor`, libera direto.
+  - Se for estudante, só libera se a aula tiver `is_free_preview: true` OU o usuário possuir `subscription_type: 'premium'`.
+  - Caso seja estudante Free tentando ver aula Premium, retorna erro HTTP `403 Forbidden`.
+- **Retorno:** JSON com os dados completos da aula (`video_url`, materiais extras, etc).
 
 #### Endpoints Administrativos (Criação e Edição)
 
-*   **POST/PUT/DELETE `/courses` e `/courses/{id}`:** Apenas `admin`.
-*   **POST/PUT/DELETE Módulos (`/courses/{course}/modules`):** `admin` e `instructor`.
-*   **POST/PUT/DELETE Aulas (`/modules/{module}/lessons`):** `admin` e `instructor`.
-    *   **Importante para o front de criação:** Ao criar/editar a aula, envie o campo booleano `is_free_preview` (`true`/`false`) para determinar se a aula será aberta ao público Free ou restrita aos assinantes Premium.
+- **POST/PUT/DELETE `/courses` e `/courses/{id}`:** Apenas `admin`.
+- **POST/PUT/DELETE Módulos (`/courses/{course}/modules`):** `admin` e `instructor`.
+- **POST/PUT/DELETE Aulas (`/modules/{module}/lessons`):** `admin` e `instructor`.
+  - **Importante para o front de criação:** Ao criar/editar a aula, envie o campo booleano `is_free_preview` (`true`/`false`) para determinar se a aula será aberta ao público Free ou restrita aos assinantes Premium.
 
 ## Planos de estudantes (free vs premium)
 

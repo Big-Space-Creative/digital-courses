@@ -86,6 +86,19 @@ if [ -f artisan ]; then
   
   # Storage link
   gosu "$WEB_USER" php artisan storage:link >/dev/null 2>&1 || true
+
+  # Criar diretório para a spec Swagger e garantir permissões para www-data
+  mkdir -p storage/api-docs
+  chown -R "$WEB_USER":"$WEB_USER" storage/api-docs
+  chmod -R 775 storage/api-docs
+
+  # Gerar spec Swagger na inicialização
+  echo "[entrypoint] 📄 Gerando documentação Swagger..."
+  if gosu "$WEB_USER" php artisan l5-swagger:generate; then
+    echo "[entrypoint] ✅ Swagger gerado com sucesso!"
+  else
+    echo "[entrypoint] ⚠️  Aviso: Swagger não pôde ser gerado agora (será gerado na primeira requisição)"
+  fi
   
   echo ""
   echo "========================================"
