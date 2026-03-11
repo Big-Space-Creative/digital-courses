@@ -1,5 +1,4 @@
 import decodeJwt from "@/libs/decodeJwt.ts";
-import { normalizeUserFromToken } from "@/libs/normalizeUser";
 import { UserFromTokenDecoded } from "@/types/user";
 import { cookies } from "next/headers";
 
@@ -19,7 +18,13 @@ export async function getUserFromToken() {
       return null;
     }
 
-    return normalizeUserFromToken(decodedToken);
+    return {
+      name: decodedToken.name,
+      email: decodedToken.email,
+      role: decodedToken.role,
+      subscriptionType: decodedToken.subscription_type?.trim() || undefined,
+      urlPhoto: decodedToken.urlPhoto ?? decodedToken.avatar_url,
+    };
   } catch (error) {
     console.error("Erro ao decodificar token:", error);
     return null;

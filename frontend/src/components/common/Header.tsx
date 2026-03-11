@@ -16,7 +16,7 @@ export default function Header() {
 
   const profile = {
     name: user?.name ?? "Aluno",
-    plan: user?.plan ?? "Free",
+    subscriptionType: user?.subscriptionType ?? "Free",
     urlPhoto:
       user?.urlPhoto ||
       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
@@ -43,7 +43,9 @@ export default function Header() {
       <div className="flex items-center gap-4">
         <div className="flex flex-col items-end">
           <p className="text-base text-white">{profile.name}</p>
-          <p className="text-sm text-white/60">Plano {profile.plan}</p>
+          <p className="text-sm text-white/60">
+            Plano {profile.subscriptionType}
+          </p>
         </div>
         <div className="relative">
           <div

@@ -1,8 +1,11 @@
 "use client";
 
+import { logoutAction } from "@/app/actions/auth";
 import { Input } from "@/components/form/Input";
+import { toast } from "@/components/ui/Toast";
 import { useUser } from "@/context/UserContext";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   MdLockOutline,
   MdOutlineEmail,
@@ -13,15 +16,30 @@ import {
 } from "react-icons/md";
 
 export default function Profile() {
-  const { user } = useUser();
+  const router = useRouter();
+  const { user, setUser } = useUser();
 
   const profile = {
     name: user?.name ?? "Aluno",
     email: user?.email ?? "",
-    plan: user?.plan ?? "Free",
+    subscriptionType: user?.subscriptionType ?? "Free",
     urlPhoto:
       user?.urlPhoto ||
       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  };
+
+  const handleLogout = async () => {
+    const res = await logoutAction();
+
+    toast(res.message, {
+      description: "Volte logo! Seus cursos estarão te esperando.",
+      variant: "success",
+    });
+
+    setUser(null);
+
+    router.push("/login");
+    router.refresh();
   };
 
   return (
@@ -54,7 +72,7 @@ export default function Profile() {
             <h1 className="text-2xl font-bold text-white">{profile.name}</h1>
             <div className="bg-primary/20 text-primary border-primary/50 flex items-center gap-1 rounded-full border px-3 py-1 font-bold">
               <MdOutlineStarBorder className="size-4" />
-              <p className="text-xs uppercase">{profile.plan}</p>
+              <p className="text-xs uppercase">{profile.subscriptionType}</p>
             </div>
           </div>
           <p className="text-primary">{profile.email}</p>
@@ -109,7 +127,10 @@ export default function Profile() {
           </form>
           <div className="flex flex-col gap-4 rounded-2xl bg-white p-6">
             <h1 className="text-secondary font-bold">Ações da Conta</h1>
-            <button className="border-secondary/20 text-secondary/80 flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-10 py-2 hover:border-red-500 hover:text-red-500">
+            <button
+              onClick={() => handleLogout()}
+              className="border-secondary/20 text-secondary/80 flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-10 py-2 hover:border-red-500 hover:text-red-500"
+            >
               <MdOutlineExitToApp className="size-5" /> Sair da Conta
             </button>
             <button className="cursor-pointer rounded-lg bg-red-100 px-10 py-2 text-sm text-red-500 hover:bg-red-200">

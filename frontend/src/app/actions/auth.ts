@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 
 //Services
 import { login, register } from "@/services/api/auth";
-import { normalizeUserFromApi } from "@/libs/normalizeUser";
 
 //Types
 import { LoginData, RegisterData } from "@/types/auth";
@@ -39,7 +38,13 @@ export async function loginAction(formData: LoginData) {
 
   return {
     message: res.message,
-    user: normalizeUserFromApi(res.data.user),
+    user: {
+      name: res.data.user.name,
+      email: res.data.user.email,
+      role: res.data.user.role,
+      subscriptionType: res.data.user.subscription_type?.trim() || undefined,
+      urlPhoto: res.data.user.avatar_url,
+    },
   };
 }
 
