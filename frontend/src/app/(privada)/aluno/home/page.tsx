@@ -30,11 +30,13 @@ export default function Home() {
         Title: "Módulo 1: Introdução ao Violão",
         Lessons: [
           {
+            id: "mod1-aula1",
             Title: "Aula 1: Conhecendo o Violão",
             Duration: "10 min",
             Status: "completed",
           },
           {
+            id: "mod1-aula2",
             Title: "Aula 2: Afinando o Violão",
             Duration: "15 min",
             Status: "completed",
@@ -46,16 +48,19 @@ export default function Home() {
         Title: "Módulo 2: Primeiros Acordes",
         Lessons: [
           {
+            id: "mod2-aula1",
             Title: "Aula 1: Acordes Básicos (C, G, D)",
             Duration: "12 min",
             Status: "completed",
           },
           {
+            id: "mod2-aula2",
             Title: "Aula 2: Mudança de Acordes",
             Duration: "14 min",
             Status: "completed",
           },
           {
+            id: "mod2-aula3",
             Title: "Aula 3: Praticando os Primeiros Acordes",
             Duration: "18 min",
             Status: "current",
@@ -67,16 +72,19 @@ export default function Home() {
         Title: "Módulo 3: Ritmo e Batidas",
         Lessons: [
           {
+            id: "mod3-aula1",
             Title: "Aula 1: Entendendo o Ritmo",
             Duration: "11 min",
             Status: "locked",
           },
           {
+            id: "mod3-aula2",
             Title: "Aula 2: Primeiras Batidas no Violão",
             Duration: "16 min",
             Status: "locked",
           },
           {
+            id: "mod3-aula3",
             Title: "Aula 3: Tocando com Ritmo",
             Duration: "20 min",
             Status: "locked",
@@ -88,11 +96,13 @@ export default function Home() {
         Title: "Módulo 4: Tocando Suas Primeiras Músicas",
         Lessons: [
           {
+            id: "mod4-aula1",
             Title: "Aula 1: Música Simples com 2 Acordes",
             Duration: "15 min",
             Status: "locked",
           },
           {
+            id: "mod4-aula2",
             Title: "Aula 2: Música com 3 Acordes",
             Duration: "18 min",
             Status: "locked",
@@ -104,16 +114,19 @@ export default function Home() {
         Title: "Módulo 5: Técnicas Iniciais",
         Lessons: [
           {
+            id: "mod5-aula1",
             Title: "Aula 1: Dedilhado Básico",
             Duration: "17 min",
             Status: "locked",
           },
           {
+            id: "mod5-aula2",
             Title: "Aula 2: Controle de Dinâmica",
             Duration: "13 min",
             Status: "locked",
           },
           {
+            id: "mod5-aula3",
             Title: "Aula 3: Exercícios de Coordenação",
             Duration: "19 min",
             Status: "locked",
@@ -269,7 +282,7 @@ export default function Home() {
 
                       return (
                         <Link
-                          href="/a"
+                          href={`/aluno/aula/${lesson.id}`}
                           onClick={(e) => {
                             if (lesson.Status === "locked") {
                               e.preventDefault();
