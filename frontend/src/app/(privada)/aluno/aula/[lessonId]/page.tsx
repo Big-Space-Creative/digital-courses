@@ -21,11 +21,6 @@ export default async function Lesson({
     description: "Aprenda a conectar os 5 shapes da escala pelo braço todo.",
     resumo:
       "Nesta aula fundamental, vamos desmistificar a escala pentatônica menor. Muitas vezes os guitarristas ficam presos no &quot;shape 1&quot;, mas o segredo para a fluência está em visualizar como os 5 desenhos se conectam horizontalmente.",
-    aprendizados: [
-      "Revisão dos 5 shapes tradicionais (CAGED system).",
-      "Como conectar shapes horizontalmente.",
-      "Dicas práticas para memorização dos shapes.",
-    ],
     dicas:
       "Não tente decorar todos os shapes de uma vez. Foque em conectar o Shape 1 com o Shape 2 primeiro, e só avance quando estiver confortável.",
     videoUrl: "https://www.pexels.com/pt-br/download/video/34258993/",
@@ -159,7 +154,6 @@ export default async function Lesson({
         <div>
           <LessonTabs
             resumo={lesson.resumo}
-            aprendizados={lesson.aprendizados}
             dicas={lesson.dicas}
             materials={lesson.materials}
           />

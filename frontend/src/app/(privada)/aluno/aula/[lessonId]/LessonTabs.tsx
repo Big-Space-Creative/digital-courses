@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import {
-  MdCheck,
   MdFolder,
   MdImage,
   MdMusicNote,
@@ -28,14 +27,12 @@ type Comment = {
 
 type LessonTabsProps = {
   resumo: string;
-  aprendizados: string[];
   dicas: string;
   materials: Material[];
 };
 
 export default function LessonTabs({
   resumo,
-  aprendizados,
   dicas,
   materials,
 }: LessonTabsProps) {
@@ -122,19 +119,7 @@ export default function LessonTabs({
         <div className="flex w-full flex-col justify-between gap-10 p-8 lg:flex-row">
           <div className="flex flex-1 flex-col gap-6 lg:max-w-1/2">
             <p>{resumo}</p>
-            <div className="flex flex-col gap-6">
-              <h1 className="text-secondary text-xl font-bold">
-                O que voce vai aprender
-              </h1>
-              <ul className="flex flex-col gap-4">
-                {aprendizados.map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-2">
-                    <MdCheck className="text-primary size-6" />
-                    <p>{item}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
+
             <div className="flex flex-col gap-1 rounded-lg border-l-4 bg-slate-200 px-4 py-2">
               <h1 className="text-secondary font-bold">Dicas para praticar</h1>
               <p>{dicas}</p>
