@@ -6,9 +6,11 @@ export default function StudentLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex">
+    <div className="min-h-screen lg:flex">
       <Sidebar />
-      <main className="h-screen w-full overflow-scroll">{children}</main>
+      <main className="w-full overflow-x-hidden lg:h-screen lg:overflow-y-auto">
+        {children}
+      </main>
     </div>
   );
 }

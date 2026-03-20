@@ -47,8 +47,8 @@ export default function Dashboard() {
 
   return (
     <div className="bg-background flex min-h-screen flex-col font-sans">
-      <main className="mx-auto w-full max-w-7xl flex-1 p-8">
-        <div className="mb-8 flex items-center justify-between">
+      <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6 lg:p-8">
+        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="text-secondary text-2xl font-bold">
               Bem-vindo ao seu painel, Ramon!
@@ -59,7 +59,7 @@ export default function Dashboard() {
           </div>
           <Link
             href="/admin/cursos/criar"
-            className="bg-primary hover:bg-primary-dark flex cursor-pointer items-center gap-2 rounded-md px-4 py-2.5 font-medium text-white shadow-sm transition-colors"
+            className="bg-primary hover:bg-primary-dark inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors sm:w-auto"
           >
             <MdAddCircleOutline size={20} />
             Adicionar Novo Curso
@@ -88,20 +88,20 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
           {/* Header da Tabela */}
-          <div className="flex items-center justify-between border-b border-gray-100 p-5">
-            <h3 className="font-bold text-gray-800">Cursos Cadastrados</h3>
-            <div className="flex items-center gap-3">
-              <div className="relative">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 p-4 sm:p-5">
+            <h3 className="font-semibold text-gray-800">Cursos Cadastrados</h3>
+            <div className="w-full sm:w-auto">
+              <div className="relative w-full sm:w-auto">
                 <MdSearch
-                  size={16}
+                  size={18}
                   className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
                 />
                 <input
                   type="text"
                   placeholder="Buscar curso..."
-                  className="focus:border-primary focus:ring-primary/20 w-64 rounded-md border border-gray-200 py-2 pr-4 pl-9 text-sm focus:ring-2 focus:outline-none"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pr-4 pl-10 text-sm text-gray-700 outline-none focus:border-orange-300 sm:w-72"
                 />
               </div>
             </div>
@@ -109,9 +109,9 @@ export default function Dashboard() {
 
           {/* Conteúdo da Tabela */}
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left">
+            <table className="w-full min-w-[760px] border-collapse text-left">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50 text-xs font-semibold tracking-wider text-gray-500 uppercase">
+                <tr className="bg-gray-100 text-xs font-semibold tracking-[0.12em] text-gray-500 uppercase">
                   <th className="px-6 py-4">Nome do Curso</th>
                   <th className="px-6 py-4">Data de Lançamento</th>
                   <th className="px-6 py-4 text-center">Ações</th>
@@ -119,7 +119,7 @@ export default function Dashboard() {
               </thead>
               <tbody className="divide-y divide-gray-100 text-sm">
                 {courses.map((course) => (
-                  <tr key={course.id} className="hover:bg-gray-50/50">
+                  <tr key={course.id} className="hover:bg-gray-50/70">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div
@@ -134,7 +134,7 @@ export default function Dashboard() {
                       {course.launchDate}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex justify-center gap-3 text-gray-400">
+                      <div className="flex items-center justify-center gap-4 text-gray-400">
                         <Link
                           href={`/admin/cursos/editar/${course.id}`}
                           className="hover:text-blue-500"
@@ -158,17 +158,26 @@ export default function Dashboard() {
             </table>
           </div>
 
-          <div className="flex items-center justify-between border-t border-gray-100 p-4 text-sm">
-            <span className="text-gray-500">Mostrando 3 de 12 cursos</span>
-            <div className="flex gap-2">
-              <button className="rounded-md border border-gray-200 px-3 py-1.5 text-gray-600 hover:bg-gray-50 disabled:opacity-50">
-                Anterior
+          <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 p-4 text-sm text-gray-500">
+            <span>Exibindo 3 de 12 cursos</span>
+            <div className="flex items-center gap-2">
+              <button className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-500 hover:bg-gray-50">
+                &lt;
               </button>
-              <button className="rounded-md border border-gray-200 px-3 py-1.5 text-gray-600 hover:bg-gray-50">
-                Próximo
+              <button className="rounded-lg bg-orange-500 px-3 py-1.5 font-semibold text-white">
+                1
+              </button>
+              <button className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-600 hover:bg-gray-50">
+                2
+              </button>
+              <button className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-600 hover:bg-gray-50">
+                3
+              </button>
+              <button className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-500 hover:bg-gray-50">
+                &gt;
               </button>
             </div>
-          </div>
+          </footer>
         </div>
       </main>
 

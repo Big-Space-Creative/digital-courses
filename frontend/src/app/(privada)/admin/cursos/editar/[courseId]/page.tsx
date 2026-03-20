@@ -275,7 +275,7 @@ export default function EditCoursePage() {
 
   return (
     <div className="bg-background min-h-screen">
-      <main className="mx-auto w-full max-w-6xl p-8">
+      <main className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8">
         <nav className="mb-3 flex items-center gap-1 text-sm text-gray-500">
           <span>Gerenciar Cursos</span>
           <MdKeyboardArrowRight size={16} />
@@ -284,11 +284,13 @@ export default function EditCoursePage() {
 
         <section className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="text-secondary text-5xl font-bold">Editar Curso</h2>
+            <h2 className="text-secondary text-2xl font-bold sm:text-3xl">
+              Editar Curso
+            </h2>
             <p className="mt-1 text-gray-500">ID: {courseId}</p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
             <button className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50">
               Descartar
             </button>
