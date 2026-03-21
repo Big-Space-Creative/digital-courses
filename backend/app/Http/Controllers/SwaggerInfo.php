@@ -7,10 +7,12 @@ namespace App\Http\Controllers;
  *     version="1.0.0",
  *     title="Digital Courses API",
  *     description="API REST da plataforma de cursos online AulasViolão. Autenticação via JWT Bearer Token.",
+ *
  *     @OA\Contact(
  *         email="admin@digitalcourses.com",
  *         name="Big Space Creative"
  *     ),
+ *
  *     @OA\License(
  *         name="MIT",
  *         url="https://opensource.org/licenses/MIT"

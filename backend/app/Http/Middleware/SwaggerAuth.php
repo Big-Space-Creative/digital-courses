@@ -34,7 +34,7 @@ class SwaggerAuth
 
         // Em staging ou produção (quando habilitado): exige Basic Auth
         if (in_array($env, ['production', 'staging'])) {
-            $user     = env('SWAGGER_USER');
+            $user = env('SWAGGER_USER');
             $password = env('SWAGGER_PASSWORD');
 
             if (! $user || ! $password) {

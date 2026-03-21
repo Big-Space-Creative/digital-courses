@@ -23,7 +23,7 @@ class CheckRole
         }
 
         if (! in_array($user->role, $roles)) {
-            return response()->json(['message' => 'Forbidden. Requires one of roles: ' . implode(', ', $roles)], 403);
+            return response()->json(['message' => 'Forbidden. Requires one of roles: '.implode(', ', $roles)], 403);
         }
 
         return $next($request);

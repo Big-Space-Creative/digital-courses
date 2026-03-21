@@ -29,8 +29,11 @@ class AdminController extends Controller
      *     summary="Dashboard administrativo",
      *     description="Retorna métricas gerais: totais de usuários, cursos e matrículas. Exclusivo para admins.",
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Response(response=200, description="Dashboard carregado",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string",  example="Dashboard carregado com sucesso"),
      *             @OA\Property(property="data", type="object",
@@ -54,24 +57,25 @@ class AdminController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Não autenticado"),
      *     @OA\Response(response=403, description="Acesso negado — somente admins")
      * )
      */
     public function dashboard(): JsonResponse
     {
-        $totalUsers       = User::count();
-        $totalStudents    = User::where('role', User::ROLE_STUDENT)->count();
+        $totalUsers = User::count();
+        $totalStudents = User::where('role', User::ROLE_STUDENT)->count();
         $totalInstructors = User::where('role', User::ROLE_INSTRUCTOR)->count();
-        $totalAdmins      = User::where('role', User::ROLE_ADMIN)->count();
-        $premiumStudents  = User::where('role', User::ROLE_STUDENT)
-                                ->where('subscription_type', 'premium')
-                                ->count();
-        $freeStudents     = User::where('role', User::ROLE_STUDENT)
-                                ->where('subscription_type', 'free')
-                                ->count();
+        $totalAdmins = User::where('role', User::ROLE_ADMIN)->count();
+        $premiumStudents = User::where('role', User::ROLE_STUDENT)
+            ->where('subscription_type', 'premium')
+            ->count();
+        $freeStudents = User::where('role', User::ROLE_STUDENT)
+            ->where('subscription_type', 'free')
+            ->count();
 
-        $totalCourses     = Course::count();
+        $totalCourses = Course::count();
         $publishedCourses = Course::where('is_published', true)->count();
         $totalEnrollments = Enrollment::count();
         $activeEnrollments = Enrollment::where('status', 'active')->count();
@@ -81,20 +85,20 @@ class AdminController extends Controller
             'message' => 'Dashboard carregado com sucesso',
             'data' => [
                 'users' => [
-                    'total'       => $totalUsers,
-                    'students'    => $totalStudents,
+                    'total' => $totalUsers,
+                    'students' => $totalStudents,
                     'instructors' => $totalInstructors,
-                    'admins'      => $totalAdmins,
-                    'premium'     => $premiumStudents,
-                    'free'        => $freeStudents,
+                    'admins' => $totalAdmins,
+                    'premium' => $premiumStudents,
+                    'free' => $freeStudents,
                 ],
                 'courses' => [
-                    'total'     => $totalCourses,
+                    'total' => $totalCourses,
                     'published' => $publishedCourses,
-                    'draft'     => $totalCourses - $publishedCourses,
+                    'draft' => $totalCourses - $publishedCourses,
                 ],
                 'enrollments' => [
-                    'total'  => $totalEnrollments,
+                    'total' => $totalEnrollments,
                     'active' => $activeEnrollments,
                 ],
             ],
@@ -120,16 +124,21 @@ class AdminController extends Controller
      *     summary="Listar usuários",
      *     description="Lista todos os usuários com paginação. Suporta filtro por role e busca por nome/e-mail.",
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(name="role",     in="query", required=false, description="Filtrar por role", @OA\Schema(type="string", enum={"student","instructor","admin"})),
      *     @OA\Parameter(name="search",   in="query", required=false, description="Busca por nome ou e-mail", @OA\Schema(type="string", example="alice")),
      *     @OA\Parameter(name="per_page", in="query", required=false, description="Itens por página (padrão 20)", @OA\Schema(type="integer", example=20)),
+     *
      *     @OA\Response(response=200, description="Usuários listados",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string",  example="Usuários listados com sucesso"),
      *             @OA\Property(property="data",    type="object", description="Resposta paginada do Laravel")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Não autenticado"),
      *     @OA\Response(response=403, description="Acesso negado")
      * )
@@ -151,18 +160,18 @@ class AdminController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
         $perPage = (int) $request->get('per_page', 20);
-        $users   = $query->orderBy('created_at', 'desc')
-                         ->paginate($perPage);
+        $users = $query->orderBy('created_at', 'desc')
+            ->paginate($perPage);
 
         return response()->json([
             'success' => true,
             'message' => 'Usuários listados com sucesso',
-            'data'    => $users,
+            'data' => $users,
         ]);
     }
 
@@ -178,14 +187,19 @@ class AdminController extends Controller
      *     summary="Exibir usuário",
      *     description="Retorna detalhes de um usuário incluindo seus cursos matriculados.",
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="ID do usuário", @OA\Schema(type="integer", example=1)),
+     *
      *     @OA\Response(response=200, description="Usuário encontrado",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string",  example="Usuário encontrado"),
      *             @OA\Property(property="data",    type="object")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Não autenticado"),
      *     @OA\Response(response=403, description="Acesso negado"),
      *     @OA\Response(response=404, description="Usuário não encontrado")
@@ -200,7 +214,7 @@ class AdminController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Usuário encontrado',
-            'data'    => $user,
+            'data' => $user,
         ]);
     }
 
@@ -218,16 +232,23 @@ class AdminController extends Controller
      *     summary="Alterar role do usuário",
      *     description="Altera o tipo (role) de um usuário. O admin não pode alterar a própria role.",
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="ID do usuário", @OA\Schema(type="integer", example=2)),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"role"},
+     *
      *             @OA\Property(property="role", type="string", enum={"student","instructor","admin"}, example="instructor")
      *         )
      *     ),
+     *
      *     @OA\Response(response=200, description="Role atualizada",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string",  example="Role do usuário atualizada de 'student' para 'instructor' com sucesso."),
      *             @OA\Property(property="data", type="object",
@@ -238,6 +259,7 @@ class AdminController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Não autenticado"),
      *     @OA\Response(response=403, description="Acesso negado ou tentativa de alterar a própria role"),
      *     @OA\Response(response=404, description="Usuário não encontrado"),
@@ -258,22 +280,22 @@ class AdminController extends Controller
             'role' => ['required', 'in:student,instructor,admin'],
         ], [
             'role.required' => 'O campo role é obrigatório.',
-            'role.in'       => 'A role deve ser: student, instructor ou admin.',
+            'role.in' => 'A role deve ser: student, instructor ou admin.',
         ]);
 
         $user = User::findOrFail($id);
-        $old  = $user->role;
+        $old = $user->role;
         $user->role = $validated['role'];
         $user->save();
 
         return response()->json([
             'success' => true,
             'message' => "Role do usuário atualizada de '{$old}' para '{$validated['role']}' com sucesso.",
-            'data'    => [
-                'id'    => $user->id,
-                'name'  => $user->name,
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
                 'email' => $user->email,
-                'role'  => $user->role,
+                'role' => $user->role,
             ],
         ]);
     }
@@ -291,16 +313,23 @@ class AdminController extends Controller
      *     summary="Alterar plano do aluno",
      *     description="Altera o plano (free/premium) de um usuário com role student.",
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="ID do usuário (student)", @OA\Schema(type="integer", example=3)),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"subscription_type"},
+     *
      *             @OA\Property(property="subscription_type", type="string", enum={"free","premium"}, example="premium")
      *         )
      *     ),
+     *
      *     @OA\Response(response=200, description="Plano atualizado",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string",  example="Plano do aluno atualizado para 'premium' com sucesso."),
      *             @OA\Property(property="data", type="object",
@@ -311,6 +340,7 @@ class AdminController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Não autenticado"),
      *     @OA\Response(response=403, description="Acesso negado"),
      *     @OA\Response(response=404, description="Usuário não encontrado"),
@@ -323,7 +353,7 @@ class AdminController extends Controller
             'subscription_type' => ['required', 'in:free,premium'],
         ], [
             'subscription_type.required' => 'O campo subscription_type é obrigatório.',
-            'subscription_type.in'       => 'O plano deve ser: free ou premium.',
+            'subscription_type.in' => 'O plano deve ser: free ou premium.',
         ]);
 
         $user = User::findOrFail($id);
@@ -341,10 +371,10 @@ class AdminController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Plano do aluno atualizado para '{$validated['subscription_type']}' com sucesso.",
-            'data'    => [
-                'id'                => $user->id,
-                'name'              => $user->name,
-                'email'             => $user->email,
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
                 'subscription_type' => $user->subscription_type,
             ],
         ]);
@@ -369,16 +399,21 @@ class AdminController extends Controller
      *     summary="Listar cursos (admin)",
      *     description="Lista todos os cursos incluindo os não publicados. Suporta filtro e paginação.",
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(name="search",       in="query", required=false, description="Busca por título ou descrição", @OA\Schema(type="string", example="violão")),
      *     @OA\Parameter(name="is_published",  in="query", required=false, description="Filtrar por status de publicação", @OA\Schema(type="boolean", example=true)),
      *     @OA\Parameter(name="per_page",      in="query", required=false, description="Itens por página (padrão 20)", @OA\Schema(type="integer", example=20)),
+     *
      *     @OA\Response(response=200, description="Cursos listados",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string",  example="Cursos listados com sucesso"),
      *             @OA\Property(property="data",    type="object", description="Resposta paginada do Laravel")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Não autenticado"),
      *     @OA\Response(response=403, description="Acesso negado")
      * )
@@ -386,13 +421,13 @@ class AdminController extends Controller
     public function listCourses(Request $request): JsonResponse
     {
         $query = Course::withCount(['enrollments', 'lessons'])
-                       ->with('modules:id,course_id,order');
+            ->with('modules:id,course_id,order');
 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -406,7 +441,7 @@ class AdminController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Cursos listados com sucesso',
-            'data'    => $courses,
+            'data' => $courses,
         ]);
     }
 
@@ -422,14 +457,19 @@ class AdminController extends Controller
      *     summary="Exibir curso (admin)",
      *     description="Retorna detalhes completos de um curso: módulos, aulas e alunos matriculados.",
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="ID do curso", @OA\Schema(type="integer", example=1)),
+     *
      *     @OA\Response(response=200, description="Curso encontrado",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string",  example="Curso encontrado"),
      *             @OA\Property(property="data",    type="object")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Não autenticado"),
      *     @OA\Response(response=403, description="Acesso negado"),
      *     @OA\Response(response=404, description="Curso não encontrado")
@@ -441,12 +481,12 @@ class AdminController extends Controller
             'modules.lessons:id,module_id,title,duration_in_minutes,is_free_preview',
             'enrollments.user:id,name,email,subscription_type',
         ])->withCount(['enrollments', 'lessons'])
-          ->findOrFail($id);
+            ->findOrFail($id);
 
         return response()->json([
             'success' => true,
             'message' => 'Curso encontrado',
-            'data'    => $course,
+            'data' => $course,
         ]);
     }
 }

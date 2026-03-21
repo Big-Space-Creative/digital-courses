@@ -18,9 +18,12 @@ class UserController extends Controller
      *     summary="Listar todos os usuários (simplificado)",
      *     description="Retorna todos os usuários sem paginação. Requer autenticação.",
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Response(response=200, description="Lista de usuários",
+     *
      *         @OA\JsonContent(type="array", @OA\Items(type="object"))
      *     ),
+     *
      *     @OA\Response(response=401, description="Não autenticado")
      * )
      */
@@ -71,16 +74,23 @@ class UserController extends Controller
      *     summary="Atualizar usuário",
      *     description="Atualiza nome, e-mail e/ou role de um usuário. Requer autenticação.",
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="ID do usuário", @OA\Schema(type="string", example="1")),
+     *
      *     @OA\RequestBody(
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="name",  type="string", example="Bob"),
      *             @OA\Property(property="email", type="string", format="email", example="bob@example.com"),
      *             @OA\Property(property="role",  type="string", enum={"student","instructor","admin"}, example="instructor")
      *         )
      *     ),
+     *
      *     @OA\Response(response=200, description="Usuário atualizado",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Usuário atualizado com sucesso."),
      *             @OA\Property(property="user", type="object",
      *                 @OA\Property(property="id",    type="integer"),
@@ -90,6 +100,7 @@ class UserController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Não autenticado"),
      *     @OA\Response(response=404, description="Usuário não encontrado"),
      *     @OA\Response(response=422, description="Erro de validação")
@@ -101,8 +112,8 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'email' => ['sometimes', 'required', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'role' => ['sometimes', 'required', 'in:' . implode(',', [
+            'email' => ['sometimes', 'required', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'role' => ['sometimes', 'required', 'in:'.implode(',', [
                 User::ROLE_STUDENT,
                 User::ROLE_INSTRUCTOR,
                 User::ROLE_ADMIN,

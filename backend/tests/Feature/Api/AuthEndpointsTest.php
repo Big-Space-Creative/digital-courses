@@ -23,19 +23,25 @@ class AuthEndpointsTest extends TestCase
             'avatar_url' => 'https://example.com/avatar.png',
         ];
 
-        $response = $this->postJson('/api/register', $payload);
+        $response = $this->postJson('/api/v1/register', $payload);
 
         $response
             ->assertCreated()
             ->assertJsonStructure([
+                'success',
                 'message',
-                'token',
-                'user' => [
-                    'id',
-                    'name',
-                    'email',
-                    'role',
-                    'avatar_url',
+                'data' => [
+                    'user' => [
+                        'id',
+                        'name',
+                        'email',
+                        'role',
+                        'avatar_url',
+                    ],
+                    'access_token',
+                    'refresh_token',
+                    'token_type',
+                    'expires_in',
                 ],
             ]);
 
@@ -55,7 +61,7 @@ class AuthEndpointsTest extends TestCase
             'avatar_url' => 'https://example.com/bob.png',
         ]);
 
-        $response = $this->postJson('/api/login', [
+        $response = $this->postJson('/api/v1/login', [
             'email' => $user->email,
             'password' => $password,
         ]);
@@ -63,16 +69,22 @@ class AuthEndpointsTest extends TestCase
         $response
             ->assertOk()
             ->assertJsonStructure([
+                'success',
                 'message',
-                'token',
-                'user' => [
-                    'id',
-                    'name',
-                    'email',
-                    'role',
+                'data' => [
+                    'user' => [
+                        'id',
+                        'name',
+                        'email',
+                        'role',
+                    ],
+                    'access_token',
+                    'refresh_token',
+                    'token_type',
+                    'expires_in',
                 ],
             ])
-            ->assertJsonPath('user.email', 'bob@example.com');
+            ->assertJsonPath('data.user.email', 'bob@example.com');
     }
 
     public function test_login_fails_with_invalid_credentials(): void
@@ -84,7 +96,7 @@ class AuthEndpointsTest extends TestCase
             'avatar_url' => 'https://example.com/charlie.png',
         ]);
 
-        $response = $this->postJson('/api/login', [
+        $response = $this->postJson('/api/v1/login', [
             'email' => $user->email,
             'password' => 'wrong-password',
         ]);
@@ -102,8 +114,8 @@ class AuthEndpointsTest extends TestCase
 
         $token = JWTAuth::fromUser($user);
 
-        $response = $this->getJson('/api/me', [
-            'Authorization' => 'Bearer ' . $token,
+        $response = $this->getJson('/api/v1/me', [
+            'Authorization' => 'Bearer '.$token,
         ]);
 
         $response

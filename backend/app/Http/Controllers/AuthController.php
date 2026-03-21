@@ -7,24 +7,25 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
-use Symfony\Component\HttpFoundation\JsonResponse as HttpFoundationJsonResponse;
 
 class AuthController extends Controller
 {
     /**
      * @OA\Post(
-     *     path="/api/v1/auth/register",
+     *     path="/api/v1/register",
      *     operationId="authRegister",
      *     tags={"Auth"},
      *     summary="Registrar novo usuário",
      *     description="Cria uma nova conta e retorna access_token + refresh_token.",
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"name","email","password","password_confirmation","role"},
+     *
      *             @OA\Property(property="name",                 type="string",  example="Alice Silva"),
      *             @OA\Property(property="email",                type="string",  format="email", example="alice@example.com"),
      *             @OA\Property(property="password",             type="string",  format="password", minLength=8, example="secret123"),
@@ -33,10 +34,13 @@ class AuthController extends Controller
      *             @OA\Property(property="avatar_url",           type="string",  format="url", nullable=true, example="https://cdn.example.com/avatar.jpg")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Usuário registrado com sucesso",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string",  example="Usuário registrado com sucesso"),
      *             @OA\Property(property="data", type="object",
@@ -55,8 +59,11 @@ class AuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=422, description="Erro de validação",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string",  example="Erro de validação"),
      *             @OA\Property(property="errors",  type="object")
@@ -100,6 +107,7 @@ class AuthController extends Controller
             // Some JWT driver implementations don't expose setTTL on the claims builder.
             // Create a refresh token with a claim type instead and rely on server-side validation.
             $refreshToken = JWTAuth::claims(['type' => 'refresh'])->fromUser($user);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Usuário registrado com sucesso',
@@ -135,23 +143,29 @@ class AuthController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/v1/auth/login",
+     *     path="/api/v1/login",
      *     operationId="authLogin",
      *     tags={"Auth"},
      *     summary="Login do usuário",
      *     description="Autentica o usuário e retorna access_token + refresh_token.",
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"email","password"},
+     *
      *             @OA\Property(property="email",    type="string", format="email",    example="alice@example.com"),
      *             @OA\Property(property="password", type="string", format="password", example="secret123")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Login bem-sucedido",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string",  example="Login bem-sucedido"),
      *             @OA\Property(property="data", type="object",
@@ -163,8 +177,11 @@ class AuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Credenciais inválidas",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string",  example="Credenciais inválidas")
      *         )
@@ -185,11 +202,11 @@ class AuthController extends Controller
                     'message' => 'Credenciais inválidas',
                 ], 401);
             }
- 
+
             $user = Auth::user();
             // See note above: avoid calling setTTL on the claims builder to keep compatibility
             $refreshToken = JWTAuth::claims(['type' => 'refresh'])->fromUser($user);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Login bem-sucedido',
@@ -209,20 +226,25 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
     /**
      * @OA\Post(
-     *     path="/api/v1/auth/logout",
+     *     path="/api/v1/logout",
      *     operationId="authLogout",
      *     tags={"Auth"},
      *     summary="Logout",
      *     description="Invalida o token JWT atual.",
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Response(response=200, description="Logout realizado",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="status",  type="string", example="success"),
      *             @OA\Property(property="message", type="string", example="Successfully logged out")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Token inválido ou ausente")
      * )
      */
@@ -230,7 +252,7 @@ class AuthController extends Controller
     {
         try {
             JWTAuth::invalidate(JWTAuth::getToken());
-            
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'Successfully logged out',
@@ -242,21 +264,25 @@ class AuthController extends Controller
             ], 500);
         }
     }
-    
+
     /**
      * @OA\Get(
-     *     path="/api/v1/auth/me",
+     *     path="/api/v1/me",
      *     operationId="authMe",
      *     tags={"Perfil"},
      *     summary="Usuário autenticado",
      *     description="Retorna os dados do usuário dono do token JWT.",
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Response(response=200, description="Usuário autenticado",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Usuário autenticado"),
      *             @OA\Property(property="user",    type="object")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Token inválido ou expirado")
      * )
      */
@@ -279,27 +305,34 @@ class AuthController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/api/v1/auth/profile",
+     *     path="/api/v1/profile",
      *     operationId="authUpdateProfile",
      *     tags={"Perfil"},
      *     summary="Atualizar perfil",
      *     description="Atualiza nome, avatar e/ou senha do usuário autenticado. E-mail não pode ser alterado por este endpoint.",
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\RequestBody(
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="name",                  type="string", example="Alice Novo Nome"),
      *             @OA\Property(property="avatar_url",            type="string", format="url", nullable=true, example="https://cdn.example.com/avatar2.jpg"),
      *             @OA\Property(property="password",              type="string", format="password", minLength=8, example="novasenha123"),
      *             @OA\Property(property="password_confirmation", type="string", format="password", example="novasenha123")
      *         )
      *     ),
+     *
      *     @OA\Response(response=200, description="Perfil atualizado",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string",  example="Perfil atualizado com sucesso"),
      *             @OA\Property(property="user",    type="object")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Token inválido"),
      *     @OA\Response(response=422, description="Erro de validação")
      * )
@@ -311,17 +344,17 @@ class AuthController extends Controller
         // Permitir atualizações parciais. Proibimos alteração de e-mail por este endpoint.
         // Campos disponíveis na tabela users: name, avatar_url, password.
         $validated = $request->validate([
-            'name'       => ['sometimes', 'required', 'string', 'max:255'],
-            'email'      => ['prohibited'],
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'email' => ['prohibited'],
             'avatar_url' => ['nullable', 'url', 'max:2048'],
-            'password'   => ['sometimes', 'required', 'string', 'min:8', 'confirmed'],
+            'password' => ['sometimes', 'required', 'string', 'min:8', 'confirmed'],
         ], [
-            'name.required'     => 'O nome é obrigatório.',
-            'name.max'          => 'O nome não pode ter mais de 255 caracteres.',
-            'email.prohibited'  => 'O e-mail não pode ser alterado por este endpoint. Apenas nome, avatar e senha podem ser atualizados.',
-            'avatar_url.url'    => 'A URL do avatar deve ser válida.',
-            'password.min'      => 'A senha deve ter no mínimo 8 caracteres.',
-            'password.confirmed'=> 'A confirmação de senha não confere.',
+            'name.required' => 'O nome é obrigatório.',
+            'name.max' => 'O nome não pode ter mais de 255 caracteres.',
+            'email.prohibited' => 'O e-mail não pode ser alterado por este endpoint. Apenas nome, avatar e senha podem ser atualizados.',
+            'avatar_url.url' => 'A URL do avatar deve ser válida.',
+            'password.min' => 'A senha deve ter no mínimo 8 caracteres.',
+            'password.confirmed' => 'A confirmação de senha não confere.',
         ]);
 
         // Atualiza somente os campos enviados na requisição
@@ -342,24 +375,30 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Perfil atualizado com sucesso',
-            'user'    => $user->fresh(),
+            'user' => $user->fresh(),
         ]);
     }
 
     /**
      * @OA\Post(
-     *     path="/api/v1/auth/refresh",
+     *     path="/api/v1/refresh",
      *     operationId="authRefresh",
      *     tags={"Auth"},
      *     summary="Renovar access token",
      *     description="Gera um novo access_token usando um refresh_token válido. Envie o refresh_token no header Authorization: Bearer {refresh_token} ou no body.",
+     *
      *     @OA\RequestBody(
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="refresh_token", type="string", description="Refresh token (alternativo ao header Authorization)")
      *         )
      *     ),
+     *
      *     @OA\Response(response=200, description="Token renovado",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string",  example="Token renovado com sucesso"),
      *             @OA\Property(property="data", type="object",
@@ -369,6 +408,7 @@ class AuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=400, description="Refresh token não fornecido"),
      *     @OA\Response(response=401, description="Refresh token inválido ou expirado")
      * )
@@ -418,5 +458,4 @@ class AuthController extends Controller
             ], 401);
         }
     }
-
 }

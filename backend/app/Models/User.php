@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -12,10 +11,13 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 class User extends Authenticatable implements JWTSubject
 {
     public const ROLE_STUDENT = 'student';
+
     public const ROLE_INSTRUCTOR = 'instructor';
+
     public const ROLE_ADMIN = 'admin';
 
     public const SUBSCRIPTION_FREE = 'free';
+
     public const SUBSCRIPTION_PREMIUM = 'premium';
 
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -148,9 +150,9 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims(): array
     {
         return [
-            'name'       => $this->name,
-            'email'      => $this->email,
-            'role'       => $this->role,
+            'name' => $this->name,
+            'email' => $this->email,
+            'role' => $this->role,
             'avatar_url' => $this->avatar_url,
         ];
     }

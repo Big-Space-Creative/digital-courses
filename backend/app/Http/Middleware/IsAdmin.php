@@ -15,9 +15,9 @@ class IsAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (! auth()->check() || auth()->user()->role !== 'admin') {
             return response()->json([
-                'message' => 'Acesso negado. Apenas administradores podem acessar este recurso.'
+                'message' => 'Acesso negado. Apenas administradores podem acessar este recurso.',
             ], 403);
         }
 
