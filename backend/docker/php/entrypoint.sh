@@ -34,8 +34,31 @@ fi
 
 if [ ! -f vendor/autoload.php ]; then
   echo "[entrypoint] 📦 Instalando dependências PHP via Composer..."
-  gosu "$APP_USER" composer install --no-interaction --prefer-dist --no-progress --no-scripts
-  echo "[entrypoint] ✅ Dependências instaladas!"
+  mkdir -p vendor
+
+  # Em alguns ambientes (Docker Desktop/Linux/macOS/Windows) o volume pode nascer
+  # com dono/permissão incompatíveis com o APP_USER. Tentamos ajustar e instalar
+  # como APP_USER; se ainda falhar por permissão, fazemos fallback para root.
+  chown -R "$APP_USER":"$APP_USER" vendor 2>/dev/null || true
+  chmod -R u+rwX vendor 2>/dev/null || true
+
+  if gosu "$APP_USER" sh -lc 'test -w vendor'; then
+    if gosu "$APP_USER" composer install --no-interaction --prefer-dist --no-progress --no-scripts; then
+      echo "[entrypoint] ✅ Dependências instaladas como $APP_USER"
+    else
+      echo "[entrypoint] ⚠️  Falha ao instalar dependências como $APP_USER"
+      echo "[entrypoint] 🔁 Tentando fallback de compatibilidade (root)..."
+      COMPOSER_ALLOW_SUPERUSER=1 composer install --no-interaction --prefer-dist --no-progress --no-scripts
+      chown -R "$APP_USER":"$APP_USER" vendor 2>/dev/null || true
+      echo "[entrypoint] ✅ Dependências instaladas com fallback"
+    fi
+  else
+    echo "[entrypoint] ⚠️  Diretório vendor sem escrita para $APP_USER"
+    echo "[entrypoint] 🔁 Tentando fallback de compatibilidade (root)..."
+    COMPOSER_ALLOW_SUPERUSER=1 composer install --no-interaction --prefer-dist --no-progress --no-scripts
+    chown -R "$APP_USER":"$APP_USER" vendor 2>/dev/null || true
+    echo "[entrypoint] ✅ Dependências instaladas com fallback"
+  fi
   
   # Reconfigurar permissões após composer install e antes dos scripts
   chown -R "$WEB_USER":"$WEB_USER" storage bootstrap/cache 2>/dev/null || true
