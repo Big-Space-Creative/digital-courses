@@ -21,8 +21,15 @@ chmod -R 775 storage bootstrap/cache 2>/dev/null || true
 if [ ! -f .env ] && [ -f .env.example ]; then
   echo "[entrypoint] .env não encontrado. Usando .env.example como base."
   cp .env.example .env
-  chown "$WEB_USER":"$WEB_USER" .env
-  chmod 666 .env
+  chown "$APP_USER":"$WEB_USER" .env 2>/dev/null || true
+  chmod 664 .env 2>/dev/null || true
+fi
+
+# Em volume bind, o .env costuma vir com UID/GID do host.
+# Garantimos que o usuário de app consiga escrever para key:generate/jwt:secret.
+if [ -f .env ]; then
+  chown "$APP_USER":"$WEB_USER" .env 2>/dev/null || true
+  chmod 664 .env 2>/dev/null || true
 fi
 
 if [ ! -f vendor/autoload.php ]; then
@@ -50,14 +57,14 @@ if [ -f artisan ]; then
   # Verificar se APP_KEY está vazia e gerar se necessário
   if ! grep -q "^APP_KEY=base64:" .env 2>/dev/null; then
     echo "[entrypoint] 🔑 Gerando chave da aplicação..."
-    gosu "$WEB_USER" php artisan key:generate --force
+    gosu "$APP_USER" php artisan key:generate --force
     echo "[entrypoint] ✅ Chave gerada!"
   fi
   
   # Verificar se JWT_SECRET está vazia e gerar se necessário
   if ! grep -q "^JWT_SECRET=" .env 2>/dev/null || grep -q "^JWT_SECRET=$" .env 2>/dev/null; then
     echo "[entrypoint] 🔐 Gerando JWT secret..."
-    gosu "$WEB_USER" php artisan jwt:secret --force
+    gosu "$APP_USER" php artisan jwt:secret --force
     echo "[entrypoint] ✅ JWT secret gerado!"
   fi
   
