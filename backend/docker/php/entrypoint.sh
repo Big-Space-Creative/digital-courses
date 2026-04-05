@@ -22,6 +22,7 @@ if [ ! -f .env ] && [ -f .env.example ]; then
   echo "[entrypoint] .env não encontrado. Usando .env.example como base."
   cp .env.example .env
   chown "$WEB_USER":"$WEB_USER" .env
+  chmod 666 .env
 fi
 
 if [ ! -f vendor/autoload.php ]; then
