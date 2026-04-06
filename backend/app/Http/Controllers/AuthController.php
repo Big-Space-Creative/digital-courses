@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use OpenApi\Annotations as OA;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
@@ -304,8 +305,8 @@ class AuthController extends Controller
     }
 
     /**
-     * @OA\Put(
-     *     path="/api/v1/profile",
+        * @OA\Post(
+        *     path="/api/v1/me",
      *     operationId="authUpdateProfile",
      *     tags={"Perfil"},
      *     summary="Atualizar perfil",

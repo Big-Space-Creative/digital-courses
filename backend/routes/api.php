@@ -488,8 +488,10 @@ Route::prefix('v1')->group(function () {
              * DELETE /api/v1/lessons/{lesson_id}
              */
             Route::post('/modules/{module}/lessons', [App\Http\Controllers\Api\v1\LessonController::class, 'store']);
+            Route::post('/modules/{module}/lessons/upload', [App\Http\Controllers\Api\v1\LessonController::class, 'storeWithUpload']);
             Route::put('/lessons/{lesson}', [App\Http\Controllers\Api\v1\LessonController::class, 'update']);
             Route::delete('/lessons/{lesson}', [App\Http\Controllers\Api\v1\LessonController::class, 'destroy']);
+            Route::post('/lessons/{lesson}/materials/upload', [App\Http\Controllers\Api\v1\LessonController::class, 'uploadMaterial']);
         });
     });
 

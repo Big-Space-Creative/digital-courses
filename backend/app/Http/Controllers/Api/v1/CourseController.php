@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use OpenApi\Annotations as OA;
 
 class CourseController extends Controller
 {
@@ -15,7 +16,8 @@ class CourseController extends Controller
      *     operationId="courseIndex",
      *     tags={"Cursos"},
      *     summary="Listar cursos",
-     *     description="Retorna todos os cursos com módulos e aulas (sem video_url). Acesso público.",
+        *     description="Retorna todos os cursos com módulos e aulas (sem video_url). Requer autenticação.",
+        *     security={{"bearerAuth":{}}},
      *
      *     @OA\Response(response=200, description="Cursos listados",
      *
@@ -43,13 +45,14 @@ class CourseController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/v1/courses/{id}",
+    *     path="/api/v1/courses/{course}",
      *     operationId="courseShow",
      *     tags={"Cursos"},
      *     summary="Exibir curso",
-     *     description="Retorna um curso específico com seus módulos e aulas. Acesso público.",
+    *     description="Retorna um curso específico com seus módulos e aulas. Requer autenticação.",
+    *     security={{"bearerAuth":{}}},
      *
-     *     @OA\Parameter(name="id", in="path", required=true, description="ID do curso", @OA\Schema(type="integer", example=1)),
+    *     @OA\Parameter(name="course", in="path", required=true, description="ID do curso", @OA\Schema(type="integer", example=1)),
      *
      *     @OA\Response(response=200, description="Curso encontrado",
      *
@@ -81,7 +84,7 @@ class CourseController extends Controller
      *     operationId="courseStore",
      *     tags={"Cursos"},
      *     summary="Criar curso",
-     *     description="Cria um novo curso. Requer autenticação (instructor ou admin).",
+    *     description="Cria um novo curso. Requer autenticação de admin.",
      *     security={{"bearerAuth":{}}},
      *
      *     @OA\RequestBody(
@@ -138,14 +141,14 @@ class CourseController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/api/v1/courses/{id}",
+    *     path="/api/v1/courses/{course}",
      *     operationId="courseUpdate",
      *     tags={"Cursos"},
      *     summary="Atualizar curso",
-     *     description="Atualiza dados de um curso existente. Requer autenticação (instructor ou admin).",
+    *     description="Atualiza dados de um curso existente. Requer autenticação de admin.",
      *     security={{"bearerAuth":{}}},
      *
-     *     @OA\Parameter(name="id", in="path", required=true, description="ID do curso", @OA\Schema(type="integer", example=1)),
+    *     @OA\Parameter(name="course", in="path", required=true, description="ID do curso", @OA\Schema(type="integer", example=1)),
      *
      *     @OA\RequestBody(
      *
@@ -202,14 +205,14 @@ class CourseController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/api/v1/courses/{id}",
+    *     path="/api/v1/courses/{course}",
      *     operationId="courseDestroy",
      *     tags={"Cursos"},
      *     summary="Excluir curso",
      *     description="Remove permanentemente um curso. Requer autenticação (admin).",
      *     security={{"bearerAuth":{}}},
      *
-     *     @OA\Parameter(name="id", in="path", required=true, description="ID do curso", @OA\Schema(type="integer", example=1)),
+    *     @OA\Parameter(name="course", in="path", required=true, description="ID do curso", @OA\Schema(type="integer", example=1)),
      *
      *     @OA\Response(response=200, description="Curso excluído",
      *
