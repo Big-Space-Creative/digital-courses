@@ -612,7 +612,7 @@
                     "Cursos"
                 ],
                 "summary": "Listar cursos",
-                "description": "Retorna todos os cursos com módulos e aulas (sem video_url). Acesso público.",
+                "description": "Retorna todos os cursos com módulos e aulas (sem video_url). Requer autenticação.",
                 "operationId": "courseIndex",
                 "responses": {
                     "200": {
@@ -637,14 +637,19 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "post": {
                 "tags": [
                     "Cursos"
                 ],
                 "summary": "Criar curso",
-                "description": "Cria um novo curso. Requer autenticação (instructor ou admin).",
+                "description": "Cria um novo curso. Requer autenticação de admin.",
                 "operationId": "courseStore",
                 "requestBody": {
                     "required": true,
@@ -719,17 +724,17 @@
                 ]
             }
         },
-        "/api/v1/courses/{id}": {
+        "/api/v1/courses/{course}": {
             "get": {
                 "tags": [
                     "Cursos"
                 ],
                 "summary": "Exibir curso",
-                "description": "Retorna um curso específico com seus módulos e aulas. Acesso público.",
+                "description": "Retorna um curso específico com seus módulos e aulas. Requer autenticação.",
                 "operationId": "courseShow",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "course",
                         "in": "path",
                         "description": "ID do curso",
                         "required": true,
@@ -762,18 +767,23 @@
                     "404": {
                         "description": "Curso não encontrado"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "put": {
                 "tags": [
                     "Cursos"
                 ],
                 "summary": "Atualizar curso",
-                "description": "Atualiza dados de um curso existente. Requer autenticação (instructor ou admin).",
+                "description": "Atualiza dados de um curso existente. Requer autenticação de admin.",
                 "operationId": "courseUpdate",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "course",
                         "in": "path",
                         "description": "ID do curso",
                         "required": true,
@@ -857,7 +867,7 @@
                 "operationId": "courseDestroy",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "course",
                         "in": "path",
                         "description": "ID do curso",
                         "required": true,
@@ -898,7 +908,7 @@
                 ]
             }
         },
-        "/api/v1/lessons/{lesson_id}": {
+        "/api/v1/lessons/{lesson}": {
             "get": {
                 "tags": [
                     "Cursos"
@@ -908,7 +918,7 @@
                 "operationId": "lessonShow",
                 "parameters": [
                     {
-                        "name": "lesson_id",
+                        "name": "lesson",
                         "in": "path",
                         "description": "ID da aula",
                         "required": true,
@@ -960,7 +970,7 @@
                 "operationId": "lessonUpdate",
                 "parameters": [
                     {
-                        "name": "lesson_id",
+                        "name": "lesson",
                         "in": "path",
                         "description": "ID da aula",
                         "required": true,
@@ -976,20 +986,24 @@
                             "schema": {
                                 "properties": {
                                     "title": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "maxLength": 255
                                     },
                                     "description": {
                                         "type": "string",
-                                        "nullable": true
+                                        "nullable": true,
+                                        "maxLength": 5000
                                     },
                                     "video_url": {
                                         "type": "string",
-                                        "format": "url",
-                                        "nullable": true
+                                        "nullable": true,
+                                        "maxLength": 2048
                                     },
                                     "duration_in_minutes": {
                                         "type": "integer",
-                                        "nullable": true
+                                        "nullable": true,
+                                        "maximum": 1440,
+                                        "minimum": 1
                                     },
                                     "is_free_preview": {
                                         "type": "boolean"
@@ -1023,6 +1037,9 @@
                     "401": {
                         "description": "Não autenticado"
                     },
+                    "403": {
+                        "description": "Sem permissão (apenas admin ou instructor)"
+                    },
                     "404": {
                         "description": "Aula não encontrada"
                     }
@@ -1042,7 +1059,7 @@
                 "operationId": "lessonDestroy",
                 "parameters": [
                     {
-                        "name": "lesson_id",
+                        "name": "lesson",
                         "in": "path",
                         "description": "ID da aula",
                         "required": true,
@@ -1083,17 +1100,17 @@
                 ]
             }
         },
-        "/api/v1/modules/{module_id}/lessons": {
+        "/api/v1/modules/{module}/lessons": {
             "post": {
                 "tags": [
                     "Cursos"
                 ],
                 "summary": "Criar aula",
-                "description": "Cria uma nova aula dentro de um módulo. Requer autenticação (instructor ou admin).",
+                "description": "Cria uma nova aula dentro de um módulo. Requer autenticação (instructor ou admin). Video URL deve referenciar MinIO.",
                 "operationId": "lessonStore",
                 "parameters": [
                     {
-                        "name": "module_id",
+                        "name": "module",
                         "in": "path",
                         "description": "ID do módulo",
                         "required": true,
@@ -1114,21 +1131,26 @@
                                 "properties": {
                                     "title": {
                                         "type": "string",
-                                        "example": "Introdução ao violão"
+                                        "example": "Introdução ao violão",
+                                        "maxLength": 255
                                     },
                                     "description": {
                                         "type": "string",
-                                        "nullable": true
+                                        "nullable": true,
+                                        "maxLength": 5000
                                     },
                                     "video_url": {
                                         "type": "string",
-                                        "format": "url",
-                                        "nullable": true
+                                        "example": "https://minio.example.com/courses/lesson-1.mp4",
+                                        "nullable": true,
+                                        "maxLength": 2048
                                     },
                                     "duration_in_minutes": {
                                         "type": "integer",
                                         "example": 15,
-                                        "nullable": true
+                                        "nullable": true,
+                                        "maximum": 1440,
+                                        "minimum": 1
                                     },
                                     "is_free_preview": {
                                         "type": "boolean",
@@ -1163,6 +1185,9 @@
                     "401": {
                         "description": "Não autenticado"
                     },
+                    "403": {
+                        "description": "Sem permissão (apenas admin ou instructor)"
+                    },
                     "404": {
                         "description": "Módulo não encontrado"
                     },
@@ -1177,7 +1202,171 @@
                 ]
             }
         },
-        "/api/v1/courses/{course_id}/modules": {
+        "/api/v1/modules/{module}/lessons/upload": {
+            "post": {
+                "tags": [
+                    "Cursos"
+                ],
+                "summary": "Criar aula com upload único",
+                "description": "Cria aula em um módulo e faz upload do vídeo + materiais (pdf, imagens, vídeos) no MinIO em uma única requisição.",
+                "operationId": "lessonStoreWithUpload",
+                "parameters": [
+                    {
+                        "name": "module",
+                        "in": "path",
+                        "description": "ID do módulo",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "video_file"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Aula 01 - Introdução",
+                                        "maxLength": 255
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "duration_in_minutes": {
+                                        "type": "integer",
+                                        "example": 15,
+                                        "nullable": true
+                                    },
+                                    "is_free_preview": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "video_file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "materials[]": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    },
+                                    "material_titles[]": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Aula e materiais enviados com sucesso"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Sem permissão"
+                    },
+                    "404": {
+                        "description": "Módulo não encontrado"
+                    },
+                    "422": {
+                        "description": "Erro de validação"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/lessons/{lesson}/materials/upload": {
+            "post": {
+                "tags": [
+                    "Cursos"
+                ],
+                "summary": "Upload de material da aula",
+                "description": "Faz upload de um material (pdf, imagem ou vídeo) no MinIO e vincula à aula.",
+                "operationId": "lessonUploadMaterial",
+                "parameters": [
+                    {
+                        "name": "lesson",
+                        "in": "path",
+                        "description": "ID da aula",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "file"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Slides da Aula",
+                                        "maxLength": 255
+                                    },
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Material enviado com sucesso"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Sem permissão"
+                    },
+                    "404": {
+                        "description": "Aula não encontrada"
+                    },
+                    "422": {
+                        "description": "Erro de validação"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/courses/{course}/modules": {
             "post": {
                 "tags": [
                     "Cursos"
@@ -1187,7 +1376,7 @@
                 "operationId": "moduleStore",
                 "parameters": [
                     {
-                        "name": "course_id",
+                        "name": "course",
                         "in": "path",
                         "description": "ID do curso",
                         "required": true,
@@ -1203,9 +1392,20 @@
                         "application/json": {
                             "schema": {
                                 "required": [
+                                    "title",
                                     "order"
                                 ],
                                 "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Fundamentos",
+                                        "maxLength": 255
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 2000
+                                    },
                                     "order": {
                                         "type": "integer",
                                         "example": 1,
@@ -1240,6 +1440,9 @@
                     "401": {
                         "description": "Não autenticado"
                     },
+                    "403": {
+                        "description": "Sem permissão (apenas admin ou instructor)"
+                    },
                     "404": {
                         "description": "Curso não encontrado"
                     },
@@ -1254,17 +1457,17 @@
                 ]
             }
         },
-        "/api/v1/courses/{course_id}/modules/{module_id}": {
+        "/api/v1/courses/{course}/modules/{module}": {
             "put": {
                 "tags": [
                     "Cursos"
                 ],
                 "summary": "Atualizar módulo",
-                "description": "Atualiza a ordem de um módulo. Requer autenticação (instructor ou admin).",
+                "description": "Atualiza dados de um módulo. Requer autenticação (instructor ou admin).",
                 "operationId": "moduleUpdate",
                 "parameters": [
                     {
-                        "name": "course_id",
+                        "name": "course",
                         "in": "path",
                         "description": "ID do curso",
                         "required": true,
@@ -1273,7 +1476,7 @@
                         }
                     },
                     {
-                        "name": "module_id",
+                        "name": "module",
                         "in": "path",
                         "description": "ID do módulo",
                         "required": true,
@@ -1287,9 +1490,17 @@
                         "application/json": {
                             "schema": {
                                 "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 2000
+                                    },
                                     "order": {
                                         "type": "integer",
-                                        "example": 2,
                                         "minimum": 0
                                     }
                                 },
@@ -1321,6 +1532,9 @@
                     "401": {
                         "description": "Não autenticado"
                     },
+                    "403": {
+                        "description": "Sem permissão (apenas admin ou instructor)"
+                    },
                     "404": {
                         "description": "Módulo não encontrado"
                     }
@@ -1340,7 +1554,7 @@
                 "operationId": "moduleDestroy",
                 "parameters": [
                     {
-                        "name": "course_id",
+                        "name": "course",
                         "in": "path",
                         "description": "ID do curso",
                         "required": true,
@@ -1349,7 +1563,7 @@
                         }
                     },
                     {
-                        "name": "module_id",
+                        "name": "module",
                         "in": "path",
                         "description": "ID do módulo",
                         "required": true,
@@ -1522,7 +1736,7 @@
                 ]
             }
         },
-        "/api/v1/auth/register": {
+        "/api/v1/register": {
             "post": {
                 "tags": [
                     "Auth"
@@ -1679,7 +1893,7 @@
                 }
             }
         },
-        "/api/v1/auth/login": {
+        "/api/v1/login": {
             "post": {
                 "tags": [
                     "Auth"
@@ -1779,7 +1993,7 @@
                 }
             }
         },
-        "/api/v1/auth/logout": {
+        "/api/v1/logout": {
             "post": {
                 "tags": [
                     "Auth"
@@ -1819,7 +2033,7 @@
                 ]
             }
         },
-        "/api/v1/auth/me": {
+        "/api/v1/me": {
             "get": {
                 "tags": [
                     "Perfil"
@@ -1856,10 +2070,8 @@
                         "bearerAuth": []
                     }
                 ]
-            }
-        },
-        "/api/v1/auth/profile": {
-            "put": {
+            },
+            "post": {
                 "tags": [
                     "Perfil"
                 ],
@@ -1936,7 +2148,7 @@
                 ]
             }
         },
-        "/api/v1/auth/refresh": {
+        "/api/v1/refresh": {
             "post": {
                 "tags": [
                     "Auth"

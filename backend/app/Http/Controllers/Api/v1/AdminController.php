@@ -8,6 +8,7 @@ use App\Models\Enrollment;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use OpenApi\Annotations as OA;
 
 class AdminController extends Controller
 {

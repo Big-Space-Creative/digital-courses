@@ -7,19 +7,20 @@ use App\Http\Requests\StoreModuleRequest;
 use App\Http\Requests\UpdateModuleRequest;
 use App\Models\Course;
 use App\Models\Module;
+use OpenApi\Annotations as OA;
 
 class ModuleController extends Controller
 {
     /**
      * @OA\Post(
-     *     path="/api/v1/courses/{course_id}/modules",
+    *     path="/api/v1/courses/{course}/modules",
      *     operationId="moduleStore",
      *     tags={"Cursos"},
      *     summary="Criar módulo",
      *     description="Cria um novo módulo dentro de um curso. Requer autenticação (instructor ou admin).",
      *     security={{"bearerAuth":{}}},
      *
-     *     @OA\Parameter(name="course_id", in="path", required=true, description="ID do curso", @OA\Schema(type="integer", example=1)),
+    *     @OA\Parameter(name="course", in="path", required=true, description="ID do curso", @OA\Schema(type="integer", example=1)),
      *
      *     @OA\RequestBody(
      *         required=true,
@@ -50,6 +51,8 @@ class ModuleController extends Controller
      */
     public function store(StoreModuleRequest $request, $course_id)
     {
+        $this->authorize('create', Module::class);
+
         $course = Course::findOrFail($course_id);
 
         $validated = $request->validated();
@@ -64,15 +67,15 @@ class ModuleController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/api/v1/courses/{course_id}/modules/{module_id}",
+    *     path="/api/v1/courses/{course}/modules/{module}",
      *     operationId="moduleUpdate",
      *     tags={"Cursos"},
      *     summary="Atualizar módulo",
      *     description="Atualiza dados de um módulo. Requer autenticação (instructor ou admin).",
      *     security={{"bearerAuth":{}}},
      *
-     *     @OA\Parameter(name="course_id",  in="path", required=true, description="ID do curso",   @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="module_id",  in="path", required=true, description="ID do módulo",  @OA\Schema(type="integer")),
+    *     @OA\Parameter(name="course",  in="path", required=true, description="ID do curso",   @OA\Schema(type="integer")),
+    *     @OA\Parameter(name="module",  in="path", required=true, description="ID do módulo",  @OA\Schema(type="integer")),
      *
      *     @OA\RequestBody(
      *
@@ -102,6 +105,8 @@ class ModuleController extends Controller
     {
         $module = Module::where('course_id', $course_id)->findOrFail($module_id);
 
+        $this->authorize('update', $module);
+
         $validated = $request->validated();
 
         $module->update($validated);
@@ -114,15 +119,15 @@ class ModuleController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/api/v1/courses/{course_id}/modules/{module_id}",
+    *     path="/api/v1/courses/{course}/modules/{module}",
      *     operationId="moduleDestroy",
      *     tags={"Cursos"},
      *     summary="Excluir módulo",
      *     description="Remove permanentemente um módulo e suas aulas. Requer autenticação (admin).",
      *     security={{"bearerAuth":{}}},
      *
-     *     @OA\Parameter(name="course_id",  in="path", required=true, description="ID do curso",   @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="module_id",  in="path", required=true, description="ID do módulo",  @OA\Schema(type="integer")),
+    *     @OA\Parameter(name="course",  in="path", required=true, description="ID do curso",   @OA\Schema(type="integer")),
+    *     @OA\Parameter(name="module",  in="path", required=true, description="ID do módulo",  @OA\Schema(type="integer")),
      *
      *     @OA\Response(response=200, description="Módulo excluído",
      *
@@ -136,6 +141,8 @@ class ModuleController extends Controller
     public function destroy($course_id, $module_id)
     {
         $module = Module::where('course_id', $course_id)->findOrFail($module_id);
+        $this->authorize('delete', $module);
+
         $module->delete();
 
         return response()->json([

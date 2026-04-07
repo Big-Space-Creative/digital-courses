@@ -1,88 +1,98 @@
 # digital-courses
 
-Monorepo com backend Laravel agrupado em `backend/` e pasta dedicada (`frontend/`) para o futuro app React/Next.js que consumirá essa API.
-
-Instruções diretas para inicializar o backend Laravel localmente (PowerShell / Windows).
+Monorepo com backend Laravel em `backend/` e frontend Next.js em `frontend/`.
 
 ---
 
 ## Requisitos
 
 ### Backend (Laravel API)
-
 - PHP 8.2+
 - Composer
-- Git
 
-### Frontend (Next.js, opcional neste momento)
-
+### Frontend (Next.js)
 - Node.js 20+
 - npm ou pnpm
 
-### Setup Docker
-
+### Setup Docker (recomendado)
 - Docker Desktop
 - Docker Compose
 
+---
+
+## Setup com Docker
+
 Este projeto inclui configuração Docker completa (PHP-FPM, Nginx, PostgreSQL, Redis, MinIO e pgAdmin).
 
-**Setup rápido (Windows):**
-
-````powershell
-# 1. Copiar arquivo de ambiente para o backend
-Copy-Item .backend\.env.example .backend\.env
-
 ```powershell
-# Executar script de inicialização (faz tudo automaticamente)
+# 1. Copiar arquivo de ambiente
+Copy-Item backend\.env.example backend\.env
+
+# 2. Subir os containers
 docker compose up -d --build
-````
 
-**Acessar aplicação:**
+# 3. Gerar chave da aplicação e rodar migrations
+docker compose exec app php artisan key:generate
+docker compose exec app php artisan migrate
+```
 
-- API: http://localhost:8000
-- **Swagger UI: http://localhost:8000/api/documentation** ← documentação interativa
-- Frontend dev (quando houver Next.js): http://localhost:3000
-- pgAdmin: http://localhost:8080 (email/pwd: definidos em `.env`)
-- PostgreSQL: localhost:5432
-- MinIO: http://localhost:9000 (API S3) | http://localhost:9001 (console)
-- Redis: localhost:6379
+**Serviços disponíveis:**
+
+| Serviço    | URL                                    |
+|------------|----------------------------------------|
+| API        | http://localhost:8000                  |
+| Swagger UI | http://localhost:8000/api/documentation |
+| Frontend   | http://localhost:3000                  |
+| pgAdmin    | http://localhost:8080                  |
+| PostgreSQL | localhost:5432                         |
+| MinIO API  | http://localhost:9000                  |
+| MinIO Console | http://localhost:9001               |
+| Redis      | localhost:6379                         |
 
 **Comandos úteis Docker:**
 
 ```powershell
-docker-compose up -d              # Iniciar containers
-docker-compose down               # Parar containers
-docker-compose logs -f app        # Ver logs
-docker-compose exec app bash      # Acessar container
-docker-compose exec app php artisan migrate
-docker-compose exec app php artisan test
+docker compose up -d                       # Iniciar containers
+docker compose down                        # Parar containers
+docker compose logs -f app                 # Ver logs
+docker compose exec app bash               # Acessar container
+docker compose exec app php artisan migrate
+docker compose exec app php artisan test
 ```
 
-### Testes automatizados
+---
 
-O pacote já inclui um teste de feature cobrindo registro, login e `GET /api/me`. Execute:
+## Setup local (sem Docker)
 
 ```powershell
-php artisan test --filter=AuthEndpointsTest
+cd backend
+composer install
+Copy-Item .env.example .env
+php artisan key:generate
+php artisan jwt:secret          # gera JWT_SECRET no .env
+php artisan migrate
+php artisan serve --port=8000
 ```
 
-## � Documentação Swagger / OpenAPI
+---
 
-A API possui documentação interativa gerada automaticamente via **L5-Swagger** (swagger-php v6 + Swagger UI v5).
+## 📄 Documentação Swagger / OpenAPI
+
+A API possui documentação interativa gerada automaticamente via **L5-Swagger** (swagger-php v6).
 
 ### Acessar
 
 | URL | Descrição |
 |-----|-----------|
 | http://localhost:8000/api/documentation | Swagger UI — interface interativa |
-| http://localhost:8000/docs | JSON da spec OpenAPI 3.0 |
+| http://localhost:8000/docs              | JSON da spec OpenAPI 3.0          |
 
 ### Autenticar no Swagger UI
 
-1. Faça login via `POST /api/v1/auth/login` dentro do próprio Swagger UI
+1. Faça o login via `POST /api/v1/login` dentro do Swagger UI
 2. Copie o `access_token` retornado
 3. Clique em **Authorize** (cadeado 🔒) no topo da página
-4. Cole o token no campo **Value**: `Bearer <seu_token>`
+4. Cole o token no campo **Value** (sem prefixo — o tipo `bearer` já está configurado)
 5. Clique em **Authorize** → **Close**
 
 A partir daí, todos os endpoints protegidos serão autenticados automaticamente.
@@ -90,44 +100,62 @@ A partir daí, todos os endpoints protegidos serão autenticados automaticamente
 ### Regenerar a spec manualmente
 
 ```powershell
-docker exec digital-courses-app php artisan l5-swagger:generate
+docker compose exec app php artisan l5-swagger:generate
 ```
 
-> Em ambiente de desenvolvimento, a spec é **regerada automaticamente** a cada requisição (`L5_SWAGGER_GENERATE_ALWAYS=true`).
+> Em ambiente de desenvolvimento, a spec é **regerada automaticamente** a cada requisição com `L5_SWAGGER_GENERATE_ALWAYS=true`.
 
 ### Variáveis de ambiente relevantes
 
 ```env
 L5_SWAGGER_GENERATE_ALWAYS=true          # Regenera automaticamente (dev)
 L5_SWAGGER_CONST_HOST=http://localhost:8000  # URL base exibida na spec
-L5_SWAGGER_BASE_PATH=/api/v1            # Prefixo das rotas
+L5_SWAGGER_BASE_PATH=/api/v1             # Prefixo das rotas
+SWAGGER_ENABLED=true                     # Habilita a UI (false bloqueia em produção)
+```
+
+### Nota sobre swagger-php v6 e anotações @OA\
+
+O projeto usa **swagger-php v6**, que por padrão escaneia apenas **PHP Attributes** (`#[OA\...]`).
+Para que os docblocks `/** @OA\ */` nos controllers sejam reconhecidos, a dependência `doctrine/annotations` deve estar instalada (já está declarada em `composer.json`). Se o Swagger não gerar corretamente, verifique:
+
+```powershell
+# Dentro do container
+docker compose exec app composer show doctrine/annotations
+# Se não estiver instalado:
+docker compose exec app composer require doctrine/annotations:^2.0
 ```
 
 ---
 
-## �📡 Guia rápido da API (para o frontend) / Fluxo manual rápido (cURL ou Postman)
+## 📡 Referência da API
 
-Base URL (dev): `http://localhost:8000/api/v1`
+Base URL: `http://localhost:8000/api/v1`
 
-### Autenticação (JWT)
+Todas as requisições autenticadas exigem o header:
+```
+Authorization: Bearer <access_token>
+```
 
-- Após o login, use o token retornado no header:
-  - `Authorization: Bearer <TOKEN_JWT>`
+---
 
-### POST `/register` — Registro
+## 🔑 Auth — Autenticação JWT
+
+### POST `/register` — Registrar novo usuário
 
 **Body (JSON)**
 
 ```json
 {
-  "name": "Alice",
+  "name": "Alice Silva",
   "email": "alice@example.com",
   "password": "Password123",
   "password_confirmation": "Password123",
-  "role": "student",
-  "avatar_url": ""
+  "role": "student"
 }
 ```
+
+> `role` aceita: `student`, `instructor`, `admin`. Campo `avatar_url` é opcional (URL válida).
 
 **Response (201)**
 
@@ -136,11 +164,23 @@ Base URL (dev): `http://localhost:8000/api/v1`
   "success": true,
   "message": "Usuário registrado com sucesso",
   "data": {
-    "user": { "id", "name", "email", "role", "avatar_url", "created_at" },
-    "token": "..."
+    "user": {
+      "id": 1,
+      "name": "Alice Silva",
+      "email": "alice@example.com",
+      "role": "student",
+      "avatar_url": "",
+      "created_at": "2026-01-01T00:00:00.000000Z"
+    },
+    "access_token": "<JWT>",
+    "refresh_token": "<JWT_refresh>",
+    "token_type": "bearer",
+    "expires_in": 3600
   }
 }
 ```
+
+---
 
 ### POST `/login` — Login
 
@@ -153,65 +193,102 @@ Base URL (dev): `http://localhost:8000/api/v1`
 }
 ```
 
-**Response (200/201)**
+**Response (200)**
 
 ```json
 {
+  "success": true,
   "message": "Login bem-sucedido",
-  "user": { "id", "name", "email", "email_verified_at", "role", "subscription_type", "avatar_url", "deleted_at", "created_at", "updated_at" },
-  "token": "..."
+  "data": {
+    "user": {
+      "id": 1,
+      "name": "Alice Silva",
+      "email": "alice@example.com",
+      "email_verified_at": null,
+      "role": "student",
+      "subscription_type": "free",
+      "avatar_url": "",
+      "deleted_at": null,
+      "created_at": "2026-01-01T00:00:00.000000Z",
+      "updated_at": "2026-01-01T00:00:00.000000Z"
+    },
+    "access_token": "<JWT>",
+    "refresh_token": "<JWT_refresh>",
+    "token_type": "bearer",
+    "expires_in": 3600
+  }
 }
 ```
 
-### GET `/me` — Perfil autenticado
+---
 
-**Headers**
+### GET `/me` — Perfil do usuário autenticado
 
-- `Authorization: Bearer <TOKEN_JWT>`
+**Headers:** `Authorization: Bearer <access_token>`
 
-**Response (200/201)**
+**Response (200)**
 
 ```json
 {
   "message": "Usuário autenticado",
-  "user": { "id", "name", "email", "email_verified_at", "role", "subscription_type", "avatar_url", "deleted_at", "created_at", "updated_at" }
+  "user": {
+    "id": 1,
+    "name": "Alice Silva",
+    "email": "alice@example.com",
+    "email_verified_at": null,
+    "role": "student",
+    "subscription_type": "free",
+    "avatar_url": "",
+    "deleted_at": null,
+    "created_at": "2026-01-01T00:00:00.000000Z",
+    "updated_at": "2026-01-01T00:00:00.000000Z"
+  }
 }
 ```
 
+---
+
 ### POST `/me` — Atualizar perfil
 
-> **Observação:** o e-mail **não** pode ser alterado nesse endpoint. Apenas `name`, `phone` e `avatar_url`.
+> **Observação:** O e-mail **não** pode ser alterado por este endpoint. Campos disponíveis: `name`, `avatar_url`, `password`.
 
-**Headers**
+**Headers:** `Authorization: Bearer <access_token>`
 
-- `Authorization: Bearer <TOKEN_JWT>`
-
-**Body (JSON)**
+**Body (JSON)** — todos os campos são opcionais:
 
 ```json
 {
   "name": "Novo Nome",
-  "phone": "+55 11 99999-9999",
-  "avatar_url": "https://imagem.com/foto.png"
+  "avatar_url": "https://cdn.example.com/avatar.jpg",
+  "password": "NovaSenha123",
+  "password_confirmation": "NovaSenha123"
 }
 ```
 
-**Response (201)**
+**Response (200)**
 
 ```json
 {
-  "message": "Perfil atualizado com sucesso. Observação: o e-mail não pode ser alterado por este endpoint, apenas nome e número.",
-  "user": { "id", "name", "email", "email_verified_at", "role", "subscription_type", "avatar_url", "deleted_at", "created_at", "updated_at" }
+  "success": true,
+  "message": "Perfil atualizado com sucesso",
+  "user": {
+    "id": 1,
+    "name": "Novo Nome",
+    "email": "alice@example.com",
+    "role": "student",
+    "subscription_type": "free",
+    "avatar_url": "https://cdn.example.com/avatar.jpg"
+  }
 }
 ```
 
+---
+
 ### POST `/logout` — Logout
 
-**Headers**
+**Headers:** `Authorization: Bearer <access_token>`
 
-- `Authorization: Bearer <TOKEN_JWT>`
-
-**Response (200/201)**
+**Response (200)**
 
 ```json
 {
@@ -220,77 +297,465 @@ Base URL (dev): `http://localhost:8000/api/v1`
 }
 ```
 
-### POST `/refresh` — Refresh Token
+---
 
-> **Observação:** O token expirado pode ser usado aqui se estiver dentro do período de "refresh_ttl" (padrão de 2 semanas). O backend irá invalidar o token antigo e retornar um novo.
+### POST `/refresh` — Renovar access token
 
-**Headers**
+> Envie o `refresh_token` (obtido no login/register) no header `Authorization` ou no body.
 
-- `Authorization: Bearer <TOKEN_JWT_EXPIRADO_OU_VALIDO>`
+**Headers:** `Authorization: Bearer <refresh_token>`
 
-**Response (200/201)**
-
+**Ou Body (JSON):**
 ```json
-{
-  "message": "Token refreshed successfully",
-  "token": "eyJ0eXAiOiJKV1Qi..."
-}
-```
-
-### GET `/users` — Listagem (admin)
-
-**Headers**
-
-- `Authorization: Bearer <TOKEN_JWT>`
-
-**Response (200)**
-
-```json
-{
-  "message": "Lista de usuários",
-  "data": [
-    { "id", "name", "email", "role", "subscription_type", "avatar_url", "created_at", "updated_at" }
-  ]
-}
-```
-
-### PUT `/users/{id}` — Atualização (admin)
-
-**Headers**
-
-- `Authorization: Bearer <TOKEN_JWT>`
-
-**Body (JSON)**
-
-```json
-{
-  "name": "Novo Nome",
-  "email": "usuario@exemplo.com",
-  "role": "student",
-  "subscription_type": "premium",
-  "avatar_url": "https://imagem.com/foto.png"
-}
+{ "refresh_token": "<refresh_token>" }
 ```
 
 **Response (200)**
 
 ```json
 {
-  "message": "Usuário atualizado com sucesso",
+  "success": true,
+  "message": "Token renovado com sucesso",
   "data": {
-    "user": { "id", "name", "email", "role", "subscription_type", "avatar_url", "created_at", "updated_at" }
+    "access_token": "<novo_JWT>",
+    "token_type": "bearer",
+    "expires_in": 3600
   }
 }
 ```
 
 ---
 
-## 🔐 Painel Administrativo — `/api/v1/admin`
+## 👤 Usuários
 
-> Todas as rotas abaixo exigem:
->
-> - `Authorization: Bearer <TOKEN_JWT>` de um usuário com `role: admin`
-> - Caso contrário: `403 Forbidden`
+### GET `/users` — Listar usuários _(requer: admin)_
+
+**Headers:** `Authorization: Bearer <admin_token>`
+
+**Response (200)**
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Alice",
+    "email": "alice@example.com",
+    "role": "student",
+    "subscription_type": "free",
+    "avatar_url": ""
+  }
+]
+```
+
+---
+
+### PUT `/users/{id}` — Atualizar usuário _(requer: admin)_
+
+**Headers:** `Authorization: Bearer <admin_token>`
+
+**Body (JSON)** — campos opcionais:
+
+```json
+{
+  "name": "Novo Nome",
+  "email": "novo@example.com",
+  "role": "instructor"
+}
+```
+
+**Response (200)**
+
+```json
+{
+  "message": "Usuário atualizado com sucesso.",
+  "user": {
+    "id": 1,
+    "name": "Novo Nome",
+    "email": "novo@example.com",
+    "role": "instructor"
+  }
+}
+```
+
+---
+
+## 📚 Cursos
+
+### GET `/courses` — Listar ementa de cursos
+
+**Headers:** `Authorization: Bearer <token>`
+
+Retorna todos os cursos publicados com seus módulos e aulas (sem `video_url`). Use para montar a vitrine/sidebar.
+
+**Response (200)**
+
+```json
+{
+  "message": "Cursos listados com sucesso",
+  "data": [
+    {
+      "id": 1,
+      "title": "Violão do Zero",
+      "slug": "violao-do-zero",
+      "description": "...",
+      "price": "49.90",
+      "thumbnail": "https://...",
+      "is_published": true,
+      "modules": [
+        {
+          "id": 1,
+          "title": "Fundamentos",
+          "order": 1,
+          "lessons": [
+            {
+              "id": 1,
+              "title": "Introdução ao violão",
+              "description": "...",
+              "duration_in_minutes": 15,
+              "is_free_preview": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### GET `/courses/{id}` — Detalhe de um curso
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response (200)**
+
+```json
+{
+  "message": "Curso encontrado",
+  "data": { ...curso com módulos e aulas... }
+}
+```
+
+---
+
+### POST `/courses` — Criar curso _(requer: admin)_
+
+**Headers:** `Authorization: Bearer <admin_token>`
+
+**Body (JSON)**
+
+```json
+{
+  "title": "Violão do Zero",
+  "description": "Aprenda violão desde o início.",
+  "price": 49.90,
+  "thumbnail": "https://cdn.example.com/thumb.jpg",
+  "is_published": false
+}
+```
+
+> `title` é **obrigatório**. O `slug` é gerado automaticamente a partir do título.
+
+**Response (201)**
+
+```json
+{
+  "message": "Curso criado com sucesso",
+  "data": {
+    "id": 1,
+    "title": "Violão do Zero",
+    "slug": "violao-do-zero",
+    "description": "Aprenda violão desde o início.",
+    "price": "49.90",
+    "thumbnail": "https://cdn.example.com/thumb.jpg",
+    "is_published": false,
+    "created_at": "2026-01-01T00:00:00.000000Z",
+    "updated_at": "2026-01-01T00:00:00.000000Z"
+  }
+}
+```
+
+---
+
+### PUT `/courses/{id}` — Editar curso _(requer: admin)_
+
+**Headers:** `Authorization: Bearer <admin_token>`
+
+**Body (JSON)** — todos opcionais:
+
+```json
+{
+  "title": "Violão Avançado",
+  "description": "Nova descrição",
+  "price": 99.90,
+  "thumbnail": "https://...",
+  "is_published": true
+}
+```
+
+**Response (200)**
+
+```json
+{
+  "message": "Curso atualizado com sucesso",
+  "data": { ...curso atualizado... }
+}
+```
+
+---
+
+### DELETE `/courses/{id}` — Excluir curso _(requer: admin)_
+
+> Usa **soft delete** — o registro fica na base com `deleted_at` preenchido.
+
+**Headers:** `Authorization: Bearer <admin_token>`
+
+**Response (200)**
+
+```json
+{ "message": "Curso excluído com sucesso" }
+```
+
+---
+
+## 🗂️ Módulos _(requer: admin ou instructor)_
+
+### POST `/courses/{course_id}/modules`
+
+**Body (JSON)**
+
+```json
+{
+  "title": "Fundamentos",
+  "description": "Módulo introdutório",
+  "order": 1
+}
+```
+
+**Response (201)**
+
+```json
+{
+  "message": "Módulo criado com sucesso",
+  "data": { ...módulo... }
+}
+```
+
+---
+
+### PUT `/courses/{course_id}/modules/{module_id}`
+
+**Body (JSON)** — campos opcionais:
+
+```json
+{
+  "title": "Fundamentos Revisados",
+  "order": 2
+}
+```
+
+**Response (200)**
+
+```json
+{
+  "message": "Módulo atualizado com sucesso",
+  "data": { ...módulo... }
+}
+```
+
+---
+
+### DELETE `/courses/{course_id}/modules/{module_id}`
+
+**Response (200)**
+
+```json
+{ "message": "Módulo excluído com sucesso" }
+```
+
+---
+
+## 🎥 Aulas
+
+### GET `/lessons/{lesson_id}` — Visualizar aula e vídeo
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Regras de acesso:**
+- `admin` ou `instructor`: acesso total sempre
+- `student premium`: acesso a qualquer aula
+- `student free`: apenas aulas com `is_free_preview: true`
+- Sem autenticação ou student free tentando aula paga → **403 Forbidden**
+
+**Response (200)**
+
+```json
+{
+  "message": "Aula encontrada",
+  "data": {
+    "id": 1,
+    "module_id": 1,
+    "title": "Introdução ao violão",
+    "description": "...",
+    "video_url": "https://minio.example.com/courses/lesson-1.mp4",
+    "duration_in_minutes": 15,
+    "is_free_preview": true
+  }
+}
+```
+
+**Response (403)** — quando acesso negado:
+
+```json
+{ "message": "Acesso negado. Esta aula é exclusiva para assinantes Premium." }
+```
+
+---
+
+### POST `/modules/{module_id}/lessons` — Criar aula _(requer: admin ou instructor)_
+
+**Body (JSON)**
+
+```json
+{
+  "title": "Introdução ao violão",
+  "description": "Aula inaugural do curso.",
+  "video_url": "https://minio.example.com/courses/lesson-1.mp4",
+  "duration_in_minutes": 15,
+  "is_free_preview": false
+}
+```
+
+> `title` é **obrigatório**. `video_url` deve ser uma URL válida apontando para o MinIO.
+
+**Response (201)**
+
+```json
+{
+  "message": "Aula criada com sucesso",
+  "data": { ...aula... }
+}
+```
+
+---
+
+### POST `/modules/{module_id}/lessons/upload` — Criar aula + upload único no MinIO _(requer: admin ou instructor)_
+
+Endpoint para a tela de criação de lesson do frontend: cria a aula e faz upload do vídeo + materiais em uma única requisição.
+
+**Content-Type:** `multipart/form-data`
+
+**Campos:**
+
+- `title` (string, obrigatório)
+- `description` (string, opcional)
+- `duration_in_minutes` (int, opcional)
+- `is_free_preview` (boolean, opcional)
+- `video_file` (file, obrigatório; mp4,mov,avi,mkv,webm)
+- `materials[]` (files, opcional; pdf,jpg,jpeg,png,webp,gif,mp4,mov,avi,mkv,webm)
+- `material_titles[]` (strings, opcional; mesmo índice de `materials[]`)
+
+**Regras de persistência:**
+
+- Upload no MinIO via disco `s3`
+- `lessons.video_url` salvo com URL pública do vídeo
+- `materials.file_path` salvo com URL pública de cada material
+- `materials.type` classificado em `pdf`, `image`, `video` ou `file`
+- Operação transacional: em erro, rollback no banco + tentativa de limpeza dos arquivos no MinIO
+
+**Response (201)**
+
+```json
+{
+  "message": "Aula criada com upload de vídeo e materiais no MinIO com sucesso",
+  "data": {
+    "id": 12,
+    "module_id": 5,
+    "title": "Aula 01 - Introdução",
+    "video_url": "http://localhost:9000/courses/.../video.mp4",
+    "materials": [
+      {
+        "id": 31,
+        "lesson_id": 12,
+        "title": "Slides Aula 01",
+        "file_path": "http://localhost:9000/courses/.../slides.pdf",
+        "type": "pdf"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### POST `/lessons/{lesson_id}/materials/upload` — Upload de material avulso _(requer: admin ou instructor)_
+
+Endpoint para anexar material em uma aula já existente.
+
+**Content-Type:** `multipart/form-data`
+
+**Campos:**
+
+- `title` (string, obrigatório)
+- `file` (file, obrigatório; pdf,jpg,jpeg,png,webp,gif,mp4,mov,avi,mkv,webm)
+
+**Response (201)**
+
+```json
+{
+  "message": "Material enviado com sucesso",
+  "data": {
+    "id": 45,
+    "lesson_id": 12,
+    "title": "Resumo da Aula",
+    "file_path": "http://localhost:9000/courses/.../resumo.pdf",
+    "type": "pdf"
+  }
+}
+```
+
+---
+
+### PUT `/lessons/{lesson_id}` — Editar aula _(requer: admin ou instructor)_
+
+**Body (JSON)** — campos opcionais:
+
+```json
+{
+  "title": "Novo Título",
+  "video_url": "https://...",
+  "is_free_preview": true,
+  "duration_in_minutes": 20
+}
+```
+
+**Response (200)**
+
+```json
+{
+  "message": "Aula atualizada com sucesso",
+  "data": { ...aula... }
+}
+```
+
+---
+
+### DELETE `/lessons/{lesson_id}` — Excluir aula _(requer: admin ou instructor)_
+
+**Response (200)**
+
+```json
+{ "message": "Aula excluída com sucesso" }
+```
+
+---
+
+## 🔐 Painel Administrativo — `/admin`
+
+> Todos os endpoints abaixo exigem `Authorization: Bearer <token>` de um usuário com `role: admin`.
+
+---
 
 ### GET `/admin/dashboard` — Métricas gerais
 
@@ -299,6 +764,7 @@ Base URL (dev): `http://localhost:8000/api/v1`
 ```json
 {
   "success": true,
+  "message": "Dashboard carregado com sucesso",
   "data": {
     "users": {
       "total": 50,
@@ -318,13 +784,13 @@ Base URL (dev): `http://localhost:8000/api/v1`
 
 ### GET `/admin/users` — Listar usuários
 
-**Query params opcionais**
+**Query params opcionais:**
 
-| Param      | Exemplo   | Descrição                                          |
-| ---------- | --------- | -------------------------------------------------- |
-| `role`     | `student` | Filtra por role (`student`, `instructor`, `admin`) |
-| `search`   | `alice`   | Busca por nome ou e-mail                           |
-| `per_page` | `20`      | Itens por página (padrão: 20)                      |
+| Param      | Exemplo   | Descrição                             |
+|------------|-----------|---------------------------------------|
+| `role`     | `student` | Filtra por role (student/instructor/admin) |
+| `search`   | `alice`   | Busca por nome ou e-mail              |
+| `per_page` | `20`      | Itens por página (padrão: 20)         |
 
 **Response (200):** Paginação Laravel com array de usuários.
 
@@ -332,11 +798,13 @@ Base URL (dev): `http://localhost:8000/api/v1`
 
 ### GET `/admin/users/{id}` — Detalhe de usuário
 
-**Response (200):** Dados completos do usuário + cursos nos quais está matriculado.
+**Response (200):** Dados completos do usuário + cursos matriculados.
 
 ---
 
 ### PATCH `/admin/users/{id}/role` — Alterar role
+
+> Um admin **não pode** alterar a própria role.
 
 **Body (JSON)**
 
@@ -344,8 +812,7 @@ Base URL (dev): `http://localhost:8000/api/v1`
 { "role": "instructor" }
 ```
 
-- Valores aceitos: `student`, `instructor`, `admin`
-- Um admin não pode alterar a própria role
+Valores aceitos: `student`, `instructor`, `admin`
 
 **Response (200)**
 
@@ -353,7 +820,7 @@ Base URL (dev): `http://localhost:8000/api/v1`
 {
   "success": true,
   "message": "Role do usuário atualizada de 'student' para 'instructor' com sucesso.",
-  "data": { "id", "name", "email", "role" }
+  "data": { "id": 2, "name": "Bob", "email": "bob@example.com", "role": "instructor" }
 }
 ```
 
@@ -361,14 +828,15 @@ Base URL (dev): `http://localhost:8000/api/v1`
 
 ### PATCH `/admin/users/{id}/subscription` — Alterar plano do aluno
 
+> Só funciona para usuários com `role: student`.
+
 **Body (JSON)**
 
 ```json
 { "subscription_type": "premium" }
 ```
 
-- Valores aceitos: `free`, `premium`
-- Só funciona para usuários com `role: student`
+Valores aceitos: `free`, `premium`
 
 **Response (200)**
 
@@ -376,7 +844,7 @@ Base URL (dev): `http://localhost:8000/api/v1`
 {
   "success": true,
   "message": "Plano do aluno atualizado para 'premium' com sucesso.",
-  "data": { "id", "name", "email", "subscription_type" }
+  "data": { "id": 3, "name": "Carol", "email": "carol@example.com", "subscription_type": "premium" }
 }
 ```
 
@@ -384,210 +852,158 @@ Base URL (dev): `http://localhost:8000/api/v1`
 
 ### GET `/admin/courses` — Listar cursos (admin)
 
-Retorna **todos** os cursos, inclusive rascunhos não publicados.
+Retorna **todos** os cursos, inclusive rascunhos.
 
-**Query params opcionais**
+**Query params opcionais:**
 
-| Param          | Exemplo  | Descrição                       |
-| -------------- | -------- | ------------------------------- |
-| `search`       | `violão` | Busca no título ou descrição    |
-| `is_published` | `true`   | Filtra por status de publicação |
-| `per_page`     | `20`     | Itens por página (padrão: 20)   |
+| Param          | Exemplo  | Descrição                        |
+|----------------|----------|----------------------------------|
+| `search`       | `violão` | Busca no título ou descrição     |
+| `is_published` | `true`   | Filtra por status de publicação  |
+| `per_page`     | `20`     | Itens por página (padrão: 20)    |
 
-**Response (200):** Paginação com `enrollments_count` e `lessons_count` incluídos em cada curso.
+**Response (200):** Paginação com `enrollments_count` e `lessons_count` em cada curso.
 
 ---
 
 ### GET `/admin/courses/{id}` — Detalhe de curso (admin)
 
-**Response (200):** Curso completo com módulos, aulas e lista de alunos matriculados (id, name, email, subscription_type).
+**Response (200):** Curso completo com módulos, aulas e lista de alunos matriculados.
 
-### 📚 Gestão de Cursos (Course Management)
+---
 
-#### GET `/courses` — Listar Ementa
+## 📋 Planos de estudantes (free vs premium)
 
-- **Headers:** `Authorization: Bearer <TOKEN>`
-- **Acesso:** Qualquer autenticado (estudantes, instrutores, admins).
-- **Retorno:** Retorna os cursos ativos, com seus módulos e aulas integradas na mesma árvore JSON.
-- **Nota Frontend:** Este endpoint **não** retorna o `video_url` por motivos de segurança. Use-o para montar a sidebar ou listagem visual do curso.
+- Usuários com `role: student` possuem `subscription_type` (`free` ou `premium`).
+- **Student premium**: acesso a todas as aulas.
+- **Student free**: acesso apenas às aulas com `is_free_preview: true`.
+- **Instructor/Admin**: acesso irrestrito, independente do subscription.
 
-#### GET `/lessons/{lesson_id}` — Visualizar Aula e Vídeo
-
-- **Headers:** `Authorization: Bearer <TOKEN>`
-- **Acesso:** O Backend faz a checagem cruzada.
-  - Se `role` for `admin` ou `instructor`, libera direto.
-  - Se for estudante, só libera se a aula tiver `is_free_preview: true` OU o usuário possuir `subscription_type: 'premium'`.
-  - Caso seja estudante Free tentando ver aula Premium, retorna erro HTTP `403 Forbidden`.
-- **Retorno:** JSON com os dados completos da aula (`video_url`, materiais extras, etc).
-
-#### Endpoints Administrativos (Criação e Edição)
-
-- **POST/PUT/DELETE `/courses` e `/courses/{id}`:** Apenas `admin`.
-- **POST/PUT/DELETE Módulos (`/courses/{course}/modules`):** `admin` e `instructor`.
-- **POST/PUT/DELETE Aulas (`/modules/{module}/lessons`):** `admin` e `instructor`.
-  - **Importante para o front de criação:** Ao criar/editar a aula, envie o campo booleano `is_free_preview` (`true`/`false`) para determinar se a aula será aberta ao público Free ou restrita aos assinantes Premium.
-
-## Planos de estudantes (free vs premium)
-
-- Todo usuário com `role = student` possui o campo `subscription_type` (`free` ou `premium`).
-- Estudantes **premium** têm acesso a todas as aulas do catálogo.
-- Estudantes **free** só visualizam aulas marcadas como prévia (`lessons.is_free_preview = true`).
-- Instructors/Admins sempre podem ver tudo, independente desse campo.
-
-### Como configurar
-
-1. Defina o plano do estudante (exemplos):
+### Configurar via Tinker
 
 ```powershell
-php artisan tinker
+docker compose exec app php artisan tinker
 >>> $user = \App\Models\User::find(1);
 >>> $user->subscription_type = 'premium';
 >>> $user->save();
 ```
 
-2. Marque as aulas liberadas para contas free:
-
 ```powershell
-php artisan tinker
 >>> $lesson = \App\Models\Lesson::find(10);
 >>> $lesson->is_free_preview = true;
 >>> $lesson->save();
 ```
 
-A lógica de negócio está centralizada em `User::canAccessLesson($lesson)` e coberta pelo teste `UserLessonAccessTest`.
-
-## Notas rápidas sobre autenticação (Sanctum) e SPA
-
-- Para SPA: antes de chamadas autenticadas, chame `/sanctum/csrf-cookie`.
-- Use fetch/axios com credenciais (cookies):
-
-```js
-fetch("http://localhost:8000/sanctum/csrf-cookie", { credentials: "include" });
-// depois: fetch('http://localhost:8000/api/rota', { credentials: 'include' })
-```
-
-## Problemas comuns e soluções
-
-- "Project directory is not empty" ao rodar `composer create-project` no root com arquivos: crie em pasta temporária e copie para `backend/`. Exemplo (Windows):
-
-```powershell
-composer create-project --prefer-dist -n laravel/laravel digital-courses-temp
-robocopy .\digital-courses-temp .\digital-courses\backend /E /XF README.md
-Remove-Item -Recurse -Force .\digital-courses-temp
-```
-
-- Composer pedindo confirmação durante instalação: use `-n` ou `--no-interaction`.
-- CORS/Sanctum: ajustar `config/cors.php` e `config/sanctum.php` com o origin do frontend (ex.: `http://localhost:3000`).
-
-## Scripts úteis
-
-- `php artisan migrate`
-- `php artisan db:seed`
-- `php artisan test`
-
-> O frontend Next.js terá seus próprios scripts (`npm run dev`, `npm run build`, etc.) dentro da pasta `frontend/` assim que for criado.
-
-## Frontend (Next.js) – organização
-
-1. Entre na pasta `frontend/` e inicialize o projeto (ex.: `npx create-next-app@latest .`).
-2. Mantenha o servidor dev na porta 3000 (já exposta no `docker-compose`).
-3. Utilize variáveis de ambiente dedicadas (`frontend/.env.local`) para configurar a URL do backend (`http://localhost:8000`).
-4. O serviço `frontend` no `docker-compose` monta essa pasta automaticamente; se `package.json` não existir o container apenas ficará em espera.
-
-> Não instalei o Next.js por você para manter o repositório limpo, mas toda a estrutura e containers já estão preparados.
-
-## Estrutura do repositório
-
-- `backend/` — contém todo o projeto Laravel (app, bootstrap, config, routes, docker configs etc.)
-- `frontend/` — pasta reservada para o app React/Next.js; inicialize com `npx create-next-app frontend` quando estiver pronto
-- `Dockerfile`, `docker-compose.yml`, `docker-init.bat` — orquestram backend e frontend via containers
-
-## Contato / responsáveis
-
-- Dono do repositório / responsável: <nome/email>
-- Canal de comunicação: Slack / Teams / etc.
+A lógica está em `app/Http/Controllers/Api/v1/LessonController.php` e coberta pelo teste `UserLessonAccessTest`.
 
 ---
 
-## Alterações importantes no banco (resumo)
+## 🗺️ Mapa completo de rotas
 
-- Tabelas presentes / adicionadas:
-  - `users` (id, name, email UNIQUE, password, email_verified_at, remember_token, timestamps)
-    - Colunas extras: `role` (student|instructor|admin), `subscription_type` (free|premium), `avatar_url`, `deleted_at`
-  - `password_reset_tokens`, `sessions`
-  - `cache`, `cache_locks`
-  - `jobs`, `job_batches`, `failed_jobs`
-  - `categories` (id, name, timestamps) — criada em 2026-01-07
-  - `lessons` inclui `is_free_preview` para liberar aulas a contas free
+| Método | Endpoint | Acesso | Controller |
+|--------|----------|--------|------------|
+| `POST` | `/api/v1/register` | Público | `AuthController@register` |
+| `POST` | `/api/v1/login` | Público | `AuthController@login` |
+| `GET`  | `/api/v1/me` | Autenticado | `AuthController@me` |
+| `POST` | `/api/v1/me` | Autenticado | `AuthController@updateProfile` |
+| `POST` | `/api/v1/logout` | Autenticado | `AuthController@logout` |
+| `POST` | `/api/v1/refresh` | Autenticado | `AuthController@refresh` |
+| `GET`  | `/api/v1/users` | Admin | `UserController@index` |
+| `PUT`  | `/api/v1/users/{id}` | Admin | `UserController@update` |
+| `GET`  | `/api/v1/courses` | Autenticado | `CourseController@index` |
+| `GET`  | `/api/v1/courses/{id}` | Autenticado | `CourseController@show` |
+| `POST` | `/api/v1/courses` | Admin | `CourseController@store` |
+| `PUT`  | `/api/v1/courses/{id}` | Admin | `CourseController@update` |
+| `DELETE` | `/api/v1/courses/{id}` | Admin | `CourseController@destroy` |
+| `POST` | `/api/v1/courses/{id}/modules` | Admin, Instructor | `ModuleController@store` |
+| `PUT`  | `/api/v1/courses/{id}/modules/{mod}` | Admin, Instructor | `ModuleController@update` |
+| `DELETE` | `/api/v1/courses/{id}/modules/{mod}` | Admin, Instructor | `ModuleController@destroy` |
+| `GET`  | `/api/v1/lessons/{id}` | Autenticado* | `LessonController@show` |
+| `POST` | `/api/v1/modules/{id}/lessons` | Admin, Instructor | `LessonController@store` |
+| `POST` | `/api/v1/modules/{id}/lessons/upload` | Admin, Instructor | `LessonController@storeWithUpload` |
+| `PUT`  | `/api/v1/lessons/{id}` | Admin, Instructor | `LessonController@update` |
+| `DELETE` | `/api/v1/lessons/{id}` | Admin, Instructor | `LessonController@destroy` |
+| `POST` | `/api/v1/lessons/{id}/materials/upload` | Admin, Instructor | `LessonController@uploadMaterial` |
+| `GET`  | `/api/v1/admin/dashboard` | Admin | `AdminController@dashboard` |
+| `GET`  | `/api/v1/admin/users` | Admin | `AdminController@listUsers` |
+| `GET`  | `/api/v1/admin/users/{id}` | Admin | `AdminController@showUser` |
+| `PATCH` | `/api/v1/admin/users/{id}/role` | Admin | `AdminController@updateUserRole` |
+| `PATCH` | `/api/v1/admin/users/{id}/subscription` | Admin | `AdminController@updateUserSubscription` |
+| `GET`  | `/api/v1/admin/courses` | Admin | `AdminController@listCourses` |
+| `GET`  | `/api/v1/admin/courses/{id}` | Admin | `AdminController@showCourse` |
 
-- Seeders:
-  - `DatabaseSeeder` cria um usuário de teste (email: `test@example.com`).
+> \* `GET /lessons/{id}`: autenticado, mas o acesso à aula depende do plano (free/premium) e do flag `is_free_preview`.
 
-Comandos rápidos para garantir o banco pronto:
+---
+
+## 🧪 Testes automatizados
 
 ```powershell
-php artisan migrate
-php artisan db:seed
+# Todos os testes
+docker compose exec app php artisan test
+
+# Filtrar por suíte
+docker compose exec app php artisan test --filter=AuthEndpointsTest
+docker compose exec app php artisan test --filter=UserLessonAccessTest
 ```
 
-Coloque abaixo informações adicionais do projeto (variáveis `.env` obrigatórias, endpoints importantes e decisões sobre o app em `frontend/`).
+Arquivos de teste em `backend/tests/`:
+- `AuthEndpointsTest.php` — registro, login, me
+- `StatusEndpointTest.php` — health check
+- `UserLessonAccessTest.php` — controle de acesso free/premium
+- `ExampleTest.php` — teste padrão Laravel
 
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+---
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## 🗄️ Estrutura do banco de dados
 
-## About Laravel
+**Tabelas principais:**
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+| Tabela    | Colunas relevantes |
+|-----------|--------------------|
+| `users`   | `id`, `name`, `email`, `password`, `role` (student\|instructor\|admin), `subscription_type` (free\|premium), `avatar_url`, `deleted_at` |
+| `courses` | `id`, `title`, `slug`, `description`, `price`, `thumbnail`, `is_published`, `published_at`, `deleted_at` |
+| `modules` | `id`, `course_id`, `title`, `description`, `order` |
+| `lessons` | `id`, `module_id`, `title`, `description`, `video_url`, `duration_in_minutes`, `is_free_preview` |
+| `categories` | `id`, `name` |
+| `enrollments` | `id`, `user_id`, `course_id`, `status` |
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 📁 Estrutura do repositório
 
-## Learning Laravel
+```
+digital-courses/
+├── backend/          # Laravel 12 (PHP 8.2+)
+│   ├── app/
+│   │   ├── Http/Controllers/
+│   │   │   ├── AuthController.php        # login, register, me, logout, refresh, updateProfile
+│   │   │   └── Api/v1/
+│   │   │       ├── CourseController.php
+│   │   │       ├── ModuleController.php
+│   │   │       ├── LessonController.php
+│   │   │       ├── AdminController.php
+│   │   │       └── UserController.php
+│   │   ├── Http/Middleware/
+│   │   │   ├── IsAdmin.php               # alias: 'admin'
+│   │   │   ├── CheckRole.php             # alias: 'role'
+│   │   │   └── SwaggerAuth.php           # alias: 'swagger.auth'
+│   │   └── Models/
+│   │       ├── User.php
+│   │       ├── Course.php
+│   │       ├── Module.php
+│   │       └── Lesson.php
+│   ├── routes/api.php                    # Todas as rotas API
+│   ├── config/l5-swagger.php             # Configuração Swagger
+│   └── database/migrations/              # 14 migrations
+├── frontend/         # Next.js 16 + React 19 + Tailwind 4
+├── docker-compose.yml
+└── README.md
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Contato / responsáveis
 
-## Laravel Sponsors
-
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- Responsável: Big Space Creative
+- Repositório: Big-Space-Creative/digital-courses
