@@ -4,23 +4,30 @@ export interface LoginData {
 }
 
 type LoginSuccessResponse = {
+  success: true;
   message: string;
-  user: {
-    id: number;
-    name: string;
-    email: string;
-    email_verified_at: null;
-    role: string;
-    subscription_type: string;
-    avatar_url: string;
-    deleted_at: null;
-    created_at: string;
-    updated_at: string;
+  data: {
+    user: {
+      id: number;
+      name: string;
+      email: string;
+      email_verified_at: null;
+      role: string;
+      subscription_type: string;
+      avatar_url: string;
+      deleted_at: null;
+      created_at: string;
+      updated_at: string;
+    };
+    access_token: string;
+    refresh_token: string;
   };
-  token: string;
+  token_type: "bearer";
+  expires_in: number;
 };
 
 type LoginErrorResponse = {
+  success: false;
   message: string;
 };
 
@@ -45,7 +52,8 @@ type RegisterSuccessResponse = {
       avatar_url: string;
       created_at: string;
     };
-    token: string;
+    access_token: string;
+    refresh_token: string;
   };
 };
 

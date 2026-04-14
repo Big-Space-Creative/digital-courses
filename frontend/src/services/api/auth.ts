@@ -27,6 +27,7 @@ export async function login(formData: LoginData): Promise<LoginResponse> {
 
     if (!res.ok) {
       return {
+        success: false,
         message: data.message ?? "Credenciais inválidas",
       };
     }
@@ -34,6 +35,7 @@ export async function login(formData: LoginData): Promise<LoginResponse> {
     return data;
   } catch (error) {
     return {
+      success: false,
       message: "Erro inesperado",
     };
   }

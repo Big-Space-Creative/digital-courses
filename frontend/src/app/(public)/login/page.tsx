@@ -15,7 +15,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 //Components
 import { Input } from "@/components/form/Input";
 import { loginAction } from "@/app/actions/auth";
-import { toast } from "@/components/ui/toast";
+import { toast } from "@/components/ui/Toast";
+import { useUser } from "@/context/UserContext";
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -24,6 +25,7 @@ const loginSchema = z.object({
 
 export default function Login() {
   const router = useRouter();
+  const { setUser } = useUser();
   const {
     register,
     handleSubmit,
@@ -49,11 +51,13 @@ export default function Login() {
       description: "Agora voce pode acessar seus cursos.",
       variant: "success",
     });
-    router.push("/curso");
+
+    setUser(res.user ?? null);
+    router.push("/aluno/home");
   };
 
   return (
-    <div className="flex min-h-dvh justify-between bg-white">
+    <div className="flex min-h-dvh justify-between">
       <div className="flex flex-1 flex-col justify-center gap-10 px-5 md:items-center">
         <div className="flex items-center md:hidden">
           <MdMusicNote className="text-primary size-6" />
