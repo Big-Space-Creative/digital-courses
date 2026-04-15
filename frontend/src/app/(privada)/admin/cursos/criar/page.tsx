@@ -147,7 +147,7 @@ function LessonCard({
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-          TÃ­tulo da aula *
+          Título da aula *
           <input
             value={lesson.title}
             onChange={(e) => onChange({ ...lesson, title: e.target.value })}
@@ -158,7 +158,7 @@ function LessonCard({
         </label>
 
         <label className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-          DuraÃ§Ã£o (minutos)
+          Duração (minutos)
           <input
             type="number"
             min="1"
@@ -178,7 +178,7 @@ function LessonCard({
           rows={3}
           value={lesson.description}
           onChange={(e) => onChange({ ...lesson, description: e.target.value })}
-          placeholder="Descreva o que o aluno aprenderÃ¡ nesta aula..."
+          placeholder="Descreva o que o aluno aprenderá nesta aula..."
           className="mt-2 w-full resize-none rounded-lg border border-gray-200 px-3 py-3 text-sm font-normal text-gray-700 outline-none focus:border-orange-300"
         />
       </label>
@@ -200,7 +200,7 @@ function LessonCard({
 
       <div className="mt-4">
         <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-          VÃ­deo da aula *
+          Vídeo da aula *
         </p>
 
         {lesson.videoFile ? (
@@ -219,7 +219,7 @@ function LessonCard({
                 if (videoInputRef.current) videoInputRef.current.value = "";
               }}
               className="shrink-0 text-gray-400 hover:text-red-500"
-              aria-label="Remover vÃ­deo"
+              aria-label="Remover vídeo"
             >
               <MdClose size={16} />
             </button>
@@ -232,7 +232,7 @@ function LessonCard({
           >
             <MdOutlineUploadFile className="mx-auto text-gray-400" size={22} />
             <p className="mt-2 text-xs font-medium text-gray-500 normal-case">
-              Clique para selecionar o arquivo de vÃ­deo
+              Clique para selecionar o arquivo de vídeo
             </p>
             <p className="mt-1 text-xs text-gray-400 normal-case">
               MP4, MOV, AVI, MKV, WebM
@@ -251,7 +251,7 @@ function LessonCard({
 
       <div className="mt-4">
         <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-          Materiais de referÃªncia
+          Materiais de referência
         </p>
 
         {lesson.materials.length > 0 && (
@@ -269,7 +269,7 @@ function LessonCard({
                   value={mat.title}
                   onChange={(e) => handleMatTitleChange(mat.id, e.target.value)}
                   className="flex-1 bg-transparent text-sm text-gray-700 outline-none"
-                  placeholder="TÃ­tulo do material"
+                placeholder="Título do material"
                 />
                 <span className="shrink-0 text-xs text-gray-400">
                   ({(mat.file.size / 1024).toFixed(0)} KB)
@@ -344,7 +344,7 @@ export default function CreateCoursePage() {
   }
 
   function requestDeleteModule(moduleId: string, moduleName: string) {
-    setDeleteTarget({ type: "module", moduleId, label: `o mÃ³dulo "${moduleName}"` });
+    setDeleteTarget({ type: "module", moduleId, label: `o módulo "${moduleName}"` });
   }
 
   function handleAddLesson(moduleId: string) {
@@ -422,8 +422,8 @@ export default function CreateCoursePage() {
 
   function handleSubmitCourse() {
     if (!courseTitle.trim()) {
-      toast("Campo obrigatÃ³rio", {
-        description: "Informe o tÃ­tulo do curso para continuar.",
+      toast("Campo obrigatório", {
+        description: "Informe o título do curso para continuar.",
         variant: "error",
       });
       return;
@@ -431,7 +431,7 @@ export default function CreateCoursePage() {
 
     if (modules.length === 0) {
       toast("Estrutura vazia", {
-        description: "Adicione pelo menos um mÃ³dulo ao curso.",
+        description: "Adicione pelo menos um módulo ao curso.",
         variant: "error",
       });
       return;
@@ -439,8 +439,8 @@ export default function CreateCoursePage() {
 
     const allLessons = modules.flatMap((m) => m.lessons);
     if (allLessons.length === 0) {
-      toast("MÃ³dulo vazio", {
-        description: "Adicione pelo menos uma aula em algum mÃ³dulo.",
+      toast("Módulo vazio", {
+        description: "Adicione pelo menos uma aula em algum módulo.",
         variant: "error",
       });
       return;
@@ -448,8 +448,8 @@ export default function CreateCoursePage() {
 
     const lessonSemTitulo = allLessons.find((l) => !l.title.trim());
     if (lessonSemTitulo) {
-      toast("TÃ­tulo de aula ausente", {
-        description: "Preencha o tÃ­tulo de todas as aulas antes de continuar.",
+      toast("Título de aula ausente", {
+        description: "Preencha o título de todas as aulas antes de continuar.",
         variant: "error",
       });
       return;
@@ -457,8 +457,8 @@ export default function CreateCoursePage() {
 
     const lessonSemVideo = allLessons.find((l) => !l.videoFile);
     if (lessonSemVideo) {
-      toast("VÃ­deo ausente", {
-        description: `A aula "${lessonSemVideo.title}" ainda nÃ£o tem vÃ­deo.`,
+      toast("Vídeo ausente", {
+        description: `A aula "${lessonSemVideo.title}" ainda não tem vídeo.`,
         variant: "error",
       });
       return;
@@ -466,8 +466,8 @@ export default function CreateCoursePage() {
 
     startTransition(async () => {
       try {
-        toast("Criando cursoâ€¦", {
-          description: "Aguarde enquanto salvamos as informaÃ§Ãµes.",
+        toast("Criando curso...", {
+          description: "Aguarde enquanto salvamos as informações.",
           variant: "info",
         });
 
@@ -493,13 +493,37 @@ export default function CreateCoursePage() {
         }));
         fd.append("modules", JSON.stringify(moduleMeta));
 
+        async function uploadDirectlyToS3(file: File): Promise<string> {
+          const res = await fetch("/api/admin/courses/upload-url", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ filename: file.name, content_type: file.type }),
+          });
+          const data = await res.json();
+          if(!data.success) throw new Error(data.error || "Erro ao pegar URL");
+          
+          const putRes = await fetch(data.upload_url, {
+            method: "PUT",
+            headers: { "Content-Type": file.type },
+            body: file,
+          });
+          if(!putRes.ok) throw new Error(`Falha no upload: ${putRes.statusText}`);
+          return data.path;
+        }
+
+        toast("Iniciando uploads...", { description: "Preparando arquivos...", variant: "info" });
+
         for (const mod of modules) {
           for (const lesson of mod.lessons) {
             if (lesson.videoFile) {
-              fd.append(`video_${lesson.id}`, lesson.videoFile);
+              toast(`Enviando vídeo (Aula ${lesson.title.substring(0,10)}...)`, { variant: "info" });
+              const s3Path = await uploadDirectlyToS3(lesson.videoFile);
+              fd.append(`video_path_${lesson.id}`, s3Path);
             }
             for (const mat of lesson.materials) {
-              fd.append(`mat_file_${lesson.id}_${mat.id}`, mat.file);
+              toast(`Enviando material (${mat.title.substring(0,10)}...)`, { variant: "info" });
+              const matPath = await uploadDirectlyToS3(mat.file);
+              fd.append(`mat_path_${lesson.id}_${mat.id}`, matPath);
               fd.append(`mat_title_${lesson.id}_${mat.id}`, mat.title);
             }
           }
@@ -524,7 +548,7 @@ export default function CreateCoursePage() {
         }
 
         toast("Curso criado com sucesso!", {
-          description: "A estrutura jÃ¡ estÃ¡ pronta para aparecer para os alunos.",
+          description: "A estrutura já está pronta para aparecer para os alunos.",
           variant: "success",
         });
 
@@ -570,7 +594,7 @@ export default function CreateCoursePage() {
               disabled={isPending}
               className="bg-primary hover:bg-primary-dark rounded-lg px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition disabled:opacity-60"
             >
-              {isPending ? "Criandoâ€¦" : "Criar Curso"}
+              {isPending ? "Criando..." : "Criar Curso"}
             </button>
           </div>
         </section>
@@ -578,16 +602,16 @@ export default function CreateCoursePage() {
         <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
             <MdOutlineInfo className="text-primary" size={18} />
-            InformaÃ§Ãµes Gerais
+            Informações Gerais
           </h3>
 
           <div className="flex flex-col gap-4">
             <label className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-              TÃ­tulo do curso *
+              Título do curso *
               <input
                 value={courseTitle}
                 onChange={(e) => setCourseTitle(e.target.value)}
-                placeholder="Ex: Guitarra do zero ao avanÃ§ado"
+                placeholder="Ex: Guitarra do zero ao avançado"
                 required
                 className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-normal text-gray-700 outline-none focus:border-orange-300"
               />
@@ -615,12 +639,12 @@ export default function CreateCoursePage() {
             </label>
 
             <label className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-              DescriÃ§Ã£o do curso
+              Descrição do curso
               <textarea
                 rows={4}
                 value={courseDescription}
                 onChange={(e) => setCourseDescription(e.target.value)}
-                placeholder="Descreva o que o aluno aprenderÃ¡ neste curso..."
+                placeholder="Descreva o que o aluno aprenderá neste curso..."
                 className="mt-2 w-full resize-none rounded-lg border border-gray-200 px-3 py-3 text-sm font-normal text-gray-700 outline-none focus:border-orange-300"
               />
             </label>
@@ -643,21 +667,21 @@ export default function CreateCoursePage() {
         <section className="mt-6">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-xl font-semibold text-gray-800">
-              Estrutura de MÃ³dulos
+              Estrutura de Módulos
             </h3>
             <button
               type="button"
               onClick={() => setIsModuleModalOpen(true)}
               className="text-primary rounded-lg bg-orange-100 px-3 py-2 text-sm font-semibold hover:bg-orange-200"
             >
-              + Novo MÃ³dulo
+              + Novo Módulo
             </button>
           </div>
 
           <div className="space-y-4">
             {modules.length === 0 && (
               <article className="rounded-xl border border-dashed border-orange-300 bg-orange-50/40 p-6 text-center text-sm text-gray-500">
-                Nenhum mÃ³dulo criado. Clique em + Novo MÃ³dulo para comeÃ§ar.
+                Nenhum módulo criado. Clique em + Novo Módulo para começar.
               </article>
             )}
 
@@ -669,7 +693,7 @@ export default function CreateCoursePage() {
                 <header className="mb-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3">
                   <div>
                     <p className="text-primary text-xs font-bold tracking-wider uppercase">
-                      MÃ³dulo {String(moduleIndex + 1).padStart(2, "0")}
+                      Módulo {String(moduleIndex + 1).padStart(2, "0")}
                     </p>
                     <h4 className="font-semibold text-gray-900">{module.name}</h4>
                   </div>
@@ -680,7 +704,7 @@ export default function CreateCoursePage() {
                       onClick={() => handleMoveModule(module.id, "up")}
                       disabled={moduleIndex === 0}
                       className="rounded-md p-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
-                      aria-label={`Mover mÃ³dulo ${moduleIndex + 1} para cima`}
+                      aria-label={`Mover módulo ${moduleIndex + 1} para cima`}
                     >
                       <MdKeyboardArrowUp size={19} />
                     </button>
@@ -689,7 +713,7 @@ export default function CreateCoursePage() {
                       onClick={() => handleMoveModule(module.id, "down")}
                       disabled={moduleIndex === modules.length - 1}
                       className="rounded-md p-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
-                      aria-label={`Mover mÃ³dulo ${moduleIndex + 1} para baixo`}
+                      aria-label={`Mover módulo ${moduleIndex + 1} para baixo`}
                     >
                       <MdKeyboardArrowDown size={19} />
                     </button>
@@ -697,7 +721,7 @@ export default function CreateCoursePage() {
                       type="button"
                       onClick={() => requestDeleteModule(module.id, module.name)}
                       className="rounded-md p-1 hover:bg-red-50 hover:text-red-600"
-                      aria-label={`Apagar mÃ³dulo ${moduleIndex + 1}`}
+                      aria-label={`Apagar módulo ${moduleIndex + 1}`}
                     >
                       <MdOutlineDelete size={17} />
                     </button>
@@ -707,7 +731,7 @@ export default function CreateCoursePage() {
 
                 {module.lessons.length === 0 && (
                   <div className="mb-4 rounded-lg border border-dashed border-gray-300 bg-white px-4 py-6 text-center text-sm text-gray-500">
-                    MÃ³dulo vazio. Clique em Adicionar Aula para inserir a primeira aula.
+                    Módulo vazio. Clique em Adicionar Aula para inserir a primeira aula.
                   </div>
                 )}
 

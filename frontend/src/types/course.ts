@@ -22,6 +22,7 @@ export type LessonUploadedResponse = {
   data: {
     id: number;
     title: string;
+    thumbnail?: string | null;
     video_url: string;
     materials: { id: number; file_path: string }[];
   };
@@ -32,22 +33,30 @@ export type LessonUploadedResponse = {
 
 export type MaterialState = {
   id: string;
+  dbId?: number;
   title: string;
-  file: File;
+  file: File | null;
+  path?: string | null;
+  type?: string | null;
 };
 
 export type LessonState = {
   id: string;
+  dbId?: number;
   title: string;
   description: string;
   durationMinutes: string;
   isFreePreview: boolean;
   videoFile: File | null;
+  videoUrl?: string | null;
+  thumbnailFile?: File | null;
+  thumbnailUrl?: string | null;
   materials: MaterialState[];
 };
 
 export type ModuleState = {
   id: string;
+  dbId?: number;
   name: string;
   lessons: LessonState[];
 };

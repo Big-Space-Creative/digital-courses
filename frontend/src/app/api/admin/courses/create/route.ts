@@ -85,8 +85,8 @@ export async function POST(request: Request) {
       const createdCourseId =
         typeof courseRes?.data?.id === "number"
           ? courseRes.data.id
-          : typeof (courseRes as { id?: unknown })?.id === "number"
-            ? ((courseRes as { id: number }).id)
+          : typeof (courseRes as any)?.id === "number"
+            ? ((courseRes as any).id)
             : null;
 
       if (!createdCourseId) {
@@ -136,8 +136,9 @@ export async function POST(request: Request) {
 
       for (const lesson of mod.lessons) {
         const videoFile = formData.get(`video_${lesson.id}`);
+        const videoPath = formData.get(`video_path_${lesson.id}`) as string | null;
 
-        if (!isFileLike(videoFile) || videoFile.size === 0) {
+        if ((!isFileLike(videoFile) || videoFile.size === 0) && !videoPath) {
           return NextResponse.json(
             {
               success: false,
@@ -148,16 +149,23 @@ export async function POST(request: Request) {
           );
         }
 
-        const materials: { title: string; file: File }[] = [];
+        const materials: { title: string; file?: File; path?: string }[] = [];
         const matPrefix = `mat_file_${lesson.id}_`;
+        const matPathPrefix = `mat_path_${lesson.id}_`;
 
         for (const [key, value] of formData.entries()) {
-          if (key.startsWith(matPrefix) && isFileLike(value) && value.size > 0) {
-            const matId = key.replace(matPrefix, "");
-            const matTitle =
-              (formData.get(`mat_title_${lesson.id}_${matId}`) as string | null) ??
-              "Material";
-            materials.push({ title: matTitle, file: value });
+          const isFile = key.startsWith(matPrefix) && isFileLike(value) && value.size > 0;
+          const isPath = key.startsWith(matPathPrefix) && typeof value === 'string' && value.length > 0;
+          
+          if (isFile || isPath) {
+            const matId = key.replace(isFile ? matPrefix : matPathPrefix, "");
+            const matTitle = (formData.get(`mat_title_${lesson.id}_${matId}`) as string | null) ?? "Material";
+            
+            if (isFile) {
+                materials.push({ title: matTitle, file: value });
+            } else if (isPath) {
+                materials.push({ title: matTitle, path: value });
+            }
           }
         }
 
@@ -169,7 +177,8 @@ export async function POST(request: Request) {
               ? parseInt(lesson.durationMinutes, 10)
               : undefined,
             isFreePreview: lesson.isFreePreview,
-            videoFile,
+            videoFile: isFileLike(videoFile) ? videoFile : undefined,
+            videoPath: videoPath || undefined,
             materials: materials.length > 0 ? materials : undefined,
           });
         } catch (err) {

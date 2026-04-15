@@ -16,6 +16,7 @@ import {
   MdAddCircleOutline,
   MdOutlineBookmarks,
   MdOutlineDelete,
+  MdOutlineEdit,
   MdOutlineSchool,
   MdOutlineVisibility,
   MdOutlineVisibilityOff,
@@ -119,7 +120,7 @@ export default function ManageCoursesPage() {
         return;
       }
 
-      toast("Curso excluÃ­do", {
+      toast("Curso excluído", {
         description: `"${target.title}" foi removido.`,
         variant: "success",
       });
@@ -138,7 +139,7 @@ export default function ManageCoursesPage() {
       const result = await togglePublishCourseAction(course.id, newState);
 
       if (!result.success) {
-        toast("Erro ao alterar publicaÃ§Ã£o", {
+        toast("Erro ao alterar publicação", {
           description: result.error ?? "Tente novamente",
           variant: "error",
         });
@@ -148,7 +149,7 @@ export default function ManageCoursesPage() {
       toast(newState ? "Curso publicado" : "Curso despublicado", {
         description: newState
           ? `"${course.title}" agora aparece como curso principal em /aluno/home.`
-          : `"${course.title}" foi ocultado da experiÃªncia do aluno.`,
+          : `"${course.title}" foi ocultado da experiência do aluno.`,
         variant: "success",
       });
 
@@ -171,7 +172,7 @@ export default function ManageCoursesPage() {
                 Gerenciar Cursos
               </h2>
               <p className="mt-1 max-w-2xl text-sm text-gray-600">
-                O curso publicado aqui Ã© o mesmo que aparece para o aluno em
+                O curso publicado aqui é o mesmo que aparece para o aluno em
                 <span className="font-semibold text-gray-800"> /aluno/home</span>.
               </p>
             </div>
@@ -206,11 +207,11 @@ export default function ManageCoursesPage() {
                     {featuredCourse.title}
                   </p>
                   <p className="mt-1 text-sm text-gray-500">
-                    Esse Ã© o curso atualmente exibido para os alunos.
+                    Esse é o curso atualmente exibido para os alunos.
                   </p>
                 </div>
                 <span className="rounded-lg border border-dashed border-gray-200 bg-white px-4 py-2 text-sm text-gray-500">
-                  EdiÃ§Ã£o detalhada em consolidaÃ§Ã£o
+                  Edição detalhada em consolidação
                 </span>
               </div>
             ) : (
@@ -249,11 +250,11 @@ export default function ManageCoursesPage() {
               <thead>
                 <tr className="bg-gray-100 text-xs font-semibold tracking-[0.12em] text-gray-500 uppercase">
                   <th className="px-6 py-4">Curso</th>
-                  <th className="px-6 py-4">MÃ³dulos</th>
+                  <th className="px-6 py-4">Módulos</th>
                   <th className="px-6 py-4">Aulas</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4">Criado em</th>
-                  <th className="px-6 py-4 text-center">AÃ§Ãµes</th>
+                  <th className="px-6 py-4 text-center">Ações</th>
                 </tr>
               </thead>
 
@@ -339,14 +340,14 @@ export default function ManageCoursesPage() {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-1.5 text-gray-600">
                             <MdOutlineBookmarks size={14} className="text-gray-400" />
-                            {course.modules?.length ?? "â€”"}
+                            {course.modules?.length ?? "�??"}
                           </div>
                         </td>
 
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-1.5 text-gray-600">
                             <MdOutlineSchool size={14} className="text-gray-400" />
-                            {course.lessons_count ?? "â€”"}
+                            {course.lessons_count ?? "�??"}
                           </div>
                         </td>
 
@@ -395,20 +396,14 @@ export default function ManageCoursesPage() {
                               )}
                             </button>
 
-                            <span
-                              className="rounded-md p-1.5 text-gray-300"
-                              aria-label={`EdiÃ§Ã£o de ${course.title} ainda indisponÃ­vel`}
-                              title="EdiÃ§Ã£o detalhada em consolidaÃ§Ã£o"
+                            <Link
+                              href={`/admin/cursos/${course.id}/editar`}
+                              className="rounded-md p-1.5 transition hover:bg-gray-100 hover:text-orange-600"
+                              aria-label={`Editar ${course.title}`}
+                              title="Editar curso"
                             >
-                              <svg
-                                viewBox="0 0 24 24"
-                                className="h-[18px] w-[18px]"
-                                fill="currentColor"
-                                aria-hidden="true"
-                              >
-                                <path d="M3 17.25V21h3.75l11-11-3.75-3.75-11 11Zm17.71-10.04a1.003 1.003 0 0 0 0-1.42l-2.5-2.5a1.003 1.003 0 0 0-1.42 0l-1.96 1.96 3.75 3.75 2.13-1.79Z" />
-                              </svg>
-                            </span>
+                              <MdOutlineEdit size={18} />
+                            </Link>
 
                             <button
                               type="button"
@@ -432,8 +427,8 @@ export default function ManageCoursesPage() {
           <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 p-4 text-sm text-gray-500">
             <span>
               {loading
-                ? "Carregandoâ€¦"
-                : `Exibindo ${meta.from ?? 0}â€“${meta.to ?? 0} de ${meta.total} cursos`}
+                ? "Carregando�?�"
+                : `Exibindo ${meta.from ?? 0}�??${meta.to ?? 0} de ${meta.total} cursos`}
             </span>
             <div className="flex items-center gap-1">
               <button
@@ -475,7 +470,7 @@ export default function ManageCoursesPage() {
         open={Boolean(deleteTarget)}
         label={deleteTarget?.title ?? ""}
         title="Excluir curso"
-        description="Essa aÃ§Ã£o Ã© irreversÃ­vel. Todos os mÃ³dulos e aulas associados tambÃ©m serÃ£o removidos."
+        description="Essa ação é irreversível. Todos os módulos e aulas associados também serão removidos."
         confirmLabel="Sim, excluir"
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}

@@ -8,8 +8,10 @@ const nextConfig: NextConfig = {
     proxyClientMaxBodySize: "100mb",
   },
   images: {
-    domains: ["images.unsplash.com"],
-    remotePatterns: [{ protocol: "https", hostname: "example.com" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "example.com" },
+      { protocol: "https", hostname: "images.unsplash.com" },
+    ],
   },
 };
 

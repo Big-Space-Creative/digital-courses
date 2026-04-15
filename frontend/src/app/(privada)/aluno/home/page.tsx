@@ -20,7 +20,7 @@ type CourseWithModules = ApiCourse & { modules: ApiModule[] };
 export default function Home() {
   const [course, setCourse] = useState<CourseWithModules | null>(null);
   const [loading, startLoading] = useTransition();
-  const [openModules, setOpenModules] = useState<string[]>([]);
+  const [openModules, setOpenModules] = useState<number[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const user = {
@@ -34,7 +34,7 @@ export default function Home() {
       if (!result.success) {
         setCourse(null);
         setLoadError(result.error);
-        toast("Curso indisponÃ­vel", {
+        toast("Curso indisponível", {
           description: result.error,
           variant: "error",
         });
@@ -44,7 +44,7 @@ export default function Home() {
       setLoadError(null);
       setCourse(result.data);
       if (result.data.modules?.length) {
-        setOpenModules([result.data.modules[0].title]);
+        setOpenModules([result.data.modules[0].id]);
       }
     });
   }, []);
@@ -53,9 +53,11 @@ export default function Home() {
     fetchCourse();
   }, [fetchCourse]);
 
-  const toggleModule = (title: string) => {
+  const toggleModule = (moduleId: number) => {
     setOpenModules((prev) =>
-      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title],
+      prev.includes(moduleId)
+        ? prev.filter((id) => id !== moduleId)
+        : [...prev, moduleId],
     );
   };
 
@@ -74,11 +76,11 @@ export default function Home() {
       <div className="mx-auto flex min-h-screen w-full max-w-3xl items-center justify-center p-6">
         <div className="w-full rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
           <h1 className="text-secondary text-2xl font-bold">
-            Nenhum curso disponÃ­vel agora
+            Nenhum curso disponível agora
           </h1>
           <p className="mt-2 text-sm text-gray-500">
             {loadError ??
-              "Assim que o administrador publicar um curso, ele aparecerÃ¡ aqui."}
+              "Assim que o administrador publicar um curso, ele aparecerá aqui."}
           </p>
         </div>
       </div>
@@ -87,7 +89,7 @@ export default function Home() {
 
   const modules = course.modules ?? [];
   const totalLessons = modules.reduce(
-    (acc, m) => acc + (m.lessons?.length || 0),
+    (acc, moduleItem) => acc + (moduleItem.lessons?.length || 0),
     0,
   );
   const completedLessons = 0;
@@ -104,7 +106,7 @@ export default function Home() {
             Bem-vindo de volta, {user.name}
           </h1>
           <p className="text-base text-white/60">
-            VocÃª estÃ¡ cursando <strong>{course.title}</strong>.
+            Você está cursando <strong>{course.title}</strong>.
           </p>
           {course.description && (
             <p className="max-w-2xl text-sm leading-6 text-white/75">
@@ -112,7 +114,7 @@ export default function Home() {
             </p>
           )}
           <ProgressBar
-            label="Aulas ConcluÃ­das"
+            label="Aulas concluídas"
             current={completedLessons}
             max={totalLessons === 0 ? 1 : totalLessons}
           />
@@ -122,7 +124,7 @@ export default function Home() {
               className="bg-primary hover:bg-primary-dark mt-2 flex size-fit items-center gap-2 rounded-lg px-6 py-3 text-white transition-colors"
             >
               <MdOutlinePlayCircleFilled className="size-5" />
-              <p className="text-base">Iniciar curso</p>
+              <p className="text-base">Continuar curso</p>
             </Link>
           )}
         </div>
@@ -146,24 +148,25 @@ export default function Home() {
 
       <div className="flex w-full flex-col gap-5">
         <h1 className="text-secondary border-b-2 border-black/20 pb-5 text-xl font-bold">
-          Trilha de Aprendizado
+          Trilha de aprendizado
         </h1>
 
         {modules.length === 0 && (
-          <p className="text-gray-500">Este curso ainda nÃ£o possui mÃ³dulos.</p>
+          <p className="text-gray-500">Este curso ainda não possui módulos.</p>
         )}
 
-        {modules.map((module) => {
-          const modTotalLessons = module.lessons?.length || 0;
-          const isOpen = openModules.includes(module.title);
+        {modules.map((moduleItem) => {
+          const moduleLessons = moduleItem.lessons ?? [];
+          const modTotalLessons = moduleLessons.length;
+          const isOpen = openModules.includes(moduleItem.id);
 
           return (
             <div
-              key={module.id}
+              key={moduleItem.id}
               className="flex flex-col items-center justify-between overflow-hidden rounded-xl border border-gray-100 shadow-sm"
             >
               <div
-                onClick={() => toggleModule(module.title)}
+                onClick={() => toggleModule(moduleItem.id)}
                 className="flex w-full cursor-pointer items-center justify-between bg-white p-6 transition-colors hover:bg-gray-50"
               >
                 <div className="flex items-center gap-4">
@@ -171,7 +174,7 @@ export default function Home() {
                     <MdPlayArrow className="size-5" />
                   </div>
                   <div>
-                    <h2 className="font-bold text-gray-800">{module.title}</h2>
+                    <h2 className="font-bold text-gray-800">{moduleItem.title}</h2>
                     <p className="text-sm text-gray-500">
                       {modTotalLessons} {modTotalLessons === 1 ? "aula" : "aulas"}
                     </p>
@@ -179,7 +182,7 @@ export default function Home() {
                 </div>
                 <div className="flex gap-4">
                   <div className="bg-orange-200 text-primary hidden rounded-full px-3 py-1 text-xs font-semibold md:block">
-                    AcessÃ­vel
+                    Acessível
                   </div>
                   <MdArrowBackIos
                     className={`text-gray-400 transition-transform duration-300 ${
@@ -196,7 +199,7 @@ export default function Home() {
               >
                 <div className="overflow-hidden bg-gray-50">
                   <div className="flex w-full flex-col gap-2 p-4">
-                    {module.lessons?.map((lesson, idx) => (
+                    {moduleLessons.map((lesson, idx) => (
                       <Link
                         href={`/aluno/aula/${lesson.id}`}
                         key={lesson.id}
@@ -211,14 +214,14 @@ export default function Home() {
                         <span className="text-xs font-medium text-gray-500">
                           {lesson.duration_in_minutes
                             ? `${lesson.duration_in_minutes} min`
-                            : "VÃ­deo"}
+                            : "Vídeo"}
                         </span>
                       </Link>
                     ))}
 
                     {modTotalLessons === 0 && (
                       <p className="p-3 text-sm text-gray-500">
-                        Nenhuma aula neste mÃ³dulo.
+                        Nenhuma aula neste módulo.
                       </p>
                     )}
                   </div>

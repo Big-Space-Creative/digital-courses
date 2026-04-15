@@ -4,18 +4,19 @@ import { useMemo, useState } from "react";
 import {
   MdFolder,
   MdImage,
+  MdInsertDriveFile,
   MdMusicNote,
   MdOutlineFileDownload,
   MdPictureAsPdf,
   MdSend,
+  MdVideocam,
 } from "react-icons/md";
 
 type Material = {
-  id: string;
+  id: number;
   title: string;
   url: string;
   type: string;
-  size: string;
 };
 
 type Comment = {
@@ -27,56 +28,50 @@ type Comment = {
 
 type LessonTabsProps = {
   resumo: string;
-  dicas: string;
+  dicas?: string | null;
   materials: Material[];
+  comments: Comment[];
 };
+
+function materialIcon(type: string) {
+  if (type === "pdf") return <MdPictureAsPdf size={24} />;
+  if (type === "audio" || type === "mp3") return <MdMusicNote size={24} />;
+  if (type === "video") return <MdVideocam size={24} />;
+  if (type === "image") return <MdImage size={24} />;
+  return <MdInsertDriveFile size={24} />;
+}
+
+function materialAccent(type: string) {
+  if (type === "pdf") return "bg-red-50 text-red-500";
+  if (type === "audio" || type === "mp3") return "bg-blue-50 text-blue-500";
+  if (type === "video") return "bg-violet-50 text-violet-500";
+  if (type === "image") return "bg-amber-50 text-amber-500";
+  return "bg-slate-100 text-slate-500";
+}
 
 export default function LessonTabs({
   resumo,
   dicas,
   materials,
+  comments: initialComments,
 }: LessonTabsProps) {
   const [activeTab, setActiveTab] = useState<"resumo" | "comentarios">(
     "resumo",
   );
   const [commentInput, setCommentInput] = useState("");
-  const [comments, setComments] = useState<Comment[]>([
-    {
-      id: 1,
-      author: "Gabriel Ferreira Camargo",
-      avatar: "GF",
-      message:
-        "Melhor curso de violao, sem duvida nenhum recomendo, 10 estrelas",
-    },
-    {
-      id: 2,
-      author: "Gabriel Ferreira Camargo",
-      avatar: "GF",
-      message:
-        "Melhor curso de violao, sem duvida nenhum recomendo, 10 estrelas",
-    },
-    {
-      id: 3,
-      author: "Gabriel Ferreira Camargo",
-      avatar: "GF",
-      message:
-        "Melhor curso de violao, sem duvida nenhum recomendo, 10 estrelas",
-    },
-  ]);
+  const [comments, setComments] = useState<Comment[]>(initialComments);
 
   const commentsCount = useMemo(() => comments.length, [comments]);
 
   const handleAddComment = () => {
     const value = commentInput.trim();
-    if (!value) {
-      return;
-    }
+    if (!value) return;
 
     setComments((prev) => [
       ...prev,
       {
-        id: prev.length + 1,
-        author: "Voce",
+        id: Date.now(),
+        author: "Você",
         avatar: "VC",
         message: value,
       },
@@ -97,7 +92,7 @@ export default function LessonTabs({
                 : "border-transparent text-slate-500 hover:text-slate-700"
             }`}
           >
-            Resumo da Aula
+            Resumo da aula
           </button>
         </li>
         <li>
@@ -110,7 +105,7 @@ export default function LessonTabs({
                 : "border-transparent text-slate-500 hover:text-slate-700"
             }`}
           >
-            Comentarios ({commentsCount})
+            Comentários ({commentsCount})
           </button>
         </li>
       </ul>
@@ -120,66 +115,64 @@ export default function LessonTabs({
           <div className="flex flex-1 flex-col gap-6 lg:max-w-1/2">
             <p>{resumo}</p>
 
-            <div className="flex flex-col gap-1 rounded-lg border-l-4 bg-slate-200 px-4 py-2">
-              <h1 className="text-secondary font-bold">Dicas para praticar</h1>
-              <p>{dicas}</p>
-            </div>
+            {dicas && (
+              <div className="flex flex-col gap-1 rounded-lg border-l-4 bg-slate-200 px-4 py-2">
+                <h1 className="text-secondary font-bold">Dicas para praticar</h1>
+                <p>{dicas}</p>
+              </div>
+            )}
           </div>
 
           <div className="w-full space-y-4 lg:w-80">
             <div className="mb-6 flex items-center gap-3">
               <MdFolder className="size-7 text-orange-500" />
               <h2 className="text-lg leading-tight font-bold text-slate-800">
-                Materiais de <br /> Referencia
+                Materiais de <br /> Referência
               </h2>
             </div>
 
-            {materials.map((material) => {
-              const isPdf = material.type === "pdf";
-              const isAudio = material.type === "mp3";
+            {materials.length === 0 && (
+              <div className="rounded-xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
+                Esta aula ainda não possui materiais complementares.
+              </div>
+            )}
 
-              return (
-                <a
-                  key={material.id}
-                  href={material.url}
-                  download
-                  className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+            {materials.map((material) => (
+              <a
+                key={material.id}
+                href={material.url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+              >
+                <div
+                  className={`flex size-12 items-center justify-center rounded-lg ${materialAccent(material.type)}`}
                 >
-                  <div
-                    className={`flex size-12 items-center justify-center rounded-lg ${
-                      isPdf
-                        ? "bg-red-50 text-red-500"
-                        : isAudio
-                          ? "bg-blue-50 text-blue-500"
-                          : "bg-amber-50 text-amber-500"
-                    }`}
-                  >
-                    {isPdf ? (
-                      <MdPictureAsPdf size={24} />
-                    ) : isAudio ? (
-                      <MdMusicNote size={24} />
-                    ) : (
-                      <MdImage size={24} />
-                    )}
-                  </div>
+                  {materialIcon(material.type)}
+                </div>
 
-                  <div className="flex-1">
-                    <h3 className="text-sm leading-snug font-bold text-slate-800">
-                      {material.title}
-                    </h3>
-                    <p className="text-[10px] font-medium text-slate-400 uppercase">
-                      {material.type} • {material.size}
-                    </p>
-                  </div>
+                <div className="flex-1">
+                  <h3 className="text-sm leading-snug font-bold text-slate-800">
+                    {material.title}
+                  </h3>
+                  <p className="text-[10px] font-medium text-slate-400 uppercase">
+                    {material.type}
+                  </p>
+                </div>
 
-                  <MdOutlineFileDownload className="size-6 text-slate-400" />
-                </a>
-              );
-            })}
+                <MdOutlineFileDownload className="size-6 text-slate-400" />
+              </a>
+            ))}
           </div>
         </div>
       ) : (
         <div className="space-y-5 bg-[#f2f2f2] p-4 md:p-6">
+          {comments.length === 0 && (
+            <div className="rounded-2xl bg-white p-4 text-sm text-slate-500">
+              Nenhum comentário nesta aula ainda.
+            </div>
+          )}
+
           {comments.map((comment) => (
             <article
               key={comment.id}
@@ -207,14 +200,14 @@ export default function LessonTabs({
                   handleAddComment();
                 }
               }}
-              placeholder="Deixe seu comentario"
+              placeholder="Deixe seu comentário"
               className="w-full rounded-xl border border-slate-300 bg-white py-4 pr-14 pl-4 text-slate-700 transition-colors outline-none placeholder:text-slate-400 focus:border-orange-400"
             />
             <button
               type="button"
               onClick={handleAddComment}
               className="bg-primary absolute top-1/2 right-2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-white transition-transform hover:scale-105"
-              aria-label="Enviar comentario"
+              aria-label="Enviar comentário"
             >
               <MdSend className="size-5" />
             </button>

@@ -1,5 +1,5 @@
 # Dockerfile para Laravel (PHP 8.4 com FPM, alinhado com composer.lock)
-FROM php:8.4-fpm
+FROM --platform=linux/amd64 php:8.4-fpm
 
 # Argumentos de build
 ARG user=laravel

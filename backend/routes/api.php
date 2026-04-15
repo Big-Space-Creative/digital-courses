@@ -492,6 +492,12 @@ Route::prefix('v1')->group(function () {
             Route::put('/lessons/{lesson}', [App\Http\Controllers\Api\v1\LessonController::class, 'update']);
             Route::delete('/lessons/{lesson}', [App\Http\Controllers\Api\v1\LessonController::class, 'destroy']);
             Route::post('/lessons/{lesson}/materials/upload', [App\Http\Controllers\Api\v1\LessonController::class, 'uploadMaterial']);
+
+            /**
+             * ROTA PARA GERAR URL TEMPORÁRIA PRÉ-ASSINADA DE UPLOAD (S3/MINIO)
+             * Usado para upload direto do browser sem passar pelo servidor Next.js.
+             */
+            Route::post('/storage/upload-url', [App\Http\Controllers\Api\v1\StorageController::class, 'uploadUrl']);
         });
     });
 

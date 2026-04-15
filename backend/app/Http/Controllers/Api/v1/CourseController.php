@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use App\Support\ResolvesPublicStorageUrls;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -11,6 +12,8 @@ use OpenApi\Annotations as OA;
 
 class CourseController extends Controller
 {
+    use ResolvesPublicStorageUrls;
+
     /**
      * @OA\Get(
      *     path="/api/v1/courses",
@@ -31,23 +34,39 @@ class CourseController extends Controller
     public function index()
     {
         $user = auth()->user();
+        $hasPrivilegedAccess = $user && in_array($user->role, ['admin', 'instructor']);
 
         $courses = Course::with([
             'modules' => function ($query) {
                 $query->orderBy('order');
             },
-            'modules.lessons' => function ($query) {
-                $query->select('id', 'module_id', 'title', 'description', 'duration_in_minutes', 'is_free_preview')
-                    ->orderBy('id');
+            'modules.lessons' => function ($query) use ($hasPrivilegedAccess) {
+                $columns = [
+                    'id',
+                    'module_id',
+                    'title',
+                    'description',
+                    'thumbnail',
+                    'duration_in_minutes',
+                    'is_free_preview',
+                ];
+
+                if ($hasPrivilegedAccess) {
+                    $columns[] = 'video_url';
+                }
+
+                $query->select($columns)->orderBy('id');
             },
         ])
             ->when(
-                ! $user || ! in_array($user->role, ['admin', 'instructor']),
+                ! $hasPrivilegedAccess,
                 fn ($query) => $query->where('is_published', true)
             )
             ->orderByDesc('published_at')
             ->orderByDesc('created_at')
             ->get();
+
+        $courses->each(fn (Course $course) => $this->normalizeCourseForResponse($course));
 
         return response()->json([
             'message' => 'Cursos listados com sucesso',
@@ -78,20 +97,37 @@ class CourseController extends Controller
     public function show($id)
     {
         $user = auth()->user();
+        $hasPrivilegedAccess = $user && in_array($user->role, ['admin', 'instructor']);
 
         $course = Course::with([
             'modules' => function ($query) {
                 $query->orderBy('order');
             },
-            'modules.lessons' => function ($query) {
-                $query->select('id', 'module_id', 'title', 'description', 'duration_in_minutes', 'is_free_preview')
-                    ->orderBy('id');
+            'modules.lessons' => function ($query) use ($hasPrivilegedAccess) {
+                $columns = [
+                    'id',
+                    'module_id',
+                    'title',
+                    'description',
+                    'thumbnail',
+                    'duration_in_minutes',
+                    'is_free_preview',
+                ];
+
+                if ($hasPrivilegedAccess) {
+                    $columns[] = 'video_url';
+                }
+
+                $query->select($columns)->orderBy('id');
             },
+            'modules.lessons.materials:id,lesson_id,title,file_path,type',
         ])->findOrFail($id);
 
-        if (! $course->is_published && (! $user || ! in_array($user->role, ['admin', 'instructor']))) {
+        if (! $course->is_published && ! $hasPrivilegedAccess) {
             abort(404);
         }
+
+        $this->normalizeCourseForResponse($course);
 
         return response()->json([
             'message' => 'Curso encontrado',
@@ -268,18 +304,7 @@ class CourseController extends Controller
             }
         }
 
-        return Storage::disk('s3')->url($storedPath);
-    }
-
-    private function extractDiskPathFromUrl(string $url): ?string
-    {
-        $baseUrl = rtrim(Storage::disk('s3')->url(''), '/');
-
-        if ($baseUrl !== '' && str_starts_with($url, $baseUrl)) {
-            return ltrim(Str::after($url, $baseUrl), '/');
-        }
-
-        return null;
+        return $this->toPublicStorageUrl($storedPath) ?? $storedPath;
     }
 
     private function generateUniqueSlug(string $title, ?int $ignoreCourseId = null): string
@@ -299,5 +324,23 @@ class CourseController extends Controller
         }
 
         return $slug;
+    }
+
+    private function normalizeCourseForResponse(Course $course): void
+    {
+        $course->thumbnail = $this->toPublicStorageUrl($course->thumbnail);
+
+        $course->modules->each(function ($module): void {
+            $module->lessons->each(function ($lesson): void {
+                $lesson->thumbnail = $this->toPublicStorageUrl($lesson->thumbnail);
+                $lesson->video_url = $this->toPublicStorageUrl($lesson->video_url);
+
+                if ($lesson->relationLoaded('materials')) {
+                    $lesson->materials->each(function ($material): void {
+                        $material->file_path = $this->toPublicStorageUrl($material->file_path);
+                    });
+                }
+            });
+        });
     }
 }

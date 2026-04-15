@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateLessonRequest;
 use App\Models\Lesson;
 use App\Models\Material;
 use App\Models\Module;
+use App\Support\ResolvesPublicStorageUrls;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -16,6 +17,8 @@ use OpenApi\Annotations as OA;
 
 class LessonController extends Controller
 {
+    use ResolvesPublicStorageUrls;
+
     /**
      * @OA\Get(
     *     path="/api/v1/lessons/{lesson}",
@@ -42,7 +45,27 @@ class LessonController extends Controller
      */
     public function show($lesson_id)
     {
-        $lesson = Lesson::with(['materials', 'comments'])->findOrFail($lesson_id);
+        $lesson = Lesson::with([
+            'materials',
+            'comments.user:id,name',
+            'module:id,course_id,title,description,order',
+            'module.course:id,title,thumbnail,description',
+            'module.course.modules' => function ($query) {
+                $query->select('id', 'course_id', 'title', 'description', 'order')
+                    ->orderBy('order');
+            },
+            'module.course.modules.lessons' => function ($query) {
+                $query->select(
+                    'id',
+                    'module_id',
+                    'title',
+                    'description',
+                    'thumbnail',
+                    'duration_in_minutes',
+                    'is_free_preview'
+                )->orderBy('id');
+            },
+        ])->findOrFail($lesson_id);
         $user = auth()->user();
 
         // Se o usuário for admin ou instructor, tem acesso total.
@@ -56,6 +79,8 @@ class LessonController extends Controller
                 ], 403);
             }
         }
+
+        $this->normalizeLessonForResponse($lesson);
 
         return response()->json([
             'message' => 'Aula encontrada',
@@ -111,6 +136,19 @@ class LessonController extends Controller
 
         $validated = $request->validated();
 
+        if ($request->hasFile('thumbnail_file')) {
+            $validated['thumbnail'] = $this->storeLessonThumbnail(
+                $request->file('thumbnail_file'),
+                $module->id
+            );
+        }
+
+        if (! empty($validated['video_path'])) {
+            $validated['video_url'] = $this->toPublicStorageUrl($validated['video_path']);
+        }
+
+        unset($validated['thumbnail_file'], $validated['video_path']);
+
         $lesson = $module->lessons()->create($validated);
 
         return response()->json([
@@ -162,6 +200,20 @@ class LessonController extends Controller
         $this->authorize('update', $lesson);
 
         $validated = $request->validated();
+
+        if ($request->hasFile('thumbnail_file')) {
+            $validated['thumbnail'] = $this->storeLessonThumbnail(
+                $request->file('thumbnail_file'),
+                $lesson->module_id,
+                $lesson->thumbnail
+            );
+        }
+
+        if (! empty($validated['video_path'])) {
+            $validated['video_url'] = $this->toPublicStorageUrl($validated['video_path']);
+        }
+
+        unset($validated['thumbnail_file'], $validated['video_path']);
 
         $lesson->update($validated);
 
@@ -248,48 +300,73 @@ class LessonController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:5000',
+            'thumbnail_file' => 'nullable|image|max:5120',
             'duration_in_minutes' => 'nullable|integer|min:1|max:1440',
             'is_free_preview' => 'nullable|boolean',
-            'video_file' => 'required|file|mimes:mp4,mov,avi,mkv,webm|max:512000',
+            'video_file' => 'nullable|file|mimes:mp4,mov,avi,mkv,webm|max:512000',
+            'video_path' => 'nullable|string',
             'materials' => 'nullable|array',
-            'materials.*' => 'file|mimes:pdf,jpg,jpeg,png,webp,gif,mp4,mov,avi,mkv,webm|max:512000',
+            'materials.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp,gif,mp4,mov,avi,mkv,webm|max:512000',
+            'material_paths' => 'nullable|array',
+            'material_paths.*' => 'nullable|string',
             'material_titles' => 'nullable|array',
             'material_titles.*' => 'nullable|string|max:255',
         ]);
 
-        $materials = $request->file('materials', []);
+        if (empty($validated['video_file']) && empty($validated['video_path'])) {
+            return response()->json(['message' => 'video_file ou video_path é obrigatório.'], 422);
+        }
+
+        $materialsFiles = $request->file('materials', []);
+        $materialPaths = $request->input('material_paths', []);
         $materialTitles = $request->input('material_titles', []);
 
-        if (! empty($materialTitles) && count($materialTitles) !== count($materials)) {
+        $totalMaterials = count($materialsFiles) + count($materialPaths);
+        if (! empty($materialTitles) && count($materialTitles) !== $totalMaterials) {
             return response()->json([
-                'message' => 'Quantidade de material_titles deve ser igual à quantidade de materials.',
+                'message' => 'Quantidade de material_titles deve ser igual à quantidade total de materials e material_paths.',
             ], 422);
         }
 
-        $file = $request->file('video_file');
-        $videoPath = 'courses/modules/'.$module->id.'/lessons/videos';
-        $videoFilename = Str::uuid().'.'.$file->getClientOriginalExtension();
         $uploadedPaths = [];
 
         try {
             DB::beginTransaction();
 
-            $storedPath = Storage::disk('s3')->putFileAs($videoPath, $file, $videoFilename, [
-                'visibility' => 'public',
-            ]);
-            $uploadedPaths[] = $storedPath;
+            $thumbnailUrl = null;
+            if ($request->hasFile('thumbnail_file')) {
+                $thumbnailUrl = $this->storeLessonThumbnail(
+                    $request->file('thumbnail_file'),
+                    $module->id
+                );
+            }
 
-            $videoUrl = Storage::disk('s3')->url($storedPath);
+            $videoUrl = null;
+            if ($request->hasFile('video_file')) {
+                $file = $request->file('video_file');
+                $videoPath = 'courses/modules/'.$module->id.'/lessons/videos';
+                $videoFilename = Str::uuid().'.'.$file->getClientOriginalExtension();
+                $storedPath = Storage::disk('s3')->putFileAs($videoPath, $file, $videoFilename, [
+                    'visibility' => 'public',
+                ]);
+                $uploadedPaths[] = $storedPath;
+                $videoUrl = $this->toPublicStorageUrl($storedPath);
+            } else {
+                $videoUrl = $this->toPublicStorageUrl($validated['video_path']);
+            }
 
             $lesson = $module->lessons()->create([
                 'title' => $validated['title'],
                 'description' => $validated['description'] ?? null,
+                'thumbnail' => $thumbnailUrl,
                 'duration_in_minutes' => $validated['duration_in_minutes'] ?? null,
                 'is_free_preview' => $validated['is_free_preview'] ?? false,
                 'video_url' => $videoUrl,
             ]);
 
-            foreach ($materials as $index => $materialFile) {
+            $titleIndex = 0;
+            
+            foreach ($materialsFiles as $materialFile) {
                 $materialPath = 'courses/modules/'.$module->id.'/lessons/'.$lesson->id.'/materials';
                 $materialFilename = Str::uuid().'.'.$materialFile->getClientOriginalExtension();
 
@@ -300,10 +377,21 @@ class LessonController extends Controller
 
                 Material::create([
                     'lesson_id' => $lesson->id,
-                    'title' => $materialTitles[$index] ?? pathinfo($materialFile->getClientOriginalName(), PATHINFO_FILENAME),
-                    'file_path' => Storage::disk('s3')->url($materialStoredPath),
+                    'title' => $materialTitles[$titleIndex] ?? pathinfo($materialFile->getClientOriginalName(), PATHINFO_FILENAME),
+                    'file_path' => $this->toPublicStorageUrl($materialStoredPath),
                     'type' => $this->detectMaterialType($materialFile->getMimeType() ?? ''),
                 ]);
+                $titleIndex++;
+            }
+
+            foreach ($materialPaths as $mPath) {
+                Material::create([
+                    'lesson_id' => $lesson->id,
+                    'title' => $materialTitles[$titleIndex] ?? 'Material',
+                    'file_path' => $this->toPublicStorageUrl($mPath),
+                    'type' => 'file',
+                ]);
+                $titleIndex++;
             }
 
             DB::commit();
@@ -383,7 +471,7 @@ class LessonController extends Controller
                 'visibility' => 'public',
             ]);
 
-            $fileUrl = Storage::disk('s3')->url($storedPath);
+            $fileUrl = $this->toPublicStorageUrl($storedPath);
         } catch (\Throwable $e) {
             return response()->json([
                 'message' => 'Falha ao enviar material para o storage.',
@@ -420,5 +508,57 @@ class LessonController extends Controller
         }
 
         return 'file';
+    }
+
+    private function storeLessonThumbnail($file, int $moduleId, ?string $previousUrl = null): string
+    {
+        $path = 'courses/modules/'.$moduleId.'/lessons/thumbnails';
+        $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
+        $storedPath = Storage::disk('s3')->putFileAs($path, $file, $filename, [
+            'visibility' => 'public',
+        ]);
+
+        if ($previousUrl) {
+            $previousPath = $this->extractDiskPathFromUrl($previousUrl);
+
+            if ($previousPath) {
+                try {
+                    Storage::disk('s3')->delete($previousPath);
+                } catch (\Throwable $e) {
+                    // Mantemos o fluxo principal mesmo se o cleanup falhar.
+                }
+            }
+        }
+
+        return $this->toPublicStorageUrl($storedPath) ?? $storedPath;
+    }
+
+    private function normalizeLessonForResponse(Lesson $lesson): void
+    {
+        $lesson->thumbnail = $this->toPublicStorageUrl($lesson->thumbnail);
+        $lesson->video_url = $this->toPublicStorageUrl($lesson->video_url);
+
+        if ($lesson->relationLoaded('materials')) {
+            $lesson->materials->each(function ($material): void {
+                $material->file_path = $this->toPublicStorageUrl($material->file_path);
+            });
+        }
+
+        if ($lesson->relationLoaded('module') && $lesson->module) {
+            $lesson->module->lessons?->each(function ($moduleLesson): void {
+                $moduleLesson->thumbnail = $this->toPublicStorageUrl($moduleLesson->thumbnail);
+                $moduleLesson->video_url = $this->toPublicStorageUrl($moduleLesson->video_url);
+            });
+
+            if ($lesson->module->relationLoaded('course') && $lesson->module->course) {
+                $lesson->module->course->thumbnail = $this->toPublicStorageUrl($lesson->module->course->thumbnail);
+                $lesson->module->course->modules?->each(function ($courseModule): void {
+                    $courseModule->lessons?->each(function ($courseLesson): void {
+                        $courseLesson->thumbnail = $this->toPublicStorageUrl($courseLesson->thumbnail);
+                        $courseLesson->video_url = $this->toPublicStorageUrl($courseLesson->video_url);
+                    });
+                });
+            }
+        }
     }
 }

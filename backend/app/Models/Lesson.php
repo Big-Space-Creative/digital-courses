@@ -14,6 +14,7 @@ class Lesson extends Model
         'module_id',
         'title',
         'description',
+        'thumbnail',
         'video_url',
         'duration_in_minutes',
         'is_free_preview',

@@ -23,7 +23,10 @@ class UpdateLessonRequest extends FormRequest
         return [
             'title' => 'sometimes|string|max:255',
             'description' => 'nullable|string|max:5000',
+            'thumbnail' => 'nullable|string|max:2048',
+            'thumbnail_file' => 'nullable|image|max:5120',
             'video_url' => 'nullable|string|max:2048',
+            'video_path' => 'nullable|string|max:2048',
             'duration_in_minutes' => 'nullable|integer|min:1|max:1440',
             'is_free_preview' => 'boolean',
         ];
@@ -37,6 +40,9 @@ class UpdateLessonRequest extends FormRequest
         return [
             'title.max' => 'O título não pode exceder 255 caracteres',
             'description.max' => 'A descrição não pode exceder 5000 caracteres',
+            'thumbnail.max' => 'A URL da foto não pode exceder 2048 caracteres',
+            'thumbnail_file.image' => 'A foto da aula deve ser uma imagem válida',
+            'thumbnail_file.max' => 'A foto da aula não pode exceder 5MB',
             'video_url.max' => 'A URL do vídeo não pode exceder 2048 caracteres',
             'duration_in_minutes.integer' => 'A duração deve ser um número inteiro',
             'duration_in_minutes.min' => 'A duração deve ser no mínimo 1 minuto',
@@ -50,6 +56,14 @@ class UpdateLessonRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        if ($this->has('thumbnail')) {
+            $thumbnail = trim((string) $this->get('thumbnail'));
+
+            if (! empty($thumbnail)) {
+                $this->merge(['thumbnail' => $thumbnail]);
+            }
+        }
+
         // Sanitizar URL do vídeo (remover espaços em branco)
         if ($this->has('video_url')) {
             $url = trim($this->get('video_url'));

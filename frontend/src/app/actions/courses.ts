@@ -20,15 +20,33 @@ export type ApiLesson = {
   module_id: number;
   title: string;
   description: string | null;
+  thumbnail?: string | null;
   duration_in_minutes: number | null;
   is_free_preview: boolean;
   video_url?: string;
+};
+
+export type ApiMaterial = {
+  id: number;
+  title: string;
+  file_path: string;
+  type: string;
+};
+
+export type ApiComment = {
+  id: number;
+  content: string;
+  user?: {
+    id: number;
+    name: string;
+  } | null;
 };
 
 export type ApiModule = {
   id: number;
   course_id: number;
   title: string;
+  description?: string | null;
   order: number;
   lessons: ApiLesson[];
 };
@@ -46,6 +64,17 @@ export type ApiCourse = {
   modules?: ApiModule[];
   lessons_count?: number;
   enrollments_count?: number;
+};
+
+export type ApiLessonDetail = ApiLesson & {
+  video_url: string | null;
+  materials: ApiMaterial[];
+  comments: ApiComment[];
+  module: ApiModule & {
+    course: ApiCourse & {
+      modules: ApiModule[];
+    };
+  };
 };
 
 export type CoursesPaginated = {
@@ -144,6 +173,31 @@ export async function getFirstPublishedCourseAction(): Promise<
     }
 
     return getCourseDetailAction(publishedCourse.id);
+  } catch {
+    return { success: false, error: "Falha de conexao com o servidor" };
+  }
+}
+
+export async function getLessonDetailAction(lessonId: number): Promise<
+  | { success: true; data: ApiLessonDetail }
+  | { success: false; error: string }
+> {
+  const token = await getToken();
+  if (!token) return { success: false, error: "Nao autenticado" };
+
+  try {
+    const res = await fetch(`${API_URL}lessons/${lessonId}`, {
+      headers: authHeaders(token),
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { success: false, error: err?.message ?? `Erro ${res.status}` };
+    }
+
+    const json = await res.json();
+    return { success: true, data: json.data };
   } catch {
     return { success: false, error: "Falha de conexao com o servidor" };
   }
