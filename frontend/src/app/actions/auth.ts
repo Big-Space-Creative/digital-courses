@@ -76,3 +76,8 @@ export async function logoutAction() {
 
   return { message: "Saiu da conta com sucesso" };
 }
+
+export async function getAccessTokenAction(): Promise<string | null> {
+  const cookieStore = await cookies();
+  return cookieStore.get("access_token")?.value ?? null;
+}

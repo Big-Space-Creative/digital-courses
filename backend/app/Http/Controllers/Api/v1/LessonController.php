@@ -323,6 +323,7 @@ class LessonController extends Controller
             return response()->json([
                 'message' => 'Falha ao processar upload da aula e materiais.',
                 'error' => $e->getMessage(),
+                'exception' => get_class($e),
             ], 500);
         }
 
@@ -387,6 +388,7 @@ class LessonController extends Controller
             return response()->json([
                 'message' => 'Falha ao enviar material para o storage.',
                 'error' => $e->getMessage(),
+                'exception' => get_class($e),
             ], 500);
         }
 
