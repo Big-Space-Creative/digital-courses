@@ -289,6 +289,8 @@ Route::prefix('v1')->group(function () {
          *  - Se estudante: Apenas se for `is_free_preview: true` OU usuário Premium (HTTP 403 caso contrário).
          */
         Route::get('/lessons/{lesson}', [App\Http\Controllers\Api\v1\LessonController::class, 'show']);
+        Route::get('/lessons/{lesson}/comments', [App\Http\Controllers\Api\v1\CommentController::class, 'indexByLesson']);
+        Route::post('/lessons/{lesson}/comments', [App\Http\Controllers\Api\v1\CommentController::class, 'store']);
 
         // Privado (Apenas Admins gerenciam cursos)
         Route::middleware('admin')->group(function () {
@@ -575,6 +577,15 @@ Route::prefix('v1')->group(function () {
              * Response (200): { "success", "message", "data": { "id", "name", "email", "subscription_type" } }
              */
             Route::patch('/users/{id}/subscription', 'updateUserSubscription');
+
+            /**
+             * COMENTÁRIOS DAS AULAS (ADMIN)
+             *
+             * GET /api/v1/admin/comments
+             * DELETE /api/v1/admin/comments/{comment_id}
+             */
+            Route::get('/comments', [App\Http\Controllers\Api\v1\CommentController::class, 'adminIndex']);
+            Route::delete('/comments/{comment}', [App\Http\Controllers\Api\v1\CommentController::class, 'destroy']);
 
             // ------------------------------------------
             // Cursos (visão administrativa)

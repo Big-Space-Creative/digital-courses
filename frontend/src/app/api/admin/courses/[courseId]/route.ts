@@ -208,7 +208,9 @@ export async function PUT(
               file: isFileLike(materialEntry) ? materialEntry : null,
             };
           })
-          .filter((material) => material.file);
+          .filter(
+            (material): material is { title: string; file: File } => material.file !== null,
+          );
 
         if (!lesson.dbId && !lesson.videoUrl && typeof videoPath !== "string") {
           return NextResponse.json(

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import {
   MdFolder,
   MdImage,
@@ -11,6 +11,8 @@ import {
   MdSend,
   MdVideocam,
 } from "react-icons/md";
+import { createLessonCommentAction } from "@/app/actions/comments";
+import { toast } from "@/components/ui/Toast";
 
 type Material = {
   id: number;
@@ -21,12 +23,16 @@ type Material = {
 
 type Comment = {
   id: number;
+  userId?: number;
   author: string;
   avatar: string;
   message: string;
+  createdAt?: string | null;
+  adminReply?: string | null;
 };
 
 type LessonTabsProps = {
+  lessonId: number;
   resumo: string;
   dicas?: string | null;
   materials: Material[];
@@ -50,6 +56,7 @@ function materialAccent(type: string) {
 }
 
 export default function LessonTabs({
+  lessonId,
   resumo,
   dicas,
   materials,
@@ -60,6 +67,7 @@ export default function LessonTabs({
   );
   const [commentInput, setCommentInput] = useState("");
   const [comments, setComments] = useState<Comment[]>(initialComments);
+  const [isSubmitting, startTransition] = useTransition();
 
   const commentsCount = useMemo(() => comments.length, [comments]);
 
@@ -67,16 +75,35 @@ export default function LessonTabs({
     const value = commentInput.trim();
     if (!value) return;
 
-    setComments((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        author: "Você",
-        avatar: "VC",
-        message: value,
-      },
-    ]);
-    setCommentInput("");
+    startTransition(async () => {
+      const result = await createLessonCommentAction(lessonId, value);
+
+      if (!result.success) {
+        toast("Nao foi possivel enviar comentario", {
+          description: result.error,
+          variant: "error",
+        });
+        return;
+      }
+
+      const newComment: Comment = {
+        id: result.data.id,
+        userId: result.data.user?.id,
+        author: result.data.user?.name ?? "Aluno",
+        avatar: (result.data.user?.name ?? "Aluno")
+          .split(" ")
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((part) => part[0]?.toUpperCase() ?? "")
+          .join(""),
+        message: result.data.content,
+        createdAt: result.data.created_at,
+        adminReply: result.data.admin_reply,
+      };
+
+      setComments((prev) => [newComment, ...prev]);
+      setCommentInput("");
+    });
   };
 
   return (
@@ -183,9 +210,22 @@ export default function LessonTabs({
               </div>
               <div>
                 <p className="text-secondary font-bold">{comment.author}</p>
+                {comment.createdAt && (
+                  <p className="text-xs text-slate-400">
+                    {new Date(comment.createdAt).toLocaleString("pt-BR")}
+                  </p>
+                )}
                 <p className="text-secondary/90 mt-1 text-[19px] leading-6">
                   {comment.message}
                 </p>
+                {comment.adminReply && (
+                  <div className="mt-3 rounded-xl border border-orange-100 bg-orange-50 p-3">
+                    <p className="text-xs font-semibold tracking-wide text-orange-700 uppercase">
+                      Resposta da equipe
+                    </p>
+                    <p className="mt-1 text-sm text-orange-900">{comment.adminReply}</p>
+                  </div>
+                )}
               </div>
             </article>
           ))}
@@ -206,6 +246,7 @@ export default function LessonTabs({
             <button
               type="button"
               onClick={handleAddComment}
+              disabled={isSubmitting}
               className="bg-primary absolute top-1/2 right-2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-white transition-transform hover:scale-105"
               aria-label="Enviar comentário"
             >

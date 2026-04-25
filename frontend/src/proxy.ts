@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 const publicRoutes = [
+  { path: "/" },
   { path: "/login", whenAuthenticated: "redirect" },
   { path: "/register", whenAuthenticated: "redirect" },
 ];

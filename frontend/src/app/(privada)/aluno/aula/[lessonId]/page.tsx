@@ -66,9 +66,12 @@ export default async function Lesson({
 
   const comments = lesson.comments.map((comment) => ({
     id: comment.id,
+    userId: comment.user?.id,
     author: comment.user?.name ?? "Aluno",
     avatar: initials(comment.user?.name ?? "Aluno"),
     message: comment.content,
+    createdAt: comment.created_at ?? null,
+    adminReply: null,
   }));
 
   return (
@@ -174,6 +177,7 @@ export default async function Lesson({
         </div>
         <div>
           <LessonTabs
+            lessonId={lesson.id}
             resumo={resumo}
             dicas={dicas}
             materials={materials}

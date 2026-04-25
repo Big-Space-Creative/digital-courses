@@ -36,6 +36,7 @@ export type ApiMaterial = {
 export type ApiComment = {
   id: number;
   content: string;
+  created_at?: string | null;
   user?: {
     id: number;
     name: string;

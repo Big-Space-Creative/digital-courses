@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useTransition, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
 import {
   listUsersAction,
@@ -229,8 +230,13 @@ function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
 // ─── Página principal ─────────────────────────────────────────────────────────
 
 export default function StudentsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [users, setUsers] = useState<ApiUser[]>([]);
   const [loading, startLoading] = useTransition();
+  const [isAutoManaging, startAutoManaging] = useTransition();
+  const [hasProcessedManageFromComment, setHasProcessedManageFromComment] =
+    useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | "">("");
@@ -282,6 +288,74 @@ export default function StudentsPage() {
     fetchUsers();
   }, [fetchUsers]);
 
+  useEffect(() => {
+    if (hasProcessedManageFromComment || loading || users.length === 0) return;
+
+    const userIdParam = searchParams.get("manageFromComment");
+    if (!userIdParam) return;
+
+    const userId = Number(userIdParam);
+    if (!Number.isFinite(userId)) return;
+
+    const target = users.find((user) => user.id === userId);
+    if (!target) return;
+
+    const targetRole = (searchParams.get("targetRole") as UserRole | null) ?? target.role;
+    const targetPlan =
+      (searchParams.get("targetPlan") as SubscriptionType | null) ??
+      target.subscription_type ??
+      "free";
+
+    setHasProcessedManageFromComment(true);
+
+    startAutoManaging(async () => {
+      const roleRes = await updateUserRoleAction(target.id, targetRole);
+
+      if (!roleRes.success) {
+        toast("Falha ao sincronizar role", {
+          description: roleRes.error ?? "Nao foi possivel aplicar role do perfil comentador.",
+          variant: "error",
+        });
+        router.replace("/admin/alunos");
+        return;
+      }
+
+      if (targetRole === "student") {
+        const subRes = await updateUserSubscriptionAction(target.id, targetPlan);
+        if (!subRes.success) {
+          toast("Falha ao sincronizar plano", {
+            description: subRes.error ?? "Nao foi possivel aplicar plano do perfil comentador.",
+            variant: "error",
+          });
+          router.replace("/admin/alunos");
+          return;
+        }
+      }
+
+      toast("Perfil do comentario carregado", {
+        description:
+          "Tipo de usuario e plano foram atualizados para este aluno. Voce pode revisar no modal.",
+        variant: "success",
+      });
+
+      setEditingUser({
+        ...target,
+        role: targetRole,
+        subscription_type: targetRole === "student" ? targetPlan : target.subscription_type,
+      });
+
+      fetchUsers();
+      router.replace("/admin/alunos");
+    });
+  }, [
+    fetchUsers,
+    hasProcessedManageFromComment,
+    loading,
+    router,
+    searchParams,
+    users,
+  ]);
+
   function handleUserSaved(updated: ApiUser) {
     setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
     setEditingUser(null);
@@ -310,10 +384,13 @@ export default function StudentsPage() {
           <button
             type="button"
             onClick={fetchUsers}
-            disabled={loading}
+            disabled={loading || isAutoManaging}
             className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
           >
-            <MdRefresh size={16} className={loading ? "animate-spin" : ""} />
+            <MdRefresh
+              size={16}
+              className={loading || isAutoManaging ? "animate-spin" : ""}
+            />
             Atualizar
           </button>
         </section>

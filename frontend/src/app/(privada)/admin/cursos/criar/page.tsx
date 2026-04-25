@@ -272,7 +272,7 @@ function LessonCard({
                 placeholder="Título do material"
                 />
                 <span className="shrink-0 text-xs text-gray-400">
-                  ({(mat.file.size / 1024).toFixed(0)} KB)
+                  {mat.file && `(${(mat.file.size / 1024).toFixed(0)} KB)`}
                 </span>
                 <button
                   type="button"
@@ -520,7 +520,9 @@ export default function CreateCoursePage() {
               const s3Path = await uploadDirectlyToS3(lesson.videoFile);
               fd.append(`video_path_${lesson.id}`, s3Path);
             }
-            for (const mat of lesson.materials) {
+            for (const mat of lesson.materials.filter(
+              (item): item is MaterialState & { file: File } => item.file !== null,
+            )) {
               toast(`Enviando material (${mat.title.substring(0,10)}...)`, { variant: "info" });
               const matPath = await uploadDirectlyToS3(mat.file);
               fd.append(`mat_path_${lesson.id}_${mat.id}`, matPath);
