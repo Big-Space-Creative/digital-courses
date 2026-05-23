@@ -32,7 +32,7 @@ export type LessonUploadedResponse = {
 // ─── Estado do formulário de criação/edição ──────────────────────────────────
 
 export type MaterialState = {
-  id: string;
+  id: string | number;
   dbId?: number;
   title: string;
   file: File | null;
@@ -41,7 +41,7 @@ export type MaterialState = {
 };
 
 export type LessonState = {
-  id: string;
+  id: string | number;
   dbId?: number;
   title: string;
   description: string;
@@ -49,13 +49,14 @@ export type LessonState = {
   isFreePreview: boolean;
   videoFile: File | null;
   videoUrl?: string | null;
+  videoPath?: string | null;
   thumbnailFile?: File | null;
   thumbnailUrl?: string | null;
   materials: MaterialState[];
 };
 
 export type ModuleState = {
-  id: string;
+  id: string | number;
   dbId?: number;
   name: string;
   lessons: LessonState[];

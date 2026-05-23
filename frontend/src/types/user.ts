@@ -4,6 +4,7 @@ export interface AppUser {
   role: string;
   subscriptionType?: string;
   urlPhoto?: string;
+  createdAt?: string;
 }
 
 export interface UserFromTokenDecoded {

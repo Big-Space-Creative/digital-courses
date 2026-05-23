@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import { toast } from "@/components/ui/Toast";
 import {
@@ -11,6 +12,13 @@ import {
   type LessonComment,
 } from "@/app/actions/comments";
 import {
+  getDashboardStatsAction,
+  listCoursesAction,
+  type ApiCourse,
+  type CoursesPaginated,
+  type DashboardStats,
+} from "@/app/actions/courses";
+import {
   MdAddCircleOutline,
   MdDeleteOutline,
   MdEdit,
@@ -18,38 +26,11 @@ import {
   MdOutlineForum,
   MdOutlinePeopleAlt,
   MdOutlineReply,
+  MdOutlineSchool,
   MdPeople,
   MdPlayCircle,
   MdSearch,
 } from "react-icons/md";
-
-type CourseItem = {
-  id: string;
-  name: string;
-  launchDate: string;
-  thumbClass: string;
-};
-
-const courses: CourseItem[] = [
-  {
-    id: "1",
-    name: "Guitarra Iniciante",
-    launchDate: "12/05/2023",
-    thumbClass: "bg-orange-100",
-  },
-  {
-    id: "2",
-    name: "Tecnicas de Solo",
-    launchDate: "20/08/2023",
-    thumbClass: "bg-yellow-100",
-  },
-  {
-    id: "3",
-    name: "Teoria Musical",
-    launchDate: "05/01/2024",
-    thumbClass: "bg-gray-200",
-  },
-];
 
 function safeParam(value: string | null | undefined, fallback: string) {
   return encodeURIComponent((value ?? fallback).toString());
@@ -57,9 +38,19 @@ function safeParam(value: string | null | undefined, fallback: string) {
 
 export default function Dashboard() {
   const router = useRouter();
+  const { user } = useUser();
   const [activeTab, setActiveTab] = useState<"overview" | "comments">("overview");
-  const [selectedCourseName, setSelectedCourseName] = useState<string | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<ApiCourse | null>(null);
 
+  // ── Stats ─────────────────────────────────────────────────────────────────
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [statsLoading, startStatsLoading] = useTransition();
+
+  // ── Courses table ─────────────────────────────────────────────────────────
+  const [courses, setCourses] = useState<ApiCourse[]>([]);
+  const [coursesLoading, startCoursesLoading] = useTransition();
+
+  // ── Comments ──────────────────────────────────────────────────────────────
   const [commentSearch, setCommentSearch] = useState("");
   const [debouncedCommentSearch, setDebouncedCommentSearch] = useState("");
   const [commentPage, setCommentPage] = useState(1);
@@ -76,12 +67,31 @@ export default function Dashboard() {
   const [commentDeleting, startCommentDeleting] = useTransition();
   const [deleteTargetComment, setDeleteTargetComment] = useState<LessonComment | null>(null);
 
+  const isAdmin = user?.role === "admin";
+  const displayName = user?.name ?? "Usuário";
+
+  // ── Load Stats ────────────────────────────────────────────────────────────
+  useEffect(() => {
+    startStatsLoading(async () => {
+      const result = await getDashboardStatsAction();
+      if (result.success) setStats(result.data);
+    });
+  }, []);
+
+  // ── Load Courses ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    startCoursesLoading(async () => {
+      const result = await listCoursesAction({ perPage: 5, page: 1 });
+      if (result.success) setCourses(result.data.data);
+    });
+  }, []);
+
+  // ── Comments debounce ─────────────────────────────────────────────────────
   useEffect(() => {
     const timeout = setTimeout(() => {
       setDebouncedCommentSearch(commentSearch);
       setCommentPage(1);
     }, 350);
-
     return () => clearTimeout(timeout);
   }, [commentSearch]);
 
@@ -165,20 +175,28 @@ export default function Dashboard() {
       <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6 lg:p-8">
         <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="text-secondary text-2xl font-bold">Bem-vindo ao seu painel, Ramon!</h2>
+            <h2 className="text-secondary text-2xl font-bold">
+              Bem-vindo ao seu painel, {displayName}!
+            </h2>
             <p className="mt-1 text-gray-500">
-              Aqui voce acompanha cursos e comentarios dos alunos em um unico lugar.
+              {user?.role === "instructor"
+                ? "Aqui você acompanha os cursos e comentários dos alunos."
+                : "Aqui você acompanha cursos e comentários dos alunos em um único lugar."}
             </p>
           </div>
-          <Link
-            href="/admin/cursos/criar"
-            className="bg-primary hover:bg-primary-dark inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors sm:w-auto"
-          >
-            <MdAddCircleOutline size={20} />
-            Adicionar Novo Curso
-          </Link>
+          {/* Botão de criar curso só para admin */}
+          {isAdmin && (
+            <Link
+              href="/admin/cursos/criar"
+              className="bg-primary hover:bg-primary-dark inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors sm:w-auto"
+            >
+              <MdAddCircleOutline size={20} />
+              Adicionar Novo Curso
+            </Link>
+          )}
         </div>
 
+        {/* Stats cards */}
         <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-start justify-between">
@@ -187,7 +205,9 @@ export default function Dashboard() {
               </div>
             </div>
             <p className="text-sm font-medium text-gray-500">Total de Alunos</p>
-            <p className="text-secondary mt-1 text-2xl font-bold">1.240</p>
+            <p className="text-secondary mt-1 text-2xl font-bold">
+              {statsLoading ? "—" : (stats?.users?.students ?? "—")}
+            </p>
           </div>
 
           <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
@@ -197,7 +217,9 @@ export default function Dashboard() {
               </div>
             </div>
             <p className="text-sm font-medium text-gray-500">Aulas Ativas</p>
-            <p className="text-secondary mt-1 text-2xl font-bold">45</p>
+            <p className="text-secondary mt-1 text-2xl font-bold">
+              {statsLoading ? "—" : (stats?.lessons?.active ?? "—")}
+            </p>
           </div>
 
           <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
@@ -213,14 +235,17 @@ export default function Dashboard() {
           <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-start justify-between">
               <div className="rounded-lg bg-emerald-50 p-2 text-emerald-500">
-                <MdOutlinePeopleAlt size={20} />
+                <MdOutlineSchool size={20} />
               </div>
             </div>
-            <p className="text-sm font-medium text-gray-500">Comentarios carregados</p>
-            <p className="text-secondary mt-1 text-2xl font-bold">{commentStats.loaded}</p>
+            <p className="text-sm font-medium text-gray-500">Cursos Publicados</p>
+            <p className="text-secondary mt-1 text-2xl font-bold">
+              {statsLoading ? "—" : (stats?.courses?.published ?? "—")}
+            </p>
           </div>
         </div>
 
+        {/* Tabs */}
         <div className="mb-4 flex gap-2 border-b border-gray-200">
           <button
             type="button"
@@ -251,19 +276,12 @@ export default function Dashboard() {
           <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 p-4 sm:p-5">
               <h3 className="font-semibold text-gray-800">Cursos Cadastrados</h3>
-              <div className="w-full sm:w-auto">
-                <div className="relative w-full sm:w-auto">
-                  <MdSearch
-                    size={18}
-                    className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Buscar curso..."
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pr-4 pl-10 text-sm text-gray-700 outline-none focus:border-orange-300 sm:w-72"
-                  />
-                </div>
-              </div>
+              <Link
+                href="/admin/cursos/gerenciar"
+                className="text-sm font-semibold text-orange-600 hover:underline"
+              >
+                Ver todos →
+              </Link>
             </div>
 
             <div className="overflow-x-auto">
@@ -271,65 +289,76 @@ export default function Dashboard() {
                 <thead>
                   <tr className="bg-gray-100 text-xs font-semibold tracking-[0.12em] text-gray-500 uppercase">
                     <th className="px-6 py-4">Nome do Curso</th>
-                    <th className="px-6 py-4">Data de Lancamento</th>
-                    <th className="px-6 py-4 text-center">Acoes</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4">Criado em</th>
+                    {isAdmin && <th className="px-6 py-4 text-center">Acoes</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-sm">
-                  {courses.map((course) => (
-                    <tr key={course.id} className="hover:bg-gray-50/70">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`h-10 w-10 rounded-md ${course.thumbClass}`} />
-                          <span className="font-semibold text-gray-800">{course.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-gray-600">{course.launchDate}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-center gap-4 text-gray-400">
-                          <Link
-                            href={`/admin/cursos/editar/${course.id}`}
-                            className="hover:text-blue-500"
-                            aria-label={`Editar curso ${course.name}`}
-                          >
-                            <MdEdit size={18} />
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedCourseName(course.name)}
-                            className="hover:text-red-500"
-                            aria-label={`Cancelar curso ${course.name}`}
-                          >
-                            <MdDeleteOutline size={18} />
-                          </button>
-                        </div>
+                  {coursesLoading &&
+                    Array.from({ length: 3 }).map((_, i) => (
+                      <tr key={i} className="animate-pulse">
+                        <td className="px-6 py-4"><div className="h-3 w-48 rounded bg-gray-200" /></td>
+                        <td className="px-6 py-4"><div className="h-5 w-20 rounded-full bg-gray-200" /></td>
+                        <td className="px-6 py-4"><div className="h-3 w-24 rounded bg-gray-200" /></td>
+                        {isAdmin && <td className="px-6 py-4"><div className="mx-auto h-7 w-20 rounded bg-gray-200" /></td>}
+                      </tr>
+                    ))}
+
+                  {!coursesLoading && courses.length === 0 && (
+                    <tr>
+                      <td colSpan={isAdmin ? 4 : 3} className="px-6 py-10 text-center text-gray-500">
+                        Nenhum curso cadastrado ainda.
                       </td>
                     </tr>
-                  ))}
+                  )}
+
+                  {!coursesLoading &&
+                    courses.map((course) => (
+                      <tr key={course.id} className="hover:bg-gray-50/70">
+                        <td className="px-6 py-4">
+                          <span className="font-semibold text-gray-800">{course.title}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-bold ${
+                              course.is_published
+                                ? "bg-green-100 text-green-700"
+                                : "bg-slate-100 text-slate-500"
+                            }`}
+                          >
+                            {course.is_published ? "Publicado" : "Rascunho"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-gray-600">
+                          {new Date(course.created_at).toLocaleDateString("pt-BR")}
+                        </td>
+                        {isAdmin && (
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-center gap-4 text-gray-400">
+                              <Link
+                                href={`/admin/cursos/${course.id}/editar`}
+                                className="hover:text-blue-500"
+                                aria-label={`Editar curso ${course.title}`}
+                              >
+                                <MdEdit size={18} />
+                              </Link>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedCourse(course)}
+                                className="hover:text-red-500"
+                                aria-label={`Excluir curso ${course.title}`}
+                              >
+                                <MdDeleteOutline size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
-
-            <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 p-4 text-sm text-gray-500">
-              <span>Exibindo 3 de 12 cursos</span>
-              <div className="flex items-center gap-2">
-                <button className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-500 hover:bg-gray-50">
-                  &lt;
-                </button>
-                <button className="rounded-lg bg-orange-500 px-3 py-1.5 font-semibold text-white">
-                  1
-                </button>
-                <button className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-600 hover:bg-gray-50">
-                  2
-                </button>
-                <button className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-600 hover:bg-gray-50">
-                  3
-                </button>
-                <button className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-500 hover:bg-gray-50">
-                  &gt;
-                </button>
-              </div>
-            </footer>
           </div>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -474,13 +503,13 @@ export default function Dashboard() {
       </main>
 
       <DeleteConfirmModal
-        open={Boolean(selectedCourseName)}
-        label={selectedCourseName ?? ""}
-        title="Cancelar curso"
-        description="Deseja mesmo cancelar este curso?"
-        confirmLabel="Sim, cancelar"
-        onCancel={() => setSelectedCourseName(null)}
-        onConfirm={() => setSelectedCourseName(null)}
+        open={Boolean(selectedCourse)}
+        label={selectedCourse?.title ?? ""}
+        title="Excluir curso"
+        description="Deseja mesmo excluir este curso? Esta ação é irreversível."
+        confirmLabel="Sim, excluir"
+        onCancel={() => setSelectedCourse(null)}
+        onConfirm={() => setSelectedCourse(null)}
       />
 
       <DeleteConfirmModal

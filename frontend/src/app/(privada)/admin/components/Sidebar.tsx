@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useUser } from "@/context/UserContext";
 import {
   MdClose,
   MdOutlineDashboard,
@@ -13,10 +14,22 @@ import {
   MdOutlineSettings,
   MdOutlineLogout,
 } from "react-icons/md";
+import { logoutAction } from "@/app/actions/auth";
+import { useRouter } from "next/navigation";
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, setUser } = useUser();
+
+  const displayName = user?.name ?? "Usuário";
+  const displayRole =
+    user?.role === "admin"
+      ? "Administrador"
+      : user?.role === "instructor"
+        ? "Instrutor"
+        : "Painel";
 
   // Lista de links para facilitar a manutenção e renderização
   const navItems = [
@@ -28,11 +41,17 @@ export default function Sidebar() {
     },
     { name: "Alunos", href: "/admin/alunos", icon: MdOutlinePeopleAlt },
     {
-      name: "Configurações",
-      href: "/admin/configuracoes",
+      name: "Meu Perfil",
+      href: "/admin/perfil",
       icon: MdOutlineSettings,
     },
   ];
+
+  async function handleLogout() {
+    await logoutAction();
+    setUser(null); // Limpa o estado global do usuário no cliente
+    router.push("/login");
+  }
 
   const renderNavLinks = (onClick?: () => void) => (
     <nav className="mt-4 flex-1 space-y-2 px-4">
@@ -66,23 +85,41 @@ export default function Sidebar() {
     </nav>
   );
 
+  const UserAvatar = ({ size = "h-9 w-9" }: { size?: string }) => (
+    <div
+      className={`relative ${size} flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-600 bg-gradient-to-br from-orange-400 to-amber-600`}
+    >
+      {user?.urlPhoto ? (
+        <Image
+          src={user.urlPhoto}
+          alt={`Foto de ${displayName}`}
+          fill
+          className="object-cover"
+        />
+      ) : (
+        <span className="text-xs font-bold text-white">
+          {(displayName || "")
+            .split(" ")
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase()}
+        </span>
+      )}
+    </div>
+  );
+
   return (
     <>
       <header className="sticky top-0 z-40 flex items-center justify-between border-b border-[#2a3150] bg-[#1A1F36] px-4 py-3 text-white lg:hidden">
-        <div className="flex items-center gap-3">
-          <div className="relative h-9 w-9 overflow-hidden rounded-full border border-gray-600">
-            <Image
-              src="https://images.unsplash.com/photo-1773633071680-a1b53fcb4e90?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-              alt="Foto de perfil de Ramon"
-              fill
-              className="object-cover"
-            />
+        <Link href="/admin/perfil" className="flex items-center gap-3">
+          <UserAvatar />
+          <div className="leading-tight text-left">
+            <p className="text-sm font-semibold">{displayName}</p>
+            <p className="text-xs text-gray-400">{displayRole}</p>
           </div>
-          <div className="leading-tight">
-            <p className="text-sm font-semibold">Ramon&apos;s Guitar</p>
-            <p className="text-xs text-gray-400">Admin Panel</p>
-          </div>
-        </div>
+        </Link>
 
         <button
           type="button"
@@ -105,20 +142,13 @@ export default function Sidebar() {
 
           <aside className="relative z-10 flex h-full w-72 max-w-[86vw] flex-col bg-[#1A1F36] text-white shadow-xl">
             <div className="flex items-center justify-between border-b border-[#2a3150] p-4">
-              <div className="flex items-center gap-3">
-                <div className="relative h-9 w-9 overflow-hidden rounded-full border border-gray-600">
-                  <Image
-                    src="https://images.unsplash.com/photo-1773633071680-a1b53fcb4e90?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                    alt="Foto de perfil de Ramon"
-                    fill
-                    className="object-cover"
-                  />
+              <Link href="/admin/perfil" className="flex items-center gap-3">
+                <UserAvatar />
+                <div className="leading-tight text-left">
+                  <p className="text-sm font-semibold">{displayName}</p>
+                  <p className="text-xs text-gray-400">{displayRole}</p>
                 </div>
-                <div className="leading-tight">
-                  <p className="text-sm font-semibold">Ramon&apos;s Guitar</p>
-                  <p className="text-xs text-gray-400">Admin Panel</p>
-                </div>
-              </div>
+              </Link>
 
               <button
                 type="button"
@@ -133,7 +163,10 @@ export default function Sidebar() {
             {renderNavLinks(() => setIsMobileMenuOpen(false))}
 
             <div className="border-t border-gray-800 p-4">
-              <button className="flex w-full items-center gap-3 rounded-md px-4 py-3 text-gray-300 transition-colors hover:bg-white/5 hover:text-red-400">
+              <button
+                onClick={handleLogout}
+                className="flex w-full items-center gap-3 rounded-md px-4 py-3 text-gray-300 transition-colors hover:bg-white/5 hover:text-red-400"
+              >
                 <MdOutlineLogout size={20} className="text-gray-400" />
                 <span className="text-sm font-medium">Sair</span>
               </button>
@@ -143,27 +176,21 @@ export default function Sidebar() {
       )}
 
       <aside className="hidden h-screen w-64 shrink-0 flex-col bg-[#1A1F36] text-white lg:flex">
-        <div className="flex items-center gap-3 p-6 pt-8">
-          <div className="relative h-10 w-10 overflow-hidden rounded-full border border-gray-600">
-            <Image
-              src="https://images.unsplash.com/photo-1773633071680-a1b53fcb4e90?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-              alt="Foto de perfil de Ramon"
-              fill
-              className="object-cover"
-            />
+        <Link href="/admin/perfil" className="flex items-center gap-3 p-6 pt-8 hover:bg-white/5 transition-colors">
+          <UserAvatar size="h-10 w-10" />
+          <div className="flex flex-col text-left">
+            <span className="text-sm font-bold tracking-wide">{displayName}</span>
+            <span className="text-xs text-gray-400">{displayRole}</span>
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-bold tracking-wide">
-              Ramon&apos;s Guitar
-            </span>
-            <span className="text-xs text-gray-400">Admin Panel</span>
-          </div>
-        </div>
+        </Link>
 
         {renderNavLinks()}
 
         <div className="border-t border-gray-800 p-4">
-          <button className="flex w-full items-center gap-3 rounded-md px-4 py-3 text-gray-300 transition-colors hover:bg-white/5 hover:text-red-400">
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-md px-4 py-3 text-gray-300 transition-colors hover:bg-white/5 hover:text-red-400"
+          >
             <MdOutlineLogout size={20} className="text-gray-400" />
             <span className="text-sm font-medium">Sair</span>
           </button>

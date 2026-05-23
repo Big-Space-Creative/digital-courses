@@ -1,4 +1,4 @@
-﻿# 02_API_REFERENCE
+# 02_API_REFERENCE
 
 ## Indice Interno
 - Base
@@ -15,12 +15,16 @@
 - Header protegido: Authorization: Bearer <token>
 
 ## Auth
-- POST /register
-- POST /login
+- POST /register  → Cria conta e envia e-mail de verificação (nao retorna tokens)
+- POST /login     → Exige email_verified_at preenchido (HTTP 403 se nao verificado)
 - POST /logout
 - POST /refresh
-- GET /me
+- GET  /me
 - POST /me
+
+## E-mail Verification
+- GET  /email/verify/{id}/{hash}  (middleware: signed) — link do e-mail, redireciona para FRONTEND_URL/email-verified?status=...
+- POST /email/resend               (sem autenticacao) — body: { "email": "..." }
 
 ## Usuarios
 - GET /users (admin)

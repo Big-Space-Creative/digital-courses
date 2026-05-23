@@ -36,7 +36,7 @@ class CoursePolicy
      */
     public function update(User $user, Course $course): bool
     {
-        return $user->role === User::ROLE_ADMIN;
+        return in_array($user->role, [User::ROLE_ADMIN, User::ROLE_INSTRUCTOR]);
     }
 
     /**

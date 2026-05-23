@@ -91,14 +91,14 @@ function LessonCard({
     e.target.value = "";
   }
 
-  function handleRemoveMaterial(matId: string) {
+  function handleRemoveMaterial(matId: string | number) {
     onChange({
       ...lesson,
       materials: lesson.materials.filter((m) => m.id !== matId),
     });
   }
 
-  function handleMatTitleChange(matId: string, newTitle: string) {
+  function handleMatTitleChange(matId: string | number, newTitle: string) {
     onChange({
       ...lesson,
       materials: lesson.materials.map((m) =>
@@ -309,8 +309,8 @@ function LessonCard({
 }
 
 type DeleteTarget =
-  | { type: "module"; moduleId: string; label: string }
-  | { type: "lesson"; moduleId: string; lessonId: string; label: string };
+  | { type: "module"; moduleId: string | number; label: string }
+  | { type: "lesson"; moduleId: string | number; lessonId: string | number; label: string };
 
 export default function CreateCoursePage() {
   const router = useRouter();
@@ -335,7 +335,7 @@ export default function CreateCoursePage() {
     setIsModuleModalOpen(false);
   }
 
-  function handleMoveModule(moduleId: string, direction: "up" | "down") {
+  function handleMoveModule(moduleId: string | number, direction: "up" | "down") {
     setModules((current) => {
       const idx = current.findIndex((m) => m.id === moduleId);
       if (idx === -1) return current;
@@ -343,11 +343,11 @@ export default function CreateCoursePage() {
     });
   }
 
-  function requestDeleteModule(moduleId: string, moduleName: string) {
+  function requestDeleteModule(moduleId: string | number, moduleName: string) {
     setDeleteTarget({ type: "module", moduleId, label: `o módulo "${moduleName}"` });
   }
 
-  function handleAddLesson(moduleId: string) {
+  function handleAddLesson(moduleId: string | number) {
     setModules((current) =>
       current.map((m) =>
         m.id !== moduleId ? m : { ...m, lessons: [...m.lessons, createLesson()] },
@@ -355,7 +355,7 @@ export default function CreateCoursePage() {
     );
   }
 
-  function handleUpdateLesson(moduleId: string, updated: LessonState) {
+  function handleUpdateLesson(moduleId: string | number, updated: LessonState) {
     setModules((current) =>
       current.map((m) =>
         m.id !== moduleId
@@ -369,8 +369,8 @@ export default function CreateCoursePage() {
   }
 
   function handleMoveLesson(
-    moduleId: string,
-    lessonId: string,
+    moduleId: string | number,
+    lessonId: string | number,
     direction: "up" | "down",
   ) {
     setModules((current) =>
@@ -387,8 +387,8 @@ export default function CreateCoursePage() {
   }
 
   function requestDeleteLesson(
-    moduleId: string,
-    lessonId: string,
+    moduleId: string | number,
+    lessonId: string | number,
     lessonNumber: number,
   ) {
     setDeleteTarget({

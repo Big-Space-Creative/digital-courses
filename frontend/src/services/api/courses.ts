@@ -7,7 +7,10 @@ import type {
 const API_URL = process.env.API_BASE_URL;
 
 function authHeaders(token: string) {
-  return { Authorization: `Bearer ${token}` };
+  return {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/json",
+  };
 }
 
 export async function apiCreateCourse(
@@ -291,5 +294,17 @@ export async function apiDeleteLesson(token: string, lessonId: number) {
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.message ?? `Erro ao excluir aula (${res.status})`);
+  }
+}
+
+export async function apiDeleteMaterial(token: string, materialId: number) {
+  const res = await fetch(`${API_URL}materials/${materialId}`, {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message ?? `Erro ao excluir material (${res.status})`);
   }
 }

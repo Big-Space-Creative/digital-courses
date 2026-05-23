@@ -346,9 +346,7 @@ class LessonController extends Controller
                 $file = $request->file('video_file');
                 $videoPath = 'courses/modules/'.$module->id.'/lessons/videos';
                 $videoFilename = Str::uuid().'.'.$file->getClientOriginalExtension();
-                $storedPath = Storage::disk('s3')->putFileAs($videoPath, $file, $videoFilename, [
-                    'visibility' => 'public',
-                ]);
+                $storedPath = Storage::disk('s3')->putFileAs($videoPath, $file, $videoFilename);
                 $uploadedPaths[] = $storedPath;
                 $videoUrl = $this->toPublicStorageUrl($storedPath);
             } else {
@@ -370,9 +368,7 @@ class LessonController extends Controller
                 $materialPath = 'courses/modules/'.$module->id.'/lessons/'.$lesson->id.'/materials';
                 $materialFilename = Str::uuid().'.'.$materialFile->getClientOriginalExtension();
 
-                $materialStoredPath = Storage::disk('s3')->putFileAs($materialPath, $materialFile, $materialFilename, [
-                    'visibility' => 'public',
-                ]);
+                $materialStoredPath = Storage::disk('s3')->putFileAs($materialPath, $materialFile, $materialFilename);
                 $uploadedPaths[] = $materialStoredPath;
 
                 Material::create([
@@ -467,9 +463,7 @@ class LessonController extends Controller
         $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
 
         try {
-            $storedPath = Storage::disk('s3')->putFileAs($path, $file, $filename, [
-                'visibility' => 'public',
-            ]);
+            $storedPath = Storage::disk('s3')->putFileAs($path, $file, $filename);
 
             $fileUrl = $this->toPublicStorageUrl($storedPath);
         } catch (\Throwable $e) {
@@ -514,9 +508,7 @@ class LessonController extends Controller
     {
         $path = 'courses/modules/'.$moduleId.'/lessons/thumbnails';
         $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
-        $storedPath = Storage::disk('s3')->putFileAs($path, $file, $filename, [
-            'visibility' => 'public',
-        ]);
+        $storedPath = Storage::disk('s3')->putFileAs($path, $file, $filename);
 
         if ($previousUrl) {
             $previousPath = $this->extractDiskPathFromUrl($previousUrl);
@@ -530,32 +522,68 @@ class LessonController extends Controller
             }
         }
 
-        return $this->toPublicStorageUrl($storedPath) ?? $storedPath;
+        return $storedPath;
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/v1/materials/{material}",
+     *     operationId="materialDestroy",
+     *     tags={"Cursos"},
+     *     summary="Excluir material",
+     *     description="Remove permanentemente um material.",
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\Parameter(name="material", in="path", required=true, description="ID do material", @OA\Schema(type="integer", example=1)),
+     *     @OA\Response(response=200, description="Material excluído"),
+     *     @OA\Response(response=401, description="Não autenticado"),
+     *     @OA\Response(response=404, description="Material não encontrado")
+     * )
+     */
+    public function destroyMaterial($material_id)
+    {
+        $material = Material::findOrFail($material_id);
+        $this->authorize('delete', $material);
+
+        try {
+            $path = $this->extractDiskPathFromUrl($material->file_path);
+            if ($path) {
+                Storage::disk('s3')->delete($path);
+            }
+        } catch (\Throwable $e) {
+            // Ignora falha de exclusão do arquivo, prossegue com exclusão no DB
+        }
+
+        $material->delete();
+
+        return response()->json([
+            'message' => 'Material excluído com sucesso',
+        ]);
     }
 
     private function normalizeLessonForResponse(Lesson $lesson): void
     {
-        $lesson->thumbnail = $this->toPublicStorageUrl($lesson->thumbnail);
-        $lesson->video_url = $this->toPublicStorageUrl($lesson->video_url);
+        $lesson->thumbnail = $this->toPresignedUrl($lesson->thumbnail);
+        $lesson->video_url = $this->toPresignedUrl($lesson->video_url);
 
         if ($lesson->relationLoaded('materials')) {
             $lesson->materials->each(function ($material): void {
-                $material->file_path = $this->toPublicStorageUrl($material->file_path);
+                $material->file_path = $this->toPresignedUrl($material->file_path);
             });
         }
 
         if ($lesson->relationLoaded('module') && $lesson->module) {
             $lesson->module->lessons?->each(function ($moduleLesson): void {
-                $moduleLesson->thumbnail = $this->toPublicStorageUrl($moduleLesson->thumbnail);
-                $moduleLesson->video_url = $this->toPublicStorageUrl($moduleLesson->video_url);
+                $moduleLesson->thumbnail = $this->toPresignedUrl($moduleLesson->thumbnail);
+                $moduleLesson->video_url = $this->toPresignedUrl($moduleLesson->video_url);
             });
 
             if ($lesson->module->relationLoaded('course') && $lesson->module->course) {
-                $lesson->module->course->thumbnail = $this->toPublicStorageUrl($lesson->module->course->thumbnail);
+                $lesson->module->course->thumbnail = $this->toPresignedUrl($lesson->module->course->thumbnail);
                 $lesson->module->course->modules?->each(function ($courseModule): void {
                     $courseModule->lessons?->each(function ($courseLesson): void {
-                        $courseLesson->thumbnail = $this->toPublicStorageUrl($courseLesson->thumbnail);
-                        $courseLesson->video_url = $this->toPublicStorageUrl($courseLesson->video_url);
+                        $courseLesson->thumbnail = $this->toPresignedUrl($courseLesson->thumbnail);
+                        $courseLesson->video_url = $this->toPresignedUrl($courseLesson->video_url);
                     });
                 });
             }

@@ -95,7 +95,7 @@ if [ -f artisan ]; then
   echo "[entrypoint] ⏳ Aguardando banco de dados..."
   MAX_TRIES=30
   COUNT=0
-  until gosu "$WEB_USER" php artisan db:show >/dev/null 2>&1 || [ $COUNT -eq $MAX_TRIES ]; do
+  until gosu "$WEB_USER" php artisan db:monitor >/dev/null 2>&1 || [ $COUNT -eq $MAX_TRIES ]; do
     COUNT=$((COUNT+1))
     echo "[entrypoint] Tentativa $COUNT/$MAX_TRIES..."
     sleep 2

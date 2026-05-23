@@ -108,7 +108,7 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
   }
 
   function updateMaterial(
-    materialId: string,
+    materialId: string | number,
     updater: (material: MaterialState) => MaterialState,
   ) {
     onUpdate((current) => ({
@@ -119,7 +119,7 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
     }));
   }
 
-  function removeMaterial(materialId: string) {
+  function removeMaterial(materialId: string | number) {
     onUpdate((current) => ({
       ...current,
       materials: current.materials.filter((material) => material.id !== materialId),
@@ -453,7 +453,7 @@ export default function EditCoursePage() {
   );
 
   function updateModule(
-    moduleId: string,
+    moduleId: string | number,
     updater: (moduleItem: ModuleState) => ModuleState,
   ) {
     setModules((current) =>
@@ -464,8 +464,8 @@ export default function EditCoursePage() {
   }
 
   function updateLesson(
-    moduleId: string,
-    lessonId: string,
+    moduleId: string | number,
+    lessonId: string | number,
     updater: (lesson: LessonState) => LessonState,
   ) {
     updateModule(moduleId, (moduleItem) => ({
@@ -480,7 +480,7 @@ export default function EditCoursePage() {
     setModules((current) => [...current, createModule()]);
   }
 
-  function removeModule(moduleId: string) {
+  function removeModule(moduleId: string | number) {
     setModules((current) => {
       const targetModule = current.find((item) => item.id === moduleId);
       if (!targetModule) return current;
@@ -499,14 +499,14 @@ export default function EditCoursePage() {
     });
   }
 
-  function addLesson(moduleId: string) {
+  function addLesson(moduleId: string | number) {
     updateModule(moduleId, (moduleItem) => ({
       ...moduleItem,
       lessons: [...moduleItem.lessons, createLesson()],
     }));
   }
 
-  function removeLesson(moduleId: string, lessonId: string) {
+  function removeLesson(moduleId: string | number, lessonId: string | number) {
     updateModule(moduleId, (moduleItem) => {
       const targetLesson = moduleItem.lessons.find((item) => item.id === lessonId);
       if (targetLesson?.dbId) {
@@ -624,6 +624,7 @@ export default function EditCoursePage() {
               isFreePreview: lesson.isFreePreview,
               videoUrl: uploadedVideoPath ? null : lesson.videoUrl ?? null,
               thumbnailUrl: lesson.thumbnailUrl ?? null,
+              materials: lesson.materials || [],
             });
           }
 
@@ -951,6 +952,16 @@ export default function EditCoursePage() {
                                 ? "Vídeo atual cadastrado"
                                 : "Nenhum vídeo cadastrado"}
                           </div>
+                          {lesson.videoUrl && !lesson.videoFile && (
+                            <a
+                              href={lesson.videoUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="mb-3 inline-flex text-sm font-medium text-orange-700 underline underline-offset-4"
+                            >
+                              Abrir vídeo atual
+                            </a>
+                          )}
                           <input
                             type="file"
                             accept="video/*,.mp4,.mov,.avi,.mkv,.webm"

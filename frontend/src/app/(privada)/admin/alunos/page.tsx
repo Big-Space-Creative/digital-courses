@@ -7,6 +7,8 @@ import {
   listUsersAction,
   updateUserRoleAction,
   updateUserSubscriptionAction,
+  updateUserDetailsAction,
+  deleteUserAction,
   type ApiUser,
   type UserRole,
   type SubscriptionType,
@@ -20,6 +22,9 @@ import {
   MdOutlineEdit,
   MdClose,
   MdRefresh,
+  MdDeleteOutline,
+  MdOutlinePerson,
+  MdEmail,
 } from "react-icons/md";
 
 // ─── Helpers visuais ──────────────────────────────────────────────────────────
@@ -39,7 +44,8 @@ function avatarGradient(id: number) {
   return gradients[id % gradients.length];
 }
 
-function initials(name: string) {
+function initials(name?: string | null) {
+  if (!name) return "";
   return name
     .split(" ")
     .slice(0, 2)
@@ -78,6 +84,8 @@ type EditModalProps = {
 
 function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
   const [isPending, startTransition] = useTransition();
+  const [name, setName] = useState(user.name);
+  const [email, setEmail] = useState(user.email);
   const [role, setRole] = useState<UserRole>(user.role);
   const [subscription, setSubscription] = useState<SubscriptionType>(
     user.subscription_type ?? "free",
@@ -85,7 +93,24 @@ function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
 
   function handleSave() {
     startTransition(async () => {
-      // 1) Atualizar role se mudou
+      // 1) Atualizar nome e e-mail se mudaram
+      const nameChanged = name.trim() !== user.name;
+      const emailChanged = email.trim() !== user.email;
+      if (nameChanged || emailChanged) {
+        const detailsRes = await updateUserDetailsAction(user.id, {
+          ...(nameChanged && { name: name.trim() }),
+          ...(emailChanged && { email: email.trim() }),
+        });
+        if (!detailsRes.success) {
+          toast("Erro ao atualizar dados", {
+            description: detailsRes.error ?? "Tente novamente",
+            variant: "error",
+          });
+          return;
+        }
+      }
+
+      // 2) Atualizar role se mudou
       if (role !== user.role) {
         const res = await updateUserRoleAction(user.id, role);
         if (!res.success) {
@@ -97,7 +122,7 @@ function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
         }
       }
 
-      // 2) Atualizar subscription se é student e mudou
+      // 3) Atualizar subscription se é student e mudou
       if (
         role === "student" &&
         subscription !== (user.subscription_type ?? "free")
@@ -113,12 +138,14 @@ function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
       }
 
       toast("Usuário atualizado", {
-        description: `${user.name} foi atualizado com sucesso.`,
+        description: `${name} foi atualizado com sucesso.`,
         variant: "success",
       });
 
       onSaved({
         ...user,
+        name: name.trim(),
+        email: email.trim(),
         role,
         subscription_type:
           role === "student" ? subscription : user.subscription_type,
@@ -154,6 +181,36 @@ function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
 
         {/* Body */}
         <div className="space-y-5 px-6 py-5">
+          {/* Nome */}
+          <div>
+            <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">Nome</p>
+            <div className="mt-2 flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
+              <MdOutlinePerson size={16} className="text-gray-400" />
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full bg-transparent text-sm text-gray-700 outline-none"
+                placeholder="Nome do usuário"
+              />
+            </div>
+          </div>
+
+          {/* E-mail */}
+          <div>
+            <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">E-mail</p>
+            <div className="mt-2 flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
+              <MdEmail size={16} className="text-gray-400" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-transparent text-sm text-gray-700 outline-none"
+                placeholder="email@exemplo.com"
+              />
+            </div>
+          </div>
+
           {/* Role */}
           <div>
             <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
@@ -250,6 +307,8 @@ export default function StudentsPage() {
     current_page: 1,
   });
   const [editingUser, setEditingUser] = useState<ApiUser | null>(null);
+  const [deleteTargetUser, setDeleteTargetUser] = useState<ApiUser | null>(null);
+  const [isDeleting, startDeleting] = useTransition();
 
   // Debounce busca
   useEffect(() => {
@@ -359,6 +418,28 @@ export default function StudentsPage() {
   function handleUserSaved(updated: ApiUser) {
     setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
     setEditingUser(null);
+  }
+
+  function handleConfirmDelete() {
+    if (!deleteTargetUser) return;
+    const target = deleteTargetUser;
+    setDeleteTargetUser(null);
+
+    startDeleting(async () => {
+      const res = await deleteUserAction(target.id);
+      if (!res.success) {
+        toast("Erro ao excluir usuário", {
+          description: res.error ?? "Tente novamente.",
+          variant: "error",
+        });
+        return;
+      }
+      toast("Usuário excluído", {
+        description: `${target.name} foi removido da plataforma.`,
+        variant: "success",
+      });
+      setUsers((prev) => prev.filter((u) => u.id !== target.id));
+    });
   }
 
   const premiumCount = users.filter(
@@ -585,14 +666,24 @@ export default function StudentsPage() {
                       </td>
 
                       <td className="px-6 py-4">
-                        <div className="flex items-center justify-center">
+                        <div className="flex items-center justify-center gap-2">
                           <button
                             type="button"
                             onClick={() => setEditingUser(user)}
                             className="rounded-md p-1.5 text-gray-400 hover:bg-orange-50 hover:text-orange-600"
                             aria-label={`Editar usuário ${user.name}`}
+                            title="Editar usuário"
                           >
                             <MdOutlineEdit size={17} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteTargetUser(user)}
+                            className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                            aria-label={`Excluir usuário ${user.name}`}
+                            title="Excluir usuário"
+                          >
+                            <MdDeleteOutline size={17} />
                           </button>
                         </div>
                       </td>
@@ -661,6 +752,37 @@ export default function StudentsPage() {
           onClose={() => setEditingUser(null)}
           onSaved={handleUserSaved}
         />
+      )}
+
+      {/* Modal de exclusão */}
+      {deleteTargetUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-gray-900">Excluir usuário?</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Você está prestes a excluir{" "}
+              <strong>{deleteTargetUser.name}</strong>. Esta ação não poderá ser desfeita.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteTargetUser(null)}
+                disabled={isDeleting}
+                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="rounded-lg bg-red-500 px-5 py-2 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-60"
+              >
+                {isDeleting ? "Excluindo..." : "Sim, excluir"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

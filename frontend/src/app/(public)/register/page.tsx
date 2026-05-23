@@ -8,6 +8,7 @@ import {
   MdOutlineEmail,
   MdOutlinePersonOutline,
   MdStar,
+  MdHelpOutline,
 } from "react-icons/md";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -37,7 +38,6 @@ export default function Register() {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(registerSchema),
@@ -45,18 +45,15 @@ export default function Register() {
 
   type RegisterData = z.infer<typeof registerSchema>;
 
-  const handleFillRandom = () => {
-    const rand = Math.random().toString(36).slice(2, 8);
-    const senha = `Aula@${rand}`;
 
-    setValue("nome", `Teste ${rand}`);
-    setValue("email", `teste.${rand}@example.com`);
-    setValue("senha", senha);
-    setValue("confirmaSenha", senha);
-  };
 
   const handleRegister = async (data: RegisterData) => {
-    const res = await registerAction(data);
+    const res = await registerAction({
+      nome: data.nome,
+      email: data.email,
+      senha: data.senha,
+      confirmaSenha: data.confirmaSenha,
+    });
 
     if (res.error) {
       toast("Nao foi possivel cadastrar", {
@@ -66,11 +63,12 @@ export default function Register() {
       return;
     }
 
-    toast("Cadastro realizado", {
-      description: "Agora voce pode entrar com sua conta.",
+    toast("Cadastro realizado!", {
+      description: "Verifique seu e-mail para ativar sua conta.",
       variant: "success",
     });
-    router.push("/login");
+    // Redireciona para a página de verificação passando o e-mail como parâmetro
+    router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
   };
 
   return (
@@ -121,21 +119,15 @@ export default function Register() {
               error={errors.confirmaSenha?.message}
               {...register("confirmaSenha")}
             />
-            <button
-              type="button"
-              onClick={handleFillRandom}
-              className="text-primary hover:text-primary-dark active:text-primary-dark border-primary/20 rounded-lg border px-4 py-2 text-xs font-semibold transition-colors"
-            >
-              Preencher dados de teste
-            </button>
+
             <button
               type="submit"
               className="bg-primary hover:bg-primary-dark active:bg-primary-dark rounded-lg py-5 text-sm font-semibold text-white transition-colors duration-300"
             >
               {isSubmitting ? "Cadastrando..." : "Cadastre-se"}
             </button>
-            <div>
-              <p className="flex justify-center gap-1 text-sm">
+            <div className="flex items-center justify-between mt-2">
+              <p className="flex gap-1 text-sm">
                 Já tem conta?
                 <Link
                   href="/login"
@@ -144,6 +136,19 @@ export default function Register() {
                   Clique aqui!
                 </Link>
               </p>
+              <button
+                type="button"
+                onClick={() => {
+                  toast("Precisa de ajuda?", {
+                    description: `Entre em contato conosco: ${process.env.NEXT_PUBLIC_SUPPORT_EMAIL}`,
+                    variant: "info",
+                  });
+                }}
+                className="flex items-center gap-1 text-sm text-gray-500 hover:text-primary transition-colors"
+                title="Atendimento ao cliente"
+              >
+                <MdHelpOutline size={18} /> Ajuda
+              </button>
             </div>
           </form>
         </div>

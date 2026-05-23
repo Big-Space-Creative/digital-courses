@@ -132,3 +132,109 @@ export async function updateUserSubscriptionAction(
     return { success: false, error: "Falha de conexão com o servidor" };
   }
 }
+
+// ─── Atualizar nome e e-mail ───────────────────────────────────────────────────
+
+export async function updateUserDetailsAction(
+  userId: number,
+  data: { name?: string; email?: string },
+): Promise<{ success: boolean; data?: ApiUser; error?: string }> {
+  const token = await getToken();
+  if (!token) return { success: false, error: "Não autenticado" };
+
+  try {
+    const res = await fetch(`${API_URL}admin/users/${userId}`, {
+      method: "PATCH",
+      headers: authHeaders(token),
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { success: false, error: err?.message ?? `Erro ${res.status}` };
+    }
+
+    const json = await res.json();
+    return { success: true, data: json.data };
+  } catch {
+    return { success: false, error: "Falha de conexão com o servidor" };
+  }
+}
+
+// ─── Excluir usuário ───────────────────────────────────────────────────────────
+
+export async function deleteUserAction(
+  userId: number,
+): Promise<{ success: boolean; error?: string }> {
+  const token = await getToken();
+  if (!token) return { success: false, error: "Não autenticado" };
+
+  try {
+    const res = await fetch(`${API_URL}admin/users/${userId}`, {
+      method: "DELETE",
+      headers: authHeaders(token),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { success: false, error: err?.message ?? `Erro ${res.status}` };
+    }
+
+    return { success: true };
+  } catch {
+    return { success: false, error: "Falha de conexão com o servidor" };
+  }
+}
+
+// ─── Alterar senha do próprio perfil ─────────────────────────────────────────
+
+export async function changePasswordAction(data: {
+  password: string;
+  password_confirmation: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const token = await getToken();
+  if (!token) return { success: false, error: "Não autenticado" };
+
+  try {
+    const res = await fetch(`${process.env.API_BASE_URL}me`, {
+      method: "POST",
+      headers: authHeaders(token),
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { success: false, error: err?.message ?? `Erro ${res.status}` };
+    }
+
+    return { success: true };
+  } catch {
+    return { success: false, error: "Falha de conexão com o servidor" };
+  }
+}
+
+// ─── Atualizar nome do próprio perfil ─────────────────────────────────────────
+
+export async function updateProfileNameAction(
+  name: string,
+): Promise<{ success: boolean; error?: string }> {
+  const token = await getToken();
+  if (!token) return { success: false, error: "Não autenticado" };
+
+  try {
+    const res = await fetch(`${process.env.API_BASE_URL}me`, {
+      method: "POST",
+      headers: authHeaders(token),
+      body: JSON.stringify({ name }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { success: false, error: err?.message ?? `Erro ${res.status}` };
+    }
+
+    return { success: true };
+  } catch {
+    return { success: false, error: "Falha de conexão com o servidor" };
+  }
+}

@@ -10,6 +10,7 @@ const API_URL = process.env.API_BASE_URL;
 
 const headers = {
   "Content-Type": "application/json",
+  "Accept": "application/json",
 };
 
 export async function login(formData: LoginData): Promise<LoginResponse> {
@@ -23,17 +24,24 @@ export async function login(formData: LoginData): Promise<LoginResponse> {
       }),
     });
 
-    const data = await res.json();
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error(`Login error: Expected JSON but got HTTP ${res.status}`);
+      return { success: false, message: `Servidor indisponível no momento (${res.status}). Tente novamente em instantes.` };
+    }
 
-    if (!res.ok) {
-      return {
-        success: false,
-        message: data.message ?? "Credenciais inválidas",
-      };
+    if (!res.ok) {  
+      // Retorna o body completo para que o loginAction possa inspecionar
+      // campos como email_verified: false (HTTP 403) ou outras respostas de erro.
+      return data;
     }
 
     return data;
   } catch (error) {
+    console.error("Login fetch error:", error, "API_URL used:", API_URL);
     return {
       success: false,
       message: "Erro inesperado",
@@ -53,7 +61,6 @@ export async function register(
         email: formData.email,
         password: formData.senha,
         password_confirmation: formData.confirmaSenha,
-        role: "student",
         avatar_url: "https://example.com/avatar.png",
       }),
     });

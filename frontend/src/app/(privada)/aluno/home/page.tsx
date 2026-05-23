@@ -4,9 +4,11 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import ProgressBar from "@/components/ui/ProgressBar";
 import { toast } from "@/components/ui/Toast";
+import { useUser } from "@/context/UserContext";
 import {
   MdArrowBackIos,
   MdOutlinePlayCircleFilled,
+  MdOutlineAdminPanelSettings,
   MdPlayArrow,
 } from "react-icons/md";
 import {
@@ -18,14 +20,14 @@ import {
 type CourseWithModules = ApiCourse & { modules: ApiModule[] };
 
 export default function Home() {
+  const { user } = useUser();
   const [course, setCourse] = useState<CourseWithModules | null>(null);
   const [loading, startLoading] = useTransition();
   const [openModules, setOpenModules] = useState<number[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const user = {
-    name: "Aluno",
-  };
+  const isPrivileged = user?.role === "admin" || user?.role === "instructor";
+  const displayName = user?.name?.split(" ")[0] ?? "Aluno";
 
   const fetchCourse = useCallback(() => {
     startLoading(async () => {
@@ -61,9 +63,22 @@ export default function Home() {
     );
   };
 
+  const adminButton = isPrivileged && (
+    <div className="flex justify-end">
+      <Link
+        href="/admin/dashboard"
+        className="inline-flex items-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-4 py-2.5 text-sm font-semibold text-orange-700 shadow-sm transition hover:bg-orange-100 hover:shadow-md"
+      >
+        <MdOutlineAdminPanelSettings size={20} />
+        Acessar Painel Administrativo
+      </Link>
+    </div>
+  );
+
   if (loading && !course) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6">
+        {adminButton}
         <p className="animate-pulse text-gray-500">
           Carregando trilha de aprendizado...
         </p>
@@ -73,7 +88,8 @@ export default function Home() {
 
   if (!course) {
     return (
-      <div className="mx-auto flex min-h-screen w-full max-w-3xl items-center justify-center p-6">
+      <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col items-center justify-center gap-6 p-6">
+        {adminButton}
         <div className="w-full rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
           <h1 className="text-secondary text-2xl font-bold">
             Nenhum curso disponível agora
@@ -100,10 +116,12 @@ export default function Home() {
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-10 p-4 sm:p-6 lg:p-8">
+      {adminButton}
+
       <div className="bg-secondary flex w-full flex-col-reverse items-center justify-between gap-10 rounded-2xl p-6 md:flex-row">
         <div className="flex flex-col gap-2 md:w-2xl">
           <h1 className="text-3xl font-bold text-white">
-            Bem-vindo de volta, {user.name}
+            Bem-vindo de volta, {displayName}!
           </h1>
           <p className="text-base text-white/60">
             Você está cursando <strong>{course.title}</strong>.

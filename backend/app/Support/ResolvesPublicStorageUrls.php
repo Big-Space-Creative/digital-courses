@@ -2,7 +2,9 @@
 
 namespace App\Support;
 
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+
 
 trait ResolvesPublicStorageUrls
 {
@@ -76,5 +78,41 @@ trait ResolvesPublicStorageUrls
         }
 
         return $configuredBaseUrl.'/'.$bucket;
+    }
+
+    protected function toPresignedUrl(?string $value, int $minutes = 60): ?string
+    {
+        $path = $this->extractDiskPathFromUrl($value);
+
+        if (! $path) {
+            return null;
+        }
+
+        try {
+            $config = config('filesystems.disks.s3');
+            $publicEndpoint = env('AWS_PUBLIC_ENDPOINT', $config['endpoint'] ?? null);
+
+            $client = new \Aws\S3\S3Client([
+                'version'                 => 'latest',
+                'region'                  => $config['region'] ?? 'us-east-1',
+                'endpoint'                => $publicEndpoint,
+                'use_path_style_endpoint' => $config['use_path_style_endpoint'] ?? false,
+                'credentials'             => [
+                    'key'    => $config['key'],
+                    'secret' => $config['secret'],
+                ],
+            ]);
+
+            $command = $client->getCommand('GetObject', [
+                'Bucket' => $config['bucket'],
+                'Key'    => $path,
+            ]);
+
+            $presignedRequest = $client->createPresignedRequest($command, "+{$minutes} minutes");
+            return (string) $presignedRequest->getUri();
+        } catch (\Throwable $e) {
+            // Fallback para URL normal se a geração falhar
+            return $this->toPublicStorageUrl($path);
+        }
     }
 }

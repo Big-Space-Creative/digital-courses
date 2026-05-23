@@ -1,4 +1,4 @@
-﻿# 04_BUSINESS_RULES
+# 04_BUSINESS_RULES
 
 ## Indice Interno
 - Perfis de Usuario
@@ -11,6 +11,14 @@
 - student: consumo de conteudo.
 - instructor: gestao de modulos/aulas/materiais.
 - admin: controle total da plataforma.
+
+## Verificacao de E-mail
+- Ao registrar, um e-mail de confirmacao e enviado via SMTP.
+- O login e bloqueado (HTTP 403) enquanto email_verified_at = null.
+- Usuarios cadastrados antes da implementacao sao automaticamente marcados como verificados (migration 2026_04_25_000001).
+- O link de verificacao expira em 24 horas (URL assinada via Laravel signed routes).
+- Reenvio de verificacao: POST /email/resend (sem autenticacao, apenas e-mail no body).
+- Resposta anti-enumeracao: o endpoint de reenvio sempre retorna 200 independente do e-mail existir.
 
 ## Regras de Acesso ao Conteudo
 - Aula free preview: acessivel para student free.

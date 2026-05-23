@@ -83,6 +83,18 @@ services:
     networks:
       - digital-courses-network
 
+  # Mailpit — capturador de e-mails para desenvolvimento
+  # UI: http://localhost:8025 | SMTP: porta 1025 (interna ao container)
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: digital-courses-mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025"  # Web UI
+      - "1025:1025"  # SMTP
+    networks:
+      - digital-courses-network
+
   # pgAdmin (UI para PostgreSQL)
   pgadmin:
     image: dpage/pgadmin4:8
@@ -121,7 +133,8 @@ services:
       retries: 5
       start_period: 10s
 
-  # MinIO Init — cria o bucket e configura CORS automaticamente na primeira execução
+  # MinIO Init — cria o bucket automaticamente na primeira execução
+  # CORS é configurado via MINIO_API_CORS_ALLOW_ORIGIN no servidor MinIO
   minio-init:
     image: minio/minio:latest
     container_name: digital-courses-minio-init
@@ -130,10 +143,8 @@ services:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c "
-        mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD};
-        mc mb --ignore-existing myminio/digital-courses-bucket;
-        echo '<CORSConfiguration><CORSRule><AllowedOrigin>*</AllowedOrigin><AllowedMethod>GET</AllowedMethod><AllowedMethod>PUT</AllowedMethod><AllowedMethod>POST</AllowedMethod><AllowedMethod>HEAD</AllowedMethod><AllowedHeader>*</AllowedHeader></CORSRule></CORSConfiguration>' > /tmp/cors.xml;
-        mc cors set myminio/digital-courses-bucket /tmp/cors.xml || echo 'CORS set skipped (version may not support it)';
+        mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} &&
+        mc mb --ignore-existing myminio/digital-courses-bucket &&
         echo 'MinIO init concluido.';
       "
     env_file:

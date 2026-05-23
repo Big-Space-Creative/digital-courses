@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { useUser } from "@/context/UserContext";
 import { toast } from "@/components/ui/Toast";
 import DeleteConfirmModal from "../../components/DeleteConfirmModal";
 import {
@@ -45,6 +46,8 @@ function thumbGradient(id: number) {
 }
 
 export default function ManageCoursesPage() {
+  const { user } = useUser();
+  const isAdmin = user?.role === "admin";
   const [courses, setCourses] = useState<ApiCourse[]>([]);
   const [featuredCourseId, setFeaturedCourseId] = useState<number | null>(null);
   const [meta, setMeta] = useState<Omit<CoursesPaginated, "data">>({
@@ -186,13 +189,15 @@ export default function ManageCoursesPage() {
               >
                 <MdRefresh size={17} className={loading ? "animate-spin" : ""} />
               </button>
-              <Link
-                href="/admin/cursos/criar"
-                className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors"
-              >
-                <MdAddCircleOutline size={20} />
-                Novo Curso
-              </Link>
+              {isAdmin && (
+                <Link
+                  href="/admin/cursos/criar"
+                  className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors"
+                >
+                  <MdAddCircleOutline size={20} />
+                  Novo Curso
+                </Link>
+              )}
             </div>
           </div>
 

@@ -7,6 +7,7 @@ import {
   MdMusicNote,
   MdOutlineEmail,
   MdStar,
+  MdHelpOutline,
 } from "react-icons/md";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -40,15 +41,29 @@ export default function Login() {
     const res = await loginAction(data);
 
     if (res.error) {
-      toast("Nao foi possivel realizar Login", {
+      // E-mail não verificado → informa o usuário e redireciona para tela de verificação
+      if ("email_not_verified" in res && res.email_not_verified) {
+        toast("Confirme seu e-mail", {
+          description:
+            "Acesse sua caixa de entrada e clique no link de verificação para ativar sua conta.",
+          variant: "info",
+        });
+        // Pequeno delay para o usuário conseguir ler o toast antes do redirect
+        setTimeout(() => {
+          router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
+        }, 1500);
+        return;
+      }
+
+      toast("Não foi possível realizar Login", {
         description: res.error,
         variant: "error",
       });
       return;
     }
 
-    toast("Login realizado com sucessoo", {
-      description: "Agora voce pode acessar seus cursos.",
+    toast("Login realizado com sucesso", {
+      description: "Agora você pode acessar seus cursos.",
       variant: "success",
     });
 
@@ -94,8 +109,8 @@ export default function Login() {
             >
               {isSubmitting ? "Entrando..." : "Entrar"}
             </button>
-            <div>
-              <p className="flex justify-center gap-1 text-sm">
+            <div className="flex items-center justify-between mt-2">
+              <p className="flex gap-1 text-sm">
                 Não tem conta?
                 <Link
                   href="/register"
@@ -104,6 +119,19 @@ export default function Login() {
                   Crie uma conta!
                 </Link>
               </p>
+              <button
+                type="button"
+                onClick={() => {
+                  toast("Precisa de ajuda?", {
+                    description: `Entre em contato conosco: ${process.env.NEXT_PUBLIC_SUPPORT_EMAIL}`,
+                    variant: "info",
+                  });
+                }}
+                className="flex items-center gap-1 text-sm text-gray-500 hover:text-primary transition-colors"
+                title="Atendimento ao cliente"
+              >
+                <MdHelpOutline size={18} /> Ajuda
+              </button>
             </div>
           </form>
         </div>

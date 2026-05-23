@@ -3,7 +3,6 @@
 use App\Http\Controllers\Api\v1\AdminController;
 use App\Http\Controllers\Api\v1\UserController;
 use App\Http\Controllers\AuthController;
-use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -49,6 +48,22 @@ Route::prefix('v1')->group(function () {
          * }
          */
         Route::post('/register', 'register');
+
+        // ─── Verificação de e-mail ───────────────────────────────────────────
+        // GET  /api/v1/email/verify/{id}/{hash}  — link clicado no e-mail (signed URL)
+        Route::get('/email/verify/{id}/{hash}', 'verifyEmail')
+            ->name('verification.verify')
+            ->middleware('signed');
+
+        // POST /api/v1/email/resend  — reenvio sem autenticação (apenas e-mail no body)
+        Route::post('/email/resend', 'resendVerification')
+            ->name('verification.resend');
+
+        // POST /api/v1/email/token-exchange — troca one-time token por JWT (auto-login pós-verificação)
+        Route::post('/email/token-exchange', 'autoLogin')
+            ->name('verification.token-exchange');
+        // ────────────────────────────────────────────────────────────────────
+
         /**
          * ROTA DE AUTENTICAÇÃO DE LOGIN
          *
@@ -371,60 +386,6 @@ Route::prefix('v1')->group(function () {
             Route::post('/courses', [App\Http\Controllers\Api\v1\CourseController::class, 'store']);
 
             /**
-             * ROTA DE EDIÇÃO DE CURSO [Apenas Admin]
-             *
-             * PUT /api/v1/courses/{course_id}
-             *
-             * ⚠️ REQUER AUTENTICAÇÃO: Apenas usuários com role 'admin' podem editar cursos
-             *
-             * Headers:
-             *   - Content-Type: application/json
-             *   - Accept: application/json
-             *   - Authorization: Bearer <TOKEN_JWT_DO_ADMIN>
-             *
-             * URL Parameter:
-             *   - {course_id}: ID do curso a ser editado (obrigatório)
-             *
-             * Body (JSON) - Enviar apenas os campos que deseja atualizar:
-             * {
-             *   "title": "Novo título do curso",           // Opcional
-             *   "description": "Nova descrição",          // Opcional
-             *   "price": 129.90,                         // Opcional
-             *   "thumbnail": "https://novo.jpg",        // Opcional
-             *   "is_published": true                    // Opcional
-             * }
-             *
-             * Response (200 OK):
-             * {
-             *   "message": "Curso atualizado com sucesso",
-             *   "data": {
-             *     "id": 1,
-             *     "title": "Novo título do curso",
-             *     "slug": "novo-titulo-do-curso",
-             *     "description": "Nova descrição",
-             *     ...
-             *   }
-             * }
-             *
-             * Response (403 Forbidden):
-             * {
-             *   "message": "Acesso negado. Apenas administradores podem acessar este recurso."
-             * }
-             *
-             * Response (404 Not Found):
-             * {
-             *   "message": "Curso não encontrado"
-             * }
-             *
-             * 🔑 EXEMPLO COM cURL:
-             * curl -X PUT http://localhost:8000/api/v1/courses/1 \
-             *   -H "Content-Type: application/json" \
-             *   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-             *   -d '{"title": "Curso Atualizado", "price": 199.90}'
-             */
-            Route::put('/courses/{course}', [App\Http\Controllers\Api\v1\CourseController::class, 'update']);
-
-            /**
              * ROTA DE EXCLUSÃO DE CURSO [Apenas Admin]
              *
              * DELETE /api/v1/courses/{course_id}
@@ -468,6 +429,13 @@ Route::prefix('v1')->group(function () {
         // Privado (Admins e Instrutores gerenciam módulos e aulas dentro de um curso)
         Route::middleware('role:admin,instructor')->group(function () {
             /**
+             * ROTA DE EDIÇÃO DE CURSO [Admin, Instrutor]
+             *
+             * PUT /api/v1/courses/{course_id}
+             */
+            Route::put('/courses/{course}', [App\Http\Controllers\Api\v1\CourseController::class, 'update']);
+
+            /**
              * CRIAÇÃO/EDIÇÃO/EXCLUSÃO DE MÓDULOS [Admin, Instrutor]
              *
              * POST /api/v1/courses/{course_id}/modules -> Body: { "order": 1 }
@@ -508,7 +476,7 @@ Route::prefix('v1')->group(function () {
     // Requer: auth:api + role = admin
     // ==========================================
 
-    Route::middleware(['auth:api', 'admin'])
+    Route::middleware(['auth:api', 'role:admin,instructor'])
         ->prefix('admin')
         ->controller(AdminController::class)
         ->group(function () {
@@ -579,6 +547,13 @@ Route::prefix('v1')->group(function () {
             Route::patch('/users/{id}/subscription', 'updateUserSubscription');
 
             /**
+             * EXCLUIR MATERIAL DA AULA [Admin, Instrutor]
+             *
+             * DELETE /api/v1/materials/{material}
+             */
+            Route::delete('/materials/{material}', [App\Http\Controllers\Api\v1\LessonController::class, 'destroyMaterial']);
+
+            /**
              * COMENTÁRIOS DAS AULAS (ADMIN)
              *
              * GET /api/v1/admin/comments
@@ -609,5 +584,13 @@ Route::prefix('v1')->group(function () {
              * Response (200): Curso com módulos, aulas e lista de alunos matriculados.
              */
             Route::get('/courses/{id}', 'showCourse');
+
+            // ------------------------------------------
+            // Gestão avançada de usuários (somente admin)
+            // ------------------------------------------
+            Route::middleware('admin')->group(function () {
+                Route::patch('/users/{id}', 'updateUser');
+                Route::delete('/users/{id}', 'destroyUser');
+            });
         });
 });

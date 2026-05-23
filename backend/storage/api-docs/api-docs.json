@@ -612,7 +612,7 @@
                     "Cursos"
                 ],
                 "summary": "Listar cursos",
-                "description": "Retorna todos os cursos com módulos e aulas (sem video_url). Requer autenticação.",
+                "description": "Retorna os cursos visiveis para o usuario autenticado com modulos e aulas (sem video_url).",
                 "operationId": "courseIndex",
                 "responses": {
                     "200": {
@@ -649,12 +649,12 @@
                     "Cursos"
                 ],
                 "summary": "Criar curso",
-                "description": "Cria um novo curso. Requer autenticação de admin.",
+                "description": "Cria um novo curso. Requer autenticacao de admin. Aceita thumbnail por URL ou upload.",
                 "operationId": "courseStore",
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "application/json": {
+                        "multipart/form-data": {
                             "schema": {
                                 "required": [
                                     "title"
@@ -662,27 +662,29 @@
                                 "properties": {
                                     "title": {
                                         "type": "string",
-                                        "example": "Violão do Zero"
+                                        "example": "Violao do Zero"
                                     },
                                     "description": {
                                         "type": "string",
-                                        "example": "Aprenda violão do absoluto zero.",
                                         "nullable": true
                                     },
                                     "price": {
                                         "type": "number",
                                         "format": "float",
-                                        "example": 49.9,
                                         "nullable": true
                                     },
                                     "thumbnail": {
                                         "type": "string",
-                                        "example": "https://cdn.example.com/thumb.jpg",
+                                        "nullable": true
+                                    },
+                                    "thumbnail_file": {
+                                        "type": "string",
+                                        "format": "binary",
                                         "nullable": true
                                     },
                                     "is_published": {
                                         "type": "boolean",
-                                        "example": false
+                                        "example": true
                                     }
                                 },
                                 "type": "object"
@@ -692,29 +694,13 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Curso criado",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Curso criado com sucesso"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Curso criado"
                     },
                     "401": {
-                        "description": "Não autenticado"
+                        "description": "Nao autenticado"
                     },
                     "422": {
-                        "description": "Erro de validação"
+                        "description": "Erro de validacao"
                     }
                 },
                 "security": [
@@ -730,7 +716,7 @@
                     "Cursos"
                 ],
                 "summary": "Exibir curso",
-                "description": "Retorna um curso específico com seus módulos e aulas. Requer autenticação.",
+                "description": "Retorna um curso especifico com seus modulos e aulas. Cursos nao publicados ficam restritos a admin/instructor.",
                 "operationId": "courseShow",
                 "parameters": [
                     {
@@ -765,7 +751,7 @@
                         }
                     },
                     "404": {
-                        "description": "Curso não encontrado"
+                        "description": "Curso nao encontrado"
                     }
                 },
                 "security": [
@@ -779,7 +765,7 @@
                     "Cursos"
                 ],
                 "summary": "Atualizar curso",
-                "description": "Atualiza dados de um curso existente. Requer autenticação de admin.",
+                "description": "Atualiza dados de um curso existente. Requer autenticacao de admin.",
                 "operationId": "courseUpdate",
                 "parameters": [
                     {
@@ -793,63 +779,15 @@
                         }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "title": {
-                                        "type": "string",
-                                        "example": "Violão Avançado"
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "price": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "nullable": true
-                                    },
-                                    "thumbnail": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "is_published": {
-                                        "type": "boolean",
-                                        "example": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
-                        "description": "Curso atualizado",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Curso atualizado com sucesso"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Curso atualizado"
                     },
                     "401": {
-                        "description": "Não autenticado"
+                        "description": "Nao autenticado"
                     },
                     "404": {
-                        "description": "Curso não encontrado"
+                        "description": "Curso nao encontrado"
                     }
                 },
                 "security": [
@@ -863,7 +801,7 @@
                     "Cursos"
                 ],
                 "summary": "Excluir curso",
-                "description": "Remove permanentemente um curso. Requer autenticação (admin).",
+                "description": "Remove permanentemente um curso. Requer autenticacao (admin).",
                 "operationId": "courseDestroy",
                 "parameters": [
                     {
@@ -879,26 +817,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Curso excluído",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Curso excluído com sucesso"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Curso excluido"
                     },
                     "401": {
-                        "description": "Não autenticado"
+                        "description": "Nao autenticado"
                     },
                     "404": {
-                        "description": "Curso não encontrado"
+                        "description": "Curso nao encontrado"
                     }
                 },
                 "security": [
@@ -1366,6 +1291,44 @@
                 ]
             }
         },
+        "/api/v1/materials/{material}": {
+            "delete": {
+                "tags": [
+                    "Cursos"
+                ],
+                "summary": "Excluir material",
+                "description": "Remove permanentemente um material.",
+                "operationId": "materialDestroy",
+                "parameters": [
+                    {
+                        "name": "material",
+                        "in": "path",
+                        "description": "ID do material",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Material excluído"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Material não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/courses/{course}/modules": {
             "post": {
                 "tags": [
@@ -1742,7 +1705,7 @@
                     "Auth"
                 ],
                 "summary": "Registrar novo usuário",
-                "description": "Cria uma nova conta e retorna access_token + refresh_token.",
+                "description": "Cria uma nova conta e envia e-mail de verificação. O login só é liberado após o usuário confirmar o e-mail.",
                 "operationId": "authRegister",
                 "requestBody": {
                     "required": true,
@@ -1800,7 +1763,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Usuário registrado com sucesso",
+                        "description": "Usuário registrado — e-mail de verificação enviado",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1811,7 +1774,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Usuário registrado com sucesso"
+                                            "example": "Conta criada com sucesso. Verifique seu e-mail para ativar o acesso."
                                         },
                                         "data": {
                                             "properties": {
@@ -1843,20 +1806,6 @@
                                                         }
                                                     },
                                                     "type": "object"
-                                                },
-                                                "access_token": {
-                                                    "type": "string"
-                                                },
-                                                "refresh_token": {
-                                                    "type": "string"
-                                                },
-                                                "token_type": {
-                                                    "type": "string",
-                                                    "example": "bearer"
-                                                },
-                                                "expires_in": {
-                                                    "type": "integer",
-                                                    "example": 3600
                                                 }
                                             },
                                             "type": "object"
@@ -1899,7 +1848,7 @@
                     "Auth"
                 ],
                 "summary": "Login do usuário",
-                "description": "Autentica o usuário e retorna access_token + refresh_token.",
+                "description": "Autentica o usuário e retorna access_token + refresh_token. Exige e-mail verificado.",
                 "operationId": "authLogin",
                 "requestBody": {
                     "required": true,
@@ -1989,6 +1938,181 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "description": "E-mail não verificado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "E-mail não verificado."
+                                        },
+                                        "email_verified": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "resend_endpoint": {
+                                            "type": "string",
+                                            "example": "/api/v1/email/resend"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/email/verify/{id}/{hash}": {
+            "get": {
+                "tags": [
+                    "E-mail"
+                ],
+                "summary": "Verificar e-mail",
+                "description": "Valida o link assinado recebido por e-mail. Após verificar, redireciona para o frontend.",
+                "operationId": "emailVerify",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "hash",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "expires",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "signature",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Redirecionamento para o frontend após verificação"
+                    },
+                    "400": {
+                        "description": "Hash inválido"
+                    },
+                    "410": {
+                        "description": "Link expirado"
+                    }
+                }
+            }
+        },
+        "/api/v1/email/resend": {
+            "post": {
+                "tags": [
+                    "E-mail"
+                ],
+                "summary": "Reenviar e-mail de verificação",
+                "description": "Reenvio do e-mail de verificação. Não requer autenticação — basta o e-mail cadastrado.",
+                "operationId": "emailResend",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "alice@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "E-mail reenviado (ou já verificado)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "E-mail de verificação reenviado com sucesso."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "E-mail inválido"
+                    }
+                }
+            }
+        },
+        "/api/v1/email/token-exchange": {
+            "post": {
+                "tags": [
+                    "E-mail"
+                ],
+                "summary": "Trocar one-time token por JWT",
+                "description": "Após a verificação de e-mail, o frontend envia o token de uso único e recebe um par JWT para login automático. O token é consumido e invalidado após o uso.",
+                "operationId": "emailTokenExchange",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "string",
+                                        "example": "abc123..."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "JWT retornado com sucesso"
+                    },
+                    "401": {
+                        "description": "Token inválido ou expirado"
                     }
                 }
             }
@@ -2154,7 +2278,7 @@
                     "Auth"
                 ],
                 "summary": "Renovar access token",
-                "description": "Gera um novo access_token usando um refresh_token válido. Envie o refresh_token no header Authorization: Bearer {refresh_token} ou no body.",
+                "description": "Gera um novo access_token usando um refresh_token válido.",
                 "operationId": "authRefresh",
                 "requestBody": {
                     "content": {
@@ -2236,6 +2360,10 @@
         {
             "name": "Perfil",
             "description": "Consulta e atualização do perfil do usuário autenticado"
+        },
+        {
+            "name": "E-mail",
+            "description": "Verificação de e-mail"
         },
         {
             "name": "Cursos",

@@ -288,9 +288,7 @@ class CourseController extends Controller
     private function storeThumbnail($file, string $slug, ?string $previousUrl = null): string
     {
         $filename = $slug.'-'.Str::uuid().'.'.$file->getClientOriginalExtension();
-        $storedPath = Storage::disk('s3')->putFileAs('courses/thumbnails', $file, $filename, [
-            'visibility' => 'public',
-        ]);
+        $storedPath = Storage::disk('s3')->putFileAs('courses/thumbnails', $file, $filename);
 
         if ($previousUrl) {
             $previousPath = $this->extractDiskPathFromUrl($previousUrl);
@@ -304,7 +302,7 @@ class CourseController extends Controller
             }
         }
 
-        return $this->toPublicStorageUrl($storedPath) ?? $storedPath;
+        return $storedPath;
     }
 
     private function generateUniqueSlug(string $title, ?int $ignoreCourseId = null): string
@@ -328,16 +326,16 @@ class CourseController extends Controller
 
     private function normalizeCourseForResponse(Course $course): void
     {
-        $course->thumbnail = $this->toPublicStorageUrl($course->thumbnail);
+        $course->thumbnail = $this->toPresignedUrl($course->thumbnail);
 
         $course->modules->each(function ($module): void {
             $module->lessons->each(function ($lesson): void {
-                $lesson->thumbnail = $this->toPublicStorageUrl($lesson->thumbnail);
-                $lesson->video_url = $this->toPublicStorageUrl($lesson->video_url);
+                $lesson->thumbnail = $this->toPresignedUrl($lesson->thumbnail);
+                $lesson->video_url = $this->toPresignedUrl($lesson->video_url);
 
                 if ($lesson->relationLoaded('materials')) {
                     $lesson->materials->each(function ($material): void {
-                        $material->file_path = $this->toPublicStorageUrl($material->file_path);
+                        $material->file_path = $this->toPresignedUrl($material->file_path);
                     });
                 }
             });

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\Lesson;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -81,6 +82,11 @@ class AdminController extends Controller
         $totalEnrollments = Enrollment::count();
         $activeEnrollments = Enrollment::where('status', 'active')->count();
 
+        // Conta aulas pertencentes a cursos publicados
+        $activeLessons = Lesson::whereHas('module.course', function ($q) {
+            $q->where('is_published', true);
+        })->count();
+
         return response()->json([
             'success' => true,
             'message' => 'Dashboard carregado com sucesso',
@@ -101,6 +107,9 @@ class AdminController extends Controller
                 'enrollments' => [
                     'total' => $totalEnrollments,
                     'active' => $activeEnrollments,
+                ],
+                'lessons' => [
+                    'active' => $activeLessons,
                 ],
             ],
         ]);
@@ -488,6 +497,75 @@ class AdminController extends Controller
             'success' => true,
             'message' => 'Curso encontrado',
             'data' => $course,
+        ]);
+    }
+
+    /*
+     |--------------------------------------------------------------------------
+     | Atualização e Exclusão de Usuários (Admin)
+     |--------------------------------------------------------------------------
+     */
+
+    /**
+     * Atualiza nome e e-mail de um usuário específico.
+     *
+     * PATCH /api/v1/admin/users/{id}
+     */
+    public function updateUser(Request $request, int $id): JsonResponse
+    {
+        $user = User::findOrFail($id);
+
+        $validated = $request->validate([
+            'name'  => ['sometimes', 'required', 'string', 'max:255'],
+            'email' => ['sometimes', 'required', 'email', 'max:255', 'unique:users,email,' . $id],
+        ], [
+            'name.required'  => 'O nome é obrigatório.',
+            'name.max'       => 'O nome não pode ter mais de 255 caracteres.',
+            'email.required' => 'O e-mail é obrigatório.',
+            'email.email'    => 'Informe um e-mail válido.',
+            'email.unique'   => 'Este e-mail já está em uso.',
+        ]);
+
+        if (isset($validated['name'])) {
+            $user->name = $validated['name'];
+        }
+
+        if (isset($validated['email'])) {
+            $user->email = $validated['email'];
+            // Se o e-mail mudou, invalida a verificação para forçar re-verificação
+            $user->email_verified_at = now();
+        }
+
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuário atualizado com sucesso.',
+            'data'    => $user->fresh(),
+        ]);
+    }
+
+    /**
+     * Exclui (soft delete) um usuário.
+     *
+     * DELETE /api/v1/admin/users/{id}
+     */
+    public function destroyUser(int $id): JsonResponse
+    {
+        // Impede que o admin se exclua
+        if (auth()->id() === $id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Você não pode excluir a sua própria conta por aqui.',
+            ], 403);
+        }
+
+        $user = User::findOrFail($id);
+        $user->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Usuário {$user->name} excluído com sucesso.",
         ]);
     }
 }

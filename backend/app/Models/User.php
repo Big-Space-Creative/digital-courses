@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Notifications\VerifyEmailNotification;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
-class User extends Authenticatable implements JWTSubject
+class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 {
     public const ROLE_STUDENT = 'student';
 
@@ -31,6 +33,7 @@ class User extends Authenticatable implements JWTSubject
     protected $fillable = [
         'name',
         'email',
+        'email_verified_at',
         'password',
         'role',
         'avatar_url',
@@ -155,5 +158,14 @@ class User extends Authenticatable implements JWTSubject
             'role' => $this->role,
             'avatar_url' => $this->avatar_url,
         ];
+    }
+
+    /**
+     * Substitui a notificação padrão do Laravel pela versão
+     * customizada com o template visual da plataforma.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyEmailNotification);
     }
 }

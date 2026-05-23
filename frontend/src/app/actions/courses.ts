@@ -258,3 +258,53 @@ export async function togglePublishCourseAction(
     return { success: false, error: "Falha de conexao com o servidor" };
   }
 }
+
+// ─── Métricas do Dashboard ─────────────────────────────────────────────────────
+
+export type DashboardStats = {
+  users: {
+    total: number;
+    students: number;
+    instructors: number;
+    admins: number;
+    premium: number;
+    free: number;
+  };
+  courses: {
+    total: number;
+    published: number;
+    draft: number;
+  };
+  enrollments: {
+    total: number;
+    active: number;
+  };
+  lessons: {
+    active: number;
+  };
+};
+
+export async function getDashboardStatsAction(): Promise<
+  | { success: true; data: DashboardStats }
+  | { success: false; error: string }
+> {
+  const token = await getToken();
+  if (!token) return { success: false, error: "Não autenticado" };
+
+  try {
+    const res = await fetch(`${API_URL}admin/dashboard`, {
+      headers: authHeaders(token),
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { success: false, error: err?.message ?? `Erro ${res.status}` };
+    }
+
+    const json = await res.json();
+    return { success: true, data: json.data };
+  } catch {
+    return { success: false, error: "Falha de conexão com o servidor" };
+  }
+}

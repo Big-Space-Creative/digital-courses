@@ -1,0 +1,146 @@
+# docker-compose.prod.yml — Sobrepõe docker-compose.yml para produção com Traefik + Redis externo
+#
+# Use assim:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# No Portainer (Stack), adicione os dois arquivos ou use "Compose path override".
+#
+# PREMISSAS:
+#   1. Traefik já está rodando em outra stack com a rede externa "traefik_network"
+#   2. Redis já está rodando em outra stack com a rede externa "infra_network"
+#      OU você mantém o Redis nesta stack (ver seção abaixo)
+#   3. Os domínios apontam para o IP da VPS (DNS configurado)
+
+services:
+
+  # ── Backend (Nginx) ── exposto via Traefik ─────────────────────────────────
+  nginx:
+    ports: []    # Remove exposição direta de porta — Traefik roteia
+    networks:
+      - digital-courses-network
+      - traefik_network     # Traefik precisa alcançar este serviço
+    labels:
+      - "traefik.enable=true"
+      # Router HTTPS
+      - "traefik.http.routers.dc-api.rule=Host(`api.seudominio.com`)"
+      - "traefik.http.routers.dc-api.entrypoints=websecure"
+      - "traefik.http.routers.dc-api.tls.certresolver=letsencrypt"
+      # Serviço interno (porta 80 do nginx container)
+      - "traefik.http.services.dc-api.loadbalancer.server.port=80"
+      # Redireciona HTTP → HTTPS
+      - "traefik.http.routers.dc-api-http.rule=Host(`api.seudominio.com`)"
+      - "traefik.http.routers.dc-api-http.entrypoints=web"
+      - "traefik.http.routers.dc-api-http.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      # Upload de arquivos grandes (vídeos)
+      - "traefik.http.middlewares.dc-api-buffering.buffering.maxRequestBodyBytes=629145600"
+      - "traefik.http.routers.dc-api.middlewares=dc-api-buffering"
+
+  # ── Frontend (Next.js) ── exposto via Traefik ──────────────────────────────
+  frontend:
+    ports: []    # Remove exposição direta de porta — Traefik roteia
+    networks:
+      - digital-courses-network
+      - traefik_network
+    environment:
+      WATCHPACK_POLLING: "false"
+      NODE_ENV: "production"
+      NEXT_TELEMETRY_DISABLED: "1"
+      # ⚠️  Altere para seus domínios reais:
+      NEXT_PUBLIC_API_URL: "https://api.seudominio.com/api/v1"
+      API_BASE_URL: "http://nginx/api/v1/"    # interno: Next.js SSR → nginx
+    command: >-
+      sh -c "npm install && npm run build && npm run start -- --hostname 0.0.0.0 --port 3000"
+    labels:
+      - "traefik.enable=true"
+      # Router HTTPS
+      - "traefik.http.routers.dc-frontend.rule=Host(`seudominio.com`) || Host(`www.seudominio.com`)"
+      - "traefik.http.routers.dc-frontend.entrypoints=websecure"
+      - "traefik.http.routers.dc-frontend.tls.certresolver=letsencrypt"
+      # Serviço interno (porta 3000 do container Next.js)
+      - "traefik.http.services.dc-frontend.loadbalancer.server.port=3000"
+      # Redireciona HTTP → HTTPS
+      - "traefik.http.routers.dc-frontend-http.rule=Host(`seudominio.com`) || Host(`www.seudominio.com`)"
+      - "traefik.http.routers.dc-frontend-http.entrypoints=web"
+      - "traefik.http.routers.dc-frontend-http.middlewares=redirect-to-https"
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+  # OPÇÃO A (recomendada): Redis em stack separada (infra)
+  # Neste caso, REMOVA o serviço redis abaixo e configure o .env:
+  #   REDIS_HOST=redis              ← nome do container Redis na rede infra_network
+  #
+  # OPÇÃO B (mais simples): Manter Redis nesta stack
+  # Deixe o bloco abaixo como está. O Redis fica isolado neste projeto.
+  redis:
+    ports: []    # Sem exposição externa em produção
+    networks:
+      - digital-courses-network
+    # Se quiser persistência do Redis em produção:
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+  # ── Banco de dados ──────────────────────────────────────────────────────────
+  db:
+    ports: []    # Sem exposição externa em produção
+
+  # ── Mailpit — apenas em dev, removido em produção ──────────────────────────
+  mailpit:
+    profiles:
+      - dev-only    # Nunca sobe em produção a menos que profile seja ativado
+
+  # ── pgAdmin — sem porta direta; acesse via Traefik se quiser ───────────────
+  pgadmin:
+    ports: []
+    networks:
+      - digital-courses-network
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dc-pgadmin.rule=Host(`pgadmin.seudominio.com`)"
+      - "traefik.http.routers.dc-pgadmin.entrypoints=websecure"
+      - "traefik.http.routers.dc-pgadmin.tls.certresolver=letsencrypt"
+      - "traefik.http.services.dc-pgadmin.loadbalancer.server.port=80"
+
+  # ── MinIO Console — via Traefik ─────────────────────────────────────────────
+  minio:
+    ports: []
+    networks:
+      - digital-courses-network
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      # API S3 (porta 9000)
+      - "traefik.http.routers.dc-minio-api.rule=Host(`s3.seudominio.com`)"
+      - "traefik.http.routers.dc-minio-api.entrypoints=websecure"
+      - "traefik.http.routers.dc-minio-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.dc-minio-api.loadbalancer.server.port=9000"
+      # Console web (porta 9001)
+      - "traefik.http.routers.dc-minio-console.rule=Host(`minio.seudominio.com`)"
+      - "traefik.http.routers.dc-minio-console.entrypoints=websecure"
+      - "traefik.http.routers.dc-minio-console.tls.certresolver=letsencrypt"
+      - "traefik.http.services.dc-minio-console.loadbalancer.server.port=9001"
+      # Routers separados precisam especificar o serviço correto
+      - "traefik.http.routers.dc-minio-api.service=dc-minio-api"
+      - "traefik.http.routers.dc-minio-console.service=dc-minio-console"
+
+# ── Redes ────────────────────────────────────────────────────────────────────
+networks:
+  digital-courses-network:
+    driver: bridge
+
+  # Rede externa do Traefik — deve existir antes de subir esta stack.
+  # O nome deve bater com o que o Traefik usa (verifique na sua stack do Traefik).
+  traefik_network:
+    external: true
+    name: traefik_network    # ← ajuste se o nome for diferente na sua stack
+
+  # Rede do Redis externo (OPÇÃO A — comente se mantiver Redis nesta stack)
+  # infra_network:
+  #   external: true
+  #   name: infra_network
+
+# ── Volumes extras ───────────────────────────────────────────────────────────
+volumes:
+  redis_data:
+    driver: local
