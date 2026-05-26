@@ -47,14 +47,14 @@ services:
       - L5_SWAGGER_GENERATE_ALWAYS=false
       - SWAGGER_ENABLED=false
     networks:
-      - digital-courses-network
+      - dc-overlay-network
       - network_swarm_public
 
   # ── Nginx Web Server (Proxy do Laravel) ──
   nginx:
     image: ghcr.io/big-space-creative/digital-courses/nginx:latest
     networks:
-      - digital-courses-network
+      - dc-overlay-network
       - network_swarm_public
     deploy:
       restart_policy:
@@ -91,7 +91,7 @@ services:
   frontend:
     image: ghcr.io/big-space-creative/digital-courses/frontend:latest
     networks:
-      - digital-courses-network
+      - dc-overlay-network
       - network_swarm_public
     environment:
       - NODE_ENV=production
@@ -123,8 +123,8 @@ services:
       - "traefik.http.routers.dc-frontend-http.middlewares=redirect-to-https"
 
 networks:
-  # Rede interna Swarm (overlay) para FPM <-> Nginx
-  digital-courses-network:
+  # Rede interna Swarm (overlay) para FPM <-> Nginx (Renomeada para evitar conflito de cache)
+  dc-overlay-network:
     driver: overlay
   
   # Rede overlay externa do Docker Swarm da VPS
