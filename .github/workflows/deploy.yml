@@ -108,15 +108,15 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
-            cd /var/www/digital-courses # <-- Altere para a pasta física do projeto na sua VPS
+            cd /root/digital-courses # <-- Altere para a pasta física do projeto na sua VPS
             git pull origin main
             
             # Autenticação silenciosa no GHCR na VPS
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
             # OPÇÃO A: Se estiver usando Docker Compose padrão na VPS:
-            docker compose -f docker-compose.stack.yml pull
-            docker compose -f docker-compose.stack.yml up -d
+            # docker compose -f docker-compose.stack.yml pull
+            # docker compose -f docker-compose.stack.yml up -d
             
-            # OPÇÃO B: Se estiver usando Docker Swarm na VPS (Descomente se necessário):
-            # docker stack deploy -c docker-compose.stack.yml digital-courses
+            # OPÇÃO B: Se estiver usando Docker Swarm na VPS:
+            docker stack deploy --with-registry-auth -c docker-compose.stack.yml digital-courses
