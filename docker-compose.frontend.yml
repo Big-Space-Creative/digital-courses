@@ -4,17 +4,17 @@ services:
   # ── Frontend Next.js (Node.js) ──
   frontend:
     image: ghcr.io/big-space-creative/digital-courses/frontend:latest
-    container_name: digital-courses-frontend
-    restart: unless-stopped
     networks:
       - network_swarm_public
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
-      # Comunicação direta com a API na rede compartilhada Swarm
+      # No Docker Swarm, comunicamos via DNS público da API ou nome do serviço na rede compartilhada
       - API_BASE_URL=http://digital-courses-nginx/api/v1/
       - PORT=3000
     deploy:
+      restart_policy:
+        condition: on-failure
       labels:
         - "traefik.enable=true"
         # HTTPS Router

@@ -4,8 +4,6 @@ services:
   # ── Backend PHP-FPM (Laravel Application) ──
   app:
     image: ghcr.io/big-space-creative/digital-courses/backend:latest
-    container_name: digital-courses-app
-    restart: unless-stopped
     working_dir: /var/www
     volumes:
       - app_storage:/var/www/storage
@@ -55,12 +53,12 @@ services:
   # ── Nginx Web Server (Proxy do Laravel) ──
   nginx:
     image: ghcr.io/big-space-creative/digital-courses/nginx:latest
-    container_name: digital-courses-nginx
-    restart: unless-stopped
     networks:
       - digital-courses-network
       - network_swarm_public
     deploy:
+      restart_policy:
+        condition: on-failure
       labels:
         - "traefik.enable=true"
         # HTTPS Router
@@ -92,8 +90,6 @@ services:
   # ── Frontend Next.js (Node.js) ──
   frontend:
     image: ghcr.io/big-space-creative/digital-courses/frontend:latest
-    container_name: digital-courses-frontend
-    restart: unless-stopped
     networks:
       - digital-courses-network
       - network_swarm_public
@@ -103,6 +99,8 @@ services:
       - API_BASE_URL=http://nginx/api/v1/
       - PORT=3000
     deploy:
+      restart_policy:
+        condition: on-failure
       labels:
         - "traefik.enable=true"
         # HTTPS Router
@@ -125,9 +123,9 @@ services:
       - "traefik.http.routers.dc-frontend-http.middlewares=redirect-to-https"
 
 networks:
-  # Rede de ponte privada interna à stack
+  # Rede interna Swarm (overlay) para FPM <-> Nginx
   digital-courses-network:
-    driver: bridge
+    driver: overlay
   
   # Rede overlay externa do Docker Swarm da VPS
   network_swarm_public:
