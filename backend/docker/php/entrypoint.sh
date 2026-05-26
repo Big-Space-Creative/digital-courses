@@ -65,7 +65,7 @@ if [ ! -f vendor/autoload.php ]; then
   chmod -R 775 storage bootstrap/cache 2>/dev/null || true
   
   echo "[entrypoint] 📦 Executando scripts do Composer..."
-  gosu "$WEB_USER" composer run-script post-autoload-dump
+  gosu "$APP_USER" composer run-script post-autoload-dump
   echo "[entrypoint] ✅ Scripts executados com sucesso!"
 fi
 
