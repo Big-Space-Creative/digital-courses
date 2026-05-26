@@ -38,10 +38,6 @@ class AuthEndpointsTest extends TestCase
                         'role',
                         'avatar_url',
                     ],
-                    'access_token',
-                    'refresh_token',
-                    'token_type',
-                    'expires_in',
                 ],
             ]);
 

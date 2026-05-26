@@ -7,6 +7,9 @@ const publicRoutes = [
   // Fluxo de verificação de e-mail — não exige autenticação
   { path: "/verify-email" },
   { path: "/email-verified" },
+  // Páginas legais — públicas e sem redirecionamento
+  { path: "/politica-de-privacidade" },
+  { path: "/termos-de-uso" },
 ];
 
 // Roles que têm acesso à área administrativa

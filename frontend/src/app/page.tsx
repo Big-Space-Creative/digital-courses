@@ -259,6 +259,23 @@ export default async function Home() {
             </div>
           </div>
         </section>
+
+        {/* Rodapé legal — LGPD */}
+        <footer className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 border-t border-gray-200 pt-6 text-xs text-gray-400">
+          <span>© {new Date().getFullYear()} AulasViolão. Todos os direitos reservados.</span>
+          <Link
+            href="/politica-de-privacidade"
+            className="transition-colors hover:text-primary"
+          >
+            Política de Privacidade
+          </Link>
+          <Link
+            href="/termos-de-uso"
+            className="transition-colors hover:text-primary"
+          >
+            Termos de Uso
+          </Link>
+        </footer>
       </div>
     </main>
   );

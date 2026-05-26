@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # ── Frontend Next.js (Node.js) ──
+  frontend:
+    platform: linux/amd64
+    image: ghcr.io/big-space-creative/digital-courses/frontend:latest
+    container_name: digital-courses-frontend
+    restart: unless-stopped
+    networks:
+      - network_swarm_public
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      # Comunicação direta com a API na rede compartilhada Swarm
+      - API_BASE_URL=http://digital-courses-nginx/api/v1/
+      - PORT=3000
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        # HTTPS Router
+        - "traefik.http.routers.dc-frontend.rule=Host(`aulasviolao.bigspacecreative.com.br`)"
+        - "traefik.http.routers.dc-frontend.entrypoints=websecure"
+        - "traefik.http.routers.dc-frontend.tls.certresolver=letsencrypt"
+        - "traefik.http.services.dc-frontend.loadbalancer.server.port=3000"
+        # Redirecionamento HTTP -> HTTPS
+        - "traefik.http.routers.dc-frontend-http.rule=Host(`aulasviolao.bigspacecreative.com.br`)"
+        - "traefik.http.routers.dc-frontend-http.entrypoints=web"
+        - "traefik.http.routers.dc-frontend-http.middlewares=redirect-to-https"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dc-frontend.rule=Host(`aulasviolao.bigspacecreative.com.br`)"
+      - "traefik.http.routers.dc-frontend.entrypoints=websecure"
+      - "traefik.http.routers.dc-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.dc-frontend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.dc-frontend-http.rule=Host(`aulasviolao.bigspacecreative.com.br`)"
+      - "traefik.http.routers.dc-frontend-http.entrypoints=web"
+      - "traefik.http.routers.dc-frontend-http.middlewares=redirect-to-https"
+
+networks:
+  # Rede overlay externa do Docker Swarm da VPS
+  network_swarm_public:
+    external: true
+    name: network_swarm_public

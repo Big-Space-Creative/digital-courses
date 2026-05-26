@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  # ── Backend PHP-FPM (Laravel Application) ──
+  app:
+    platform: linux/amd64
+    image: ghcr.io/big-space-creative/digital-courses/backend:latest
+    container_name: digital-courses-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - app_storage:/var/www/storage
+      - app_bootstrap_cache:/var/www/bootstrap/cache
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    env_file:
+      - .env.production
+    networks:
+      - digital-courses-network
+      - network_swarm_public
+
+  # ── Nginx Web Server (Proxy do Laravel) ──
+  nginx:
+    image: ghcr.io/big-space-creative/digital-courses/nginx:latest
+    container_name: digital-courses-nginx
+    restart: unless-stopped
+    networks:
+      - digital-courses-network
+      - network_swarm_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        # HTTPS Router
+        - "traefik.http.routers.dc-api.rule=Host(`api-aulasviolao.bigspacecreative.com.br`)"
+        - "traefik.http.routers.dc-api.entrypoints=websecure"
+        - "traefik.http.routers.dc-api.tls.certresolver=letsencrypt"
+        - "traefik.http.services.dc-api.loadbalancer.server.port=80"
+        # Redirecionamento HTTP -> HTTPS
+        - "traefik.http.routers.dc-api-http.rule=Host(`api-aulasviolao.bigspacecreative.com.br`)"
+        - "traefik.http.routers.dc-api-http.entrypoints=web"
+        - "traefik.http.routers.dc-api-http.middlewares=redirect-to-https"
+        - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+        # Limite de Upload (Vídeos de aulas)
+        - "traefik.http.middlewares.dc-api-buffering.buffering.maxRequestBodyBytes=629145600" # 600MB
+        - "traefik.http.routers.dc-api.middlewares=dc-api-buffering"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dc-api.rule=Host(`api-aulasviolao.bigspacecreative.com.br`)"
+      - "traefik.http.routers.dc-api.entrypoints=websecure"
+      - "traefik.http.routers.dc-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.dc-api.loadbalancer.server.port=80"
+      - "traefik.http.routers.dc-api-http.rule=Host(`api-aulasviolao.bigspacecreative.com.br`)"
+      - "traefik.http.routers.dc-api-http.entrypoints=web"
+      - "traefik.http.routers.dc-api-http.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.dc-api-buffering.buffering.maxRequestBodyBytes=629145600"
+      - "traefik.http.routers.dc-api.middlewares=dc-api-buffering"
+
+  # ── Frontend Next.js (Node.js) ──
+  frontend:
+    platform: linux/amd64
+    image: ghcr.io/big-space-creative/digital-courses/frontend:latest
+    container_name: digital-courses-frontend
+    restart: unless-stopped
+    networks:
+      - digital-courses-network
+      - network_swarm_public
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      - API_BASE_URL=http://nginx/api/v1/
+      - PORT=3000
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        # HTTPS Router
+        - "traefik.http.routers.dc-frontend.rule=Host(`aulasviolao.bigspacecreative.com.br`)"
+        - "traefik.http.routers.dc-frontend.entrypoints=websecure"
+        - "traefik.http.routers.dc-frontend.tls.certresolver=letsencrypt"
+        - "traefik.http.services.dc-frontend.loadbalancer.server.port=3000"
+        # Redirecionamento HTTP -> HTTPS
+        - "traefik.http.routers.dc-frontend-http.rule=Host(`aulasviolao.bigspacecreative.com.br`)"
+        - "traefik.http.routers.dc-frontend-http.entrypoints=web"
+        - "traefik.http.routers.dc-frontend-http.middlewares=redirect-to-https"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dc-frontend.rule=Host(`aulasviolao.bigspacecreative.com.br`)"
+      - "traefik.http.routers.dc-frontend.entrypoints=websecure"
+      - "traefik.http.routers.dc-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.dc-frontend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.dc-frontend-http.rule=Host(`aulasviolao.bigspacecreative.com.br`)"
+      - "traefik.http.routers.dc-frontend-http.entrypoints=web"
+      - "traefik.http.routers.dc-frontend-http.middlewares=redirect-to-https"
+
+networks:
+  # Rede de ponte privada interna à stack
+  digital-courses-network:
+    driver: bridge
+  
+  # Rede overlay externa do Docker Swarm da VPS
+  network_swarm_public:
+    external: true
+    name: network_swarm_public
+
+volumes:
+  app_storage:
+    driver: local
+  app_bootstrap_cache:
+    driver: local

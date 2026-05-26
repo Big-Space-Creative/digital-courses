@@ -27,9 +27,12 @@ const registerSchema = z
     confirmaSenha: z
       .string()
       .min(8, "A senha deve conter pelo menos 8 caracteres"),
+    aceitaTermos: z.literal(true, {
+      error: "Você precisa aceitar os Termos de Uso e a Política de Privacidade para continuar.",
+    }),
   })
   .refine((data) => data.senha === data.confirmaSenha, {
-    message: "Senhas não conhecidem",
+    message: "As senhas não coincidem",
     path: ["confirmaSenha"],
   });
 
@@ -120,6 +123,41 @@ export default function Register() {
               {...register("confirmaSenha")}
             />
 
+            {/* Aceite de Termos — exigido pela LGPD Art. 8º */}
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <label className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  {...register("aceitaTermos")}
+                  className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-orange-500"
+                />
+                <span className="text-sm leading-relaxed text-gray-600">
+                  Eu li e aceito os{" "}
+                  <Link
+                    href="/termos-de-uso"
+                    target="_blank"
+                    className="font-semibold text-primary underline hover:text-primary-dark"
+                  >
+                    Termos de Uso
+                  </Link>{" "}
+                  e a{" "}
+                  <Link
+                    href="/politica-de-privacidade"
+                    target="_blank"
+                    className="font-semibold text-primary underline hover:text-primary-dark"
+                  >
+                    Política de Privacidade
+                  </Link>
+                  .
+                </span>
+              </label>
+              {errors.aceitaTermos && (
+                <p className="mt-2 text-xs text-red-500">
+                  {errors.aceitaTermos.message}
+                </p>
+              )}
+            </div>
+
             <button
               type="submit"
               className="bg-primary hover:bg-primary-dark active:bg-primary-dark rounded-lg py-5 text-sm font-semibold text-white transition-colors duration-300"
@@ -161,7 +199,7 @@ export default function Register() {
           </div>
           <div className="flex flex-col gap-2.5">
             <span className="text-primary flex gap-1">
-              {Array.from({ length: 6 }).map((_, index) => (
+              {Array.from({ length: 5 }).map((_, index) => (
                 <MdStar key={index} />
               ))}
             </span>

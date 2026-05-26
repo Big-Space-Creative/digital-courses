@@ -345,14 +345,14 @@ export default function ManageCoursesPage() {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-1.5 text-gray-600">
                             <MdOutlineBookmarks size={14} className="text-gray-400" />
-                            {course.modules?.length ?? "�??"}
+                            {course.modules?.length ?? "—"}
                           </div>
                         </td>
 
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-1.5 text-gray-600">
                             <MdOutlineSchool size={14} className="text-gray-400" />
-                            {course.lessons_count ?? "�??"}
+                            {course.lessons_count ?? "—"}
                           </div>
                         </td>
 
@@ -432,8 +432,8 @@ export default function ManageCoursesPage() {
           <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 p-4 text-sm text-gray-500">
             <span>
               {loading
-                ? "Carregando�?�"
-                : `Exibindo ${meta.from ?? 0}�??${meta.to ?? 0} de ${meta.total} cursos`}
+                ? "Carregando..."
+                : `Exibindo ${meta.from ?? 0}–${meta.to ?? 0} de ${meta.total} cursos`}
             </span>
             <div className="flex items-center gap-1">
               <button

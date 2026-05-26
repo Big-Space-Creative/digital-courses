@@ -183,8 +183,11 @@ export default function Home() {
               key={moduleItem.id}
               className="flex flex-col items-center justify-between overflow-hidden rounded-xl border border-gray-100 shadow-sm"
             >
-              <div
+              <button
+                type="button"
                 onClick={() => toggleModule(moduleItem.id)}
+                aria-expanded={isOpen}
+                aria-controls={`module-content-${moduleItem.id}`}
                 className="flex w-full cursor-pointer items-center justify-between bg-white p-6 transition-colors hover:bg-gray-50"
               >
                 <div className="flex items-center gap-4">
@@ -208,9 +211,10 @@ export default function Home() {
                     }`}
                   />
                 </div>
-              </div>
+              </button>
 
               <div
+                id={`module-content-${moduleItem.id}`}
                 className={`grid w-full transition-all duration-300 ease-in-out ${
                   isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
                 }`}

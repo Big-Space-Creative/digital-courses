@@ -113,6 +113,14 @@ if [ -f artisan ]; then
     else
       echo "[entrypoint] ⚠️  Erro ao executar migrações"
     fi
+    
+    # Rodar Admin Seeder
+    echo "[entrypoint] 👤 Criando/Atualizando usuário admin inicial..."
+    if gosu "$WEB_USER" php artisan db:seed --class=AdminUserSeeder --force; then
+      echo "[entrypoint] ✅ Usuário admin processado!"
+    else
+      echo "[entrypoint] ⚠️  Erro ao executar AdminUserSeeder"
+    fi
   fi
   
   # Storage link

@@ -12,6 +12,7 @@ import {
   type LessonComment,
 } from "@/app/actions/comments";
 import {
+  deleteCourseAction,
   getDashboardStatsAction,
   listCoursesAction,
   type ApiCourse,
@@ -49,6 +50,7 @@ export default function Dashboard() {
   // ── Courses table ─────────────────────────────────────────────────────────
   const [courses, setCourses] = useState<ApiCourse[]>([]);
   const [coursesLoading, startCoursesLoading] = useTransition();
+  const [courseDeleting, startCourseDeleting] = useTransition();
 
   // ── Comments ──────────────────────────────────────────────────────────────
   const [commentSearch, setCommentSearch] = useState("");
@@ -79,12 +81,41 @@ export default function Dashboard() {
   }, []);
 
   // ── Load Courses ──────────────────────────────────────────────────────────
-  useEffect(() => {
+  const fetchCourses = useCallback(() => {
     startCoursesLoading(async () => {
       const result = await listCoursesAction({ perPage: 5, page: 1 });
       if (result.success) setCourses(result.data.data);
     });
   }, []);
+
+  useEffect(() => {
+    fetchCourses();
+  }, [fetchCourses]);
+
+  // ── Delete course (dashboard) ─────────────────────────────────────────────
+  function handleDeleteCourse() {
+    if (!selectedCourse) return;
+    const target = selectedCourse;
+    setSelectedCourse(null);
+
+    startCourseDeleting(async () => {
+      const result = await deleteCourseAction(target.id);
+      if (!result.success) {
+        toast("Erro ao excluir curso", {
+          description: result.error ?? "Tente novamente.",
+          variant: "error",
+        });
+        return;
+      }
+
+      toast("Curso excluído", {
+        description: `"${target.title}" foi removido com sucesso.`,
+        variant: "success",
+      });
+
+      setCourses((prev) => prev.filter((c) => c.id !== target.id));
+    });
+  }
 
   // ── Comments debounce ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -507,9 +538,9 @@ export default function Dashboard() {
         label={selectedCourse?.title ?? ""}
         title="Excluir curso"
         description="Deseja mesmo excluir este curso? Esta ação é irreversível."
-        confirmLabel="Sim, excluir"
+        confirmLabel={courseDeleting ? "Excluindo..." : "Sim, excluir"}
         onCancel={() => setSelectedCourse(null)}
-        onConfirm={() => setSelectedCourse(null)}
+        onConfirm={handleDeleteCourse}
       />
 
       <DeleteConfirmModal

@@ -144,7 +144,7 @@ export default function Login() {
           </div>
           <div className="flex flex-col gap-2.5">
             <span className="text-primary flex gap-1">
-              {Array.from({ length: 6 }).map((_, index) => (
+              {Array.from({ length: 5 }).map((_, index) => (
                 <MdStar key={index} />
               ))}
             </span>
