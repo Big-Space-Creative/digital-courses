@@ -3,7 +3,6 @@ version: '3.8'
 services:
   # ── Backend PHP-FPM (Laravel Application) ──
   app:
-    platform: linux/amd64
     image: ghcr.io/big-space-creative/digital-courses/backend:latest
     container_name: digital-courses-app
     restart: unless-stopped
@@ -59,7 +58,6 @@ services:
 
   # ── Frontend Next.js (Node.js) ──
   frontend:
-    platform: linux/amd64
     image: ghcr.io/big-space-creative/digital-courses/frontend:latest
     container_name: digital-courses-frontend
     restart: unless-stopped

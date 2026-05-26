@@ -3,7 +3,6 @@ version: '3.8'
 services:
   # ── Frontend Next.js (Node.js) ──
   frontend:
-    platform: linux/amd64
     image: ghcr.io/big-space-creative/digital-courses/frontend:latest
     container_name: digital-courses-frontend
     restart: unless-stopped
