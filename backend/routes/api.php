@@ -47,7 +47,8 @@ Route::prefix('v1')->group(function () {
          *   }
          * }
          */
-        Route::post('/register', 'register');
+        // throttle:5,1 → no máximo 5 tentativas por minuto por IP (anti-spam de cadastro).
+        Route::post('/register', 'register')->middleware('throttle:5,1');
 
         // ─── Verificação de e-mail ───────────────────────────────────────────
         // GET  /api/v1/email/verify/{id}/{hash}  — link clicado no e-mail (signed URL)
@@ -56,11 +57,15 @@ Route::prefix('v1')->group(function () {
             ->middleware('signed');
 
         // POST /api/v1/email/resend  — reenvio sem autenticação (apenas e-mail no body)
+        // throttle:5,10 → 5 reenvios a cada 10 min por IP (evita enumeração de e-mail e abuso de envio).
         Route::post('/email/resend', 'resendVerification')
+            ->middleware('throttle:5,10')
             ->name('verification.resend');
 
         // POST /api/v1/email/token-exchange — troca one-time token por JWT (auto-login pós-verificação)
+        // throttle:10,1 → limita brute force no token one-time de auto-login.
         Route::post('/email/token-exchange', 'autoLogin')
+            ->middleware('throttle:10,1')
             ->name('verification.token-exchange');
         // ────────────────────────────────────────────────────────────────────
 
@@ -91,7 +96,20 @@ Route::prefix('v1')->group(function () {
          *   }
          * }
          */
-        Route::post('/login', 'login');
+        // throttle:5,1 → no máximo 5 tentativas de login por minuto por IP (anti brute force / credential stuffing).
+        Route::post('/login', 'login')->middleware('throttle:5,1');
+
+        // ─── Redefinição de senha (esqueci minha senha) ──────────────────────
+        // POST /api/v1/password/forgot — envia o e-mail com link de redefinição
+        Route::post('/password/forgot', 'forgotPassword')
+            ->middleware('throttle:5,10')
+            ->name('password.forgot');
+
+        // POST /api/v1/password/reset — define a nova senha a partir do token
+        Route::post('/password/reset', 'resetPassword')
+            ->middleware('throttle:5,10')
+            ->name('password.reset');
+        // ─────────────────────────────────────────────────────────────────────
 
         // Esse middleware "Route::middleware('auth:api')" obriga que seja passado o header Authorization: Bearer <token> para prosseguir com as requisições
         Route::middleware('auth:api')->group(function () {
@@ -145,6 +163,16 @@ Route::prefix('v1')->group(function () {
              * }
              */
             Route::post('/me', 'updateProfile');
+            /**
+             * ROTA DE EXCLUSÃO DA PRÓPRIA CONTA (LGPD Art. 18, VI)
+             *
+             * DELETE /api/v1/me
+             * Headers: Authorization: Bearer <TOKEN_JWT>
+             * Body (JSON): { "password": "<senha atual>" }
+             *
+             * Exige reautenticação por senha. Faz soft delete e invalida o token.
+             */
+            Route::delete('/me', 'deleteAccount');
             /**
              * ROTA DE LOGOUT DO USUÁRIO
              *
@@ -531,8 +559,12 @@ Route::prefix('v1')->group(function () {
              *   - Não é possível alterar a própria role.
              *
              * Response (200): { "success", "message", "data": { "id", "name", "email", "role" } }
+             *
+             * ⚠️ SEGURANÇA: restrito a 'admin'. Sem o middleware 'admin', um instrutor
+             * poderia promover qualquer conta (inclusive a sua) a admin — escalonamento
+             * vertical de privilégio.
              */
-            Route::patch('/users/{id}/role', 'updateUserRole');
+            Route::patch('/users/{id}/role', 'updateUserRole')->middleware('admin');
 
             /**
              * ALTERAR PLANO DO ALUNO
@@ -543,8 +575,11 @@ Route::prefix('v1')->group(function () {
              *   - Só funciona para usuários com role = student.
              *
              * Response (200): { "success", "message", "data": { "id", "name", "email", "subscription_type" } }
+             *
+             * ⚠️ SEGURANÇA: restrito a 'admin'. Conceder plano premium é uma ação
+             * administrativa de valor — não deve ficar disponível a instrutores.
              */
-            Route::patch('/users/{id}/subscription', 'updateUserSubscription');
+            Route::patch('/users/{id}/subscription', 'updateUserSubscription')->middleware('admin');
 
             /**
              * EXCLUIR MATERIAL DA AULA [Admin, Instrutor]

@@ -103,6 +103,12 @@ export default function Login() {
               error={errors.senha?.message}
               {...register("senha")}
             />
+            <Link
+              href="/esqueci-senha"
+              className="text-primary hover:text-primary-dark -mt-2 self-end text-sm"
+            >
+              Esqueci minha senha
+            </Link>
             <button
               type="submit"
               className="bg-primary hover:bg-primary-dark active:bg-primary-dark rounded-lg py-5 text-sm font-semibold text-white transition-colors duration-300"

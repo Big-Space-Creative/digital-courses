@@ -1,6 +1,8 @@
 "use client";
 
-import { logoutAction } from "@/app/actions/auth";
+import { useState } from "react";
+
+import { deleteAccountAction, logoutAction } from "@/app/actions/auth";
 import { Input } from "@/components/form/Input";
 import { toast } from "@/components/ui/Toast";
 import { useUser } from "@/context/UserContext";
@@ -38,6 +40,36 @@ export default function Profile() {
 
     setUser(null);
 
+    router.push("/login");
+    router.refresh();
+  };
+
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      toast("Informe sua senha para confirmar.", { variant: "error" });
+      return;
+    }
+
+    setIsDeleting(true);
+    const res = await deleteAccountAction(deletePassword);
+    setIsDeleting(false);
+
+    if (!res.success) {
+      toast(res.error ?? "Falha ao excluir a conta.", { variant: "error" });
+      return;
+    }
+
+    toast(res.message ?? "Conta excluída com sucesso.", {
+      description: "Sentiremos sua falta.",
+      variant: "success",
+    });
+
+    setUser(null);
+    setIsDeleteOpen(false);
     router.push("/login");
     router.refresh();
   };
@@ -133,12 +165,55 @@ export default function Profile() {
             >
               <MdOutlineExitToApp className="size-5" /> Sair da Conta
             </button>
-            <button className="cursor-pointer rounded-lg bg-red-100 px-10 py-2 text-sm text-red-500 hover:bg-red-200">
+            <button
+              onClick={() => setIsDeleteOpen(true)}
+              className="cursor-pointer rounded-lg bg-red-100 px-10 py-2 text-sm text-red-500 hover:bg-red-200"
+            >
               Excluir minha conta
             </button>
           </div>
         </div>
       </div>
+
+      {isDeleteOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="flex w-full max-w-md flex-col gap-4 rounded-2xl bg-white p-6">
+            <h2 className="text-secondary text-xl font-bold">
+              Excluir minha conta
+            </h2>
+            <p className="text-secondary/70 text-sm">
+              Esta ação é permanente. Seus dados serão anonimizados ou eliminados
+              conforme a Política de Privacidade. Digite sua senha para confirmar.
+            </p>
+            <input
+              type="password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              placeholder="Sua senha atual"
+              className="border-secondary/20 focus:border-primary rounded-lg border px-4 py-2 outline-none"
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setIsDeleteOpen(false);
+                  setDeletePassword("");
+                }}
+                disabled={isDeleting}
+                className="border-secondary/20 text-secondary/80 cursor-pointer rounded-lg border px-6 py-2 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleDeleteAccount()}
+                disabled={isDeleting}
+                className="cursor-pointer rounded-lg bg-red-500 px-6 py-2 text-white hover:bg-red-600 disabled:opacity-50"
+              >
+                {isDeleting ? "Excluindo..." : "Excluir conta"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

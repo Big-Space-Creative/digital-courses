@@ -73,7 +73,14 @@ services:
         - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
         # Limite de Upload (Vídeos de aulas)
         - "traefik.http.middlewares.dc-api-buffering.buffering.maxRequestBodyBytes=629145600" # 600MB
-        - "traefik.http.routers.dc-api.middlewares=dc-api-buffering"
+        # Cabeçalhos de segurança (HSTS + anti-clickjacking + nosniff + referrer-policy)
+        - "traefik.http.middlewares.dc-sec-headers.headers.stsSeconds=31536000"
+        - "traefik.http.middlewares.dc-sec-headers.headers.stsIncludeSubdomains=true"
+        - "traefik.http.middlewares.dc-sec-headers.headers.stsPreload=true"
+        - "traefik.http.middlewares.dc-sec-headers.headers.contentTypeNosniff=true"
+        - "traefik.http.middlewares.dc-sec-headers.headers.frameDeny=true"
+        - "traefik.http.middlewares.dc-sec-headers.headers.referrerPolicy=strict-origin-when-cross-origin"
+        - "traefik.http.routers.dc-api.middlewares=dc-api-buffering,dc-sec-headers"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.dc-api.rule=Host(`api-aulasviolao.bigspacecreative.com.br`)"
@@ -108,6 +115,7 @@ services:
         - "traefik.http.routers.dc-frontend.entrypoints=websecure"
         - "traefik.http.routers.dc-frontend.tls.certresolver=letsencrypt"
         - "traefik.http.services.dc-frontend.loadbalancer.server.port=3000"
+        - "traefik.http.routers.dc-frontend.middlewares=dc-sec-headers"
         # Redirecionamento HTTP -> HTTPS
         - "traefik.http.routers.dc-frontend-http.rule=Host(`aulasviolao.bigspacecreative.com.br`)"
         - "traefik.http.routers.dc-frontend-http.entrypoints=web"

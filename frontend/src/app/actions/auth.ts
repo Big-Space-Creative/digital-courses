@@ -2,7 +2,13 @@
 import { cookies } from "next/headers";
 
 //Services
-import { login, register } from "@/services/api/auth";
+import {
+  deleteAccount,
+  forgotPassword,
+  login,
+  register,
+  resetPassword,
+} from "@/services/api/auth";
 
 //Types
 import { LoginData, RegisterData } from "@/types/auth";
@@ -102,6 +108,41 @@ export async function logoutAction() {
   cookieStore.delete("user_role");
 
   return { message: "Saiu da conta com sucesso" };
+}
+
+export async function deleteAccountAction(password: string) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("access_token")?.value;
+
+  if (!token) {
+    return { success: false, error: "Sessão expirada. Faça login novamente." };
+  }
+
+  const res = await deleteAccount(token, password);
+
+  if (!res.success) {
+    return { success: false, error: res.message || "Falha ao excluir a conta." };
+  }
+
+  // Conta excluída no backend — encerra a sessão local removendo os cookies.
+  cookieStore.delete("access_token");
+  cookieStore.delete("refresh_token");
+  cookieStore.delete("user_role");
+
+  return { success: true, message: res.message };
+}
+
+export async function forgotPasswordAction(email: string) {
+  return forgotPassword(email);
+}
+
+export async function resetPasswordAction(payload: {
+  token: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+}) {
+  return resetPassword(payload);
 }
 
 export async function getAccessTokenAction(): Promise<string | null> {

@@ -49,6 +49,75 @@ export async function login(formData: LoginData): Promise<LoginResponse> {
   }
 }
 
+export async function deleteAccount(
+  token: string,
+  password: string,
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const res = await fetch(`${API_URL}me`, {
+      method: "DELETE",
+      headers: {
+        ...headers,
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ password }),
+    });
+
+    const data = await res.json().catch(() => ({
+      success: false,
+      message: `Servidor indisponível (${res.status}).`,
+    }));
+
+    return data;
+  } catch (error) {
+    console.error("Delete account fetch error:", error);
+    return { success: false, message: "Erro inesperado" };
+  }
+}
+
+export async function forgotPassword(
+  email: string,
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const res = await fetch(`${API_URL}password/forgot`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ email }),
+    });
+
+    return await res.json().catch(() => ({
+      success: false,
+      message: `Servidor indisponível (${res.status}).`,
+    }));
+  } catch (error) {
+    console.error("Forgot password fetch error:", error);
+    return { success: false, message: "Erro inesperado" };
+  }
+}
+
+export async function resetPassword(payload: {
+  token: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+}): Promise<{ success: boolean; message: string }> {
+  try {
+    const res = await fetch(`${API_URL}password/reset`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    return await res.json().catch(() => ({
+      success: false,
+      message: `Servidor indisponível (${res.status}).`,
+    }));
+  } catch (error) {
+    console.error("Reset password fetch error:", error);
+    return { success: false, message: "Erro inesperado" };
+  }
+}
+
 export async function register(
   formData: RegisterData,
 ): Promise<RegisterResponse> {

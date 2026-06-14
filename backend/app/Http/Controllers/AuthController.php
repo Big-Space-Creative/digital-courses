@@ -7,8 +7,11 @@ use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use OpenApi\Annotations as OA;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
@@ -610,6 +613,173 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Perfil atualizado com sucesso',
             'user'    => $user->fresh(),
+        ]);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // DELETE ACCOUNT (LGPD Art. 18, VI — direito de eliminação)
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @OA\Delete(
+     *     path="/api/v1/me",
+     *     operationId="authDeleteAccount",
+     *     tags={"Perfil"},
+     *     summary="Excluir a própria conta",
+     *     description="Exclui (soft delete) a conta do usuário autenticado, atendendo ao direito de eliminação da LGPD (Art. 18, VI). Exige reautenticação por senha. Os dados são anonimizados/eliminados definitivamente por rotina agendada após o prazo de retenção declarado na Política de Privacidade.",
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *
+     *         @OA\JsonContent(
+     *             required={"password"},
+     *
+     *             @OA\Property(property="password", type="string", format="password", description="Senha atual, para confirmar a identidade do titular")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=200, description="Conta excluída"),
+     *     @OA\Response(response=401, description="Token inválido"),
+     *     @OA\Response(response=422, description="Senha incorreta ou ausente")
+     * )
+     */
+    public function deleteAccount(Request $request): JsonResponse
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+
+        $request->validate([
+            'password' => ['required', 'string'],
+        ], [
+            'password.required' => 'Informe a senha atual para confirmar a exclusão.',
+        ]);
+
+        // Reautenticação: impede que uma sessão sequestrada exclua a conta.
+        if (! Hash::check($request->input('password'), $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Senha incorreta.',
+            ], 422);
+        }
+
+        // Soft delete: a conta fica inacessível imediatamente (deleted_at).
+        // A anonimização/eliminação definitiva ocorre via rotina agendada após o
+        // prazo de retenção (ver docs/auditoria/05-minimizacao-retencao.md), de modo
+        // a preservar registros com obrigação legal (ex.: pedidos/fiscais).
+        $user->delete();
+
+        // Invalida o token atual para encerrar a sessão na hora.
+        try {
+            JWTAuth::invalidate(JWTAuth::getToken());
+        } catch (JWTException $exception) {
+            // Conta já excluída; falha ao invalidar o token não deve reverter a operação.
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Conta excluída com sucesso. Seus dados serão anonimizados ou eliminados conforme a Política de Privacidade.',
+        ]);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // PASSWORD RESET (esqueci minha senha)
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/password/forgot",
+     *     operationId="authForgotPassword",
+     *     tags={"Auth"},
+     *     summary="Solicitar redefinição de senha",
+     *     description="Envia um e-mail com link de redefinição. Por segurança, a resposta é sempre genérica, sem revelar se o e-mail existe (anti-enumeração).",
+     *
+     *     @OA\RequestBody(required=true,
+     *
+     *         @OA\JsonContent(required={"email"},
+     *
+     *             @OA\Property(property="email", type="string", format="email", example="aluno@example.com")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=200, description="Solicitação processada")
+     * )
+     */
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => ['required', 'email'],
+        ], [
+            'email.required' => 'Informe o e-mail.',
+            'email.email'    => 'Informe um e-mail válido.',
+        ]);
+
+        // Dispara o e-mail de redefinição (se o usuário existir). Ignoramos o status
+        // específico de propósito para NÃO revelar se o e-mail está cadastrado.
+        Password::sendResetLink($request->only('email'));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Se houver uma conta com este e-mail, enviaremos as instruções de redefinição.',
+        ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/password/reset",
+     *     operationId="authResetPassword",
+     *     tags={"Auth"},
+     *     summary="Redefinir senha",
+     *     description="Define uma nova senha a partir do token recebido por e-mail.",
+     *
+     *     @OA\RequestBody(required=true,
+     *
+     *         @OA\JsonContent(required={"token","email","password","password_confirmation"},
+     *
+     *             @OA\Property(property="token",                 type="string"),
+     *             @OA\Property(property="email",                 type="string", format="email"),
+     *             @OA\Property(property="password",              type="string", format="password", minLength=8),
+     *             @OA\Property(property="password_confirmation", type="string", format="password")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=200, description="Senha redefinida"),
+     *     @OA\Response(response=422, description="Token inválido/expirado ou dados inválidos")
+     * )
+     */
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'token'    => ['required', 'string'],
+            'email'    => ['required', 'email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'password.min'       => 'A senha deve ter no mínimo 8 caracteres.',
+            'password.confirmed' => 'A confirmação de senha não confere.',
+        ]);
+
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                ])->setRememberToken(Str::random(60));
+
+                $user->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Não foi possível redefinir a senha. O link pode ter expirado — solicite um novo.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Senha redefinida com sucesso. Faça login com a nova senha.',
         ]);
     }
 
