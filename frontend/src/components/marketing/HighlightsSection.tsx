@@ -125,7 +125,7 @@ export default function HighlightsSection() {
           </div>
 
           {/* Divided list of highlights */}
-          <div className="divide-border flex flex-col justify-center divide-y">
+          <div className="wave-reading-surface divide-border flex flex-col justify-center divide-y rounded-[var(--radius-panel)] p-6 sm:p-8">
             {rest.map(({ title, description, icon: Icon }) => (
               <div key={title} className="flex gap-4 py-6 first:pt-0 last:pb-0">
                 <span className="border-border bg-canvas text-accent-text mt-0.5 inline-grid size-11 shrink-0 place-items-center rounded-xl border">

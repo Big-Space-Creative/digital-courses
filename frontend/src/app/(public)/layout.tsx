@@ -5,8 +5,8 @@ import type { Metadata } from "next";
 // então este layout define um baseline que pode ser sobrescrito por páginas server.
 export const metadata: Metadata = {
   title: {
-    default: "AulasViolão",
-    template: "%s — AulasViolão",
+    default: "Pullse",
+    template: "%s — Pullse",
   },
   description:
     "Plataforma de cursos de violão online. Aprenda do zero ao avançado com aulas práticas e material de apoio.",

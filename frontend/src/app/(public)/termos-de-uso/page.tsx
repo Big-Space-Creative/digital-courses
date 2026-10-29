@@ -7,9 +7,9 @@ import ThemeToggle from "@/components/marketing/ThemeToggle";
 import SiteFooter from "@/components/marketing/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Termos de Uso — AulasViolão",
+  title: "Termos de Uso",
   description:
-    "Leia os Termos de Uso da plataforma AulasViolão antes de utilizar nossos serviços de cursos de violão online.",
+    "Leia os Termos de Uso da plataforma Pullse antes de utilizar nossos serviços de cursos de violão online.",
 };
 
 const lastUpdated = "26 de maio de 2026";
@@ -61,7 +61,7 @@ export default function TermsOfUsePage() {
           </p>
           <p className="text-text-muted mt-5 max-w-[68ch] text-base leading-7 text-pretty">
             Ao criar uma conta ou utilizar os serviços da{" "}
-            <strong>AulasViolão</strong>, você concorda com os termos descritos
+            <strong>Pullse</strong>, você concorda com os termos descritos
             abaixo. Leia com atenção antes de prosseguir.
           </p>
         </div>
@@ -89,7 +89,7 @@ export default function TermsOfUsePage() {
                   <Section id="aceitacao" title="1. Aceitação dos Termos">
                     <p>
                       Ao se cadastrar e utilizar a plataforma{" "}
-                      <strong>AulasViolão</strong>, você declara ter lido,
+                      <strong>Pullse</strong>, você declara ter lido,
                       entendido e concordado com estes Termos de Uso. Caso não
                       concorde com alguma condição, não utilize a plataforma.
                     </p>
@@ -97,7 +97,7 @@ export default function TermsOfUsePage() {
 
                   <Section id="descricao" title="2. Descrição do Serviço">
                     <p>
-                      A AulasViolão é uma plataforma de ensino online de violão
+                      A Pullse é uma plataforma de ensino online de violão
                       que disponibiliza aulas em vídeo, materiais de apoio e
                       acompanhamento de progresso para seus alunos cadastrados.
                       O acesso ao conteúdo está sujeito às condições descritas
@@ -155,9 +155,9 @@ export default function TermsOfUsePage() {
 
                   <Section id="propriedade" title="5. Propriedade Intelectual">
                     <p>
-                      Todo o conteúdo disponibilizado na AulasViolão — incluindo
+                      Todo o conteúdo disponibilizado na Pullse — incluindo
                       vídeos, textos, imagens, materiais de apoio e a estrutura
-                      da plataforma — é de propriedade exclusiva da AulasViolão
+                      da plataforma — é de propriedade exclusiva da Pullse
                       ou de seus licenciantes, protegido pelas leis de direito
                       autoral e propriedade intelectual aplicáveis.
                     </p>
@@ -208,7 +208,7 @@ export default function TermsOfUsePage() {
                     title="8. Limitação de Responsabilidade"
                   >
                     <p>
-                      A AulasViolão não garante que a plataforma estará
+                      A Pullse não garante que a plataforma estará
                       disponível de forma ininterrupta ou livre de erros. Não
                       somos responsáveis por danos decorrentes do uso inadequado
                       do serviço, falhas de conexão à internet ou interrupções

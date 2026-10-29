@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PullseLogo from "@/components/brand/PullseLogo";
 
 /**
  * SiteFooter — Semantic footer with accessible contrast (solid text-text-muted, no opacity leaks).
@@ -7,6 +8,7 @@ export default function SiteFooter() {
   return (
     <footer className="relative overflow-hidden border-t border-[var(--border)] bg-[var(--panel)]">
       <div className="relative z-10 mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-6 gap-y-3 px-5 py-8 text-xs text-[var(--text-muted)] md:px-8">
+        <PullseLogo className="text-text h-8 w-auto" title="Pullse" />
         <span>
           © {new Date().getFullYear()} Pullse. Todos os direitos reservados.
         </span>

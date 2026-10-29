@@ -1,5 +1,5 @@
 import Link from "next/link";
-import PulseWave from "@/components/brand/PulseWave";
+import PullseLogo from "@/components/brand/PullseLogo";
 import ThemeToggle from "@/components/marketing/ThemeToggle";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 
@@ -25,10 +25,7 @@ export default function SiteHeader({
           className="flex min-h-[44px] items-center gap-2 pr-1"
           aria-label="Pullse — Início"
         >
-          <PulseWave className="h-7 w-7 sm:h-8 sm:w-8" title="" />
-          <span className="text-text text-base font-semibold tracking-tight sm:text-lg">
-            Pullse
-          </span>
+          <PullseLogo className="text-text h-9 w-auto sm:h-11" title="" />
         </Link>
 
         <nav

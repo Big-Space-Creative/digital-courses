@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { MdOutlinePlayCircle, MdStar } from "react-icons/md";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import PulseWave from "@/components/brand/PulseWave";
 
 type HeroSectionProps = {
   isAuthenticated: boolean;
@@ -20,7 +21,7 @@ const stats = [
  * - Radius: 28px max (rounded-[var(--radius-hero)])
  * - Contrast AA: Ink text (#1D1E1F) over orange #FF6B07 (never white over orange)
  * - Semantic surfaces: panel / panel-elevated (no fixed bg-ink)
- * - Photo /02.jpg preserved verbatim
+ * - Fotografia de violão com legenda protegida por fundo e blur.
  */
 export default function HeroSection({
   isAuthenticated,
@@ -29,18 +30,13 @@ export default function HeroSection({
   return (
     <section className="relative overflow-hidden">
       <div className="relative z-10 mx-auto max-w-6xl px-5 pt-24 pb-14 md:px-8 md:pt-32 md:pb-20">
-        <div
-          className="reveal grid gap-5 md:grid-cols-[1.4fr_1fr] md:gap-6"
-          style={{
-            gridTemplateAreas: "'headline photo' 'accent photo' 'stats photo'",
-          }}
-        >
+        <div className="home-hero-grid reveal grid min-w-0 grid-cols-1 gap-5 md:grid-cols-[1.4fr_1fr] md:gap-6">
           {/* Headline tile */}
           <div
-            className="rounded-[var(--radius-hero)] border border-[var(--border)] bg-[var(--panel)] p-7 shadow-[var(--shadow-panel)] md:p-10"
+            className="min-w-0 rounded-[var(--radius-hero)] border border-[var(--border)] bg-[var(--panel)] p-6 shadow-[var(--shadow-panel)] sm:p-7 md:p-10"
             style={{ gridArea: "headline" }}
           >
-            <h1 className="text-text text-[length:var(--text-hero)] leading-[1.08] font-semibold tracking-[-0.03em] text-balance">
+            <h1 className="text-text text-[length:var(--text-hero)] leading-[1.08] font-semibold tracking-[-0.03em] text-balance max-[359px]:text-[2rem]">
               Domine o violão com uma trilha clara, do primeiro acorde à
               apresentação
             </h1>
@@ -105,24 +101,22 @@ export default function HeroSection({
             </div>
           </div>
 
-          {/* Photo tile — Photo /02.jpg preserved with solid text */}
+          {/* A fotografia aproxima o destaque da prática musical. */}
           <div
-            className="relative min-h-[280px] overflow-hidden rounded-[var(--radius-hero)] border border-[var(--border)] bg-[var(--media)] shadow-[var(--shadow-panel)] md:min-h-0"
+            className="relative min-h-[380px] overflow-hidden rounded-[var(--radius-hero)] border border-[var(--border)] bg-[var(--media)] shadow-[var(--shadow-panel)] sm:min-h-[480px] md:min-h-0"
             style={{ gridArea: "photo" }}
           >
             <Image
-              src="/02.jpg"
-              alt="Aluno tocando guitarra elétrica ao vivo, sorrindo"
+              src="/01.jpg"
+              alt="Pessoa segurando um violão acústico junto ao corpo"
               fill
-              sizes="(min-width: 768px) 40vw, 100vw"
-              className="object-cover"
-              style={{ objectPosition: "32% 38%" }}
+              sizes="(min-width: 1200px) 450px, (min-width: 768px) 40vw, 100vw"
+              className="object-cover object-[50%_48%]"
               priority
             />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-5 pt-16">
-              <p className="text-sm font-medium text-white">
-                Alunos reais, resultado real.
-              </p>
+            <div className="absolute inset-x-4 bottom-4 flex items-center justify-between gap-3 rounded-2xl border border-white/15 bg-black/70 px-5 py-4 text-white backdrop-blur-xl">
+              <p className="text-sm font-medium">Um acorde de cada vez.</p>
+              <PulseWave className="h-7 w-7 shrink-0" title="" loop={false} />
             </div>
           </div>
         </div>

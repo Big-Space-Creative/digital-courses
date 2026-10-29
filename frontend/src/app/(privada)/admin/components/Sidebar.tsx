@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
+import PullseLogo from "@/components/brand/PullseLogo";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useUser } from "@/context/UserContext";
@@ -59,13 +60,7 @@ export default function Sidebar() {
       onClick={() => setOpen(false)}
       className="focus-visible:outline-accent inline-flex min-h-11 items-center gap-2 rounded-xl text-xl font-semibold tracking-tight focus-visible:outline-2"
     >
-      <span
-        aria-hidden="true"
-        className="bg-accent text-on-accent flex size-8 items-center justify-center rounded-xl text-sm"
-      >
-        P
-      </span>
-      Pullse
+      <PullseLogo className="text-text h-10 w-auto" title="Pullse" />
       <span className="text-text-muted ml-1 text-xs font-normal tracking-normal">
         Admin
       </span>

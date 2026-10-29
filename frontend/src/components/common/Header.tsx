@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import PulseWave from "@/components/brand/PulseWave";
+import PullseLogo from "@/components/brand/PullseLogo";
 import ThemeToggle from "@/components/marketing/ThemeToggle";
 import { Badge } from "@/components/ui/Badge";
 import { logoutAction } from "@/app/actions/auth";
@@ -96,10 +96,7 @@ export default function Header() {
             href="/aluno/home"
             className="focus-visible:ring-accent flex items-center gap-2.5 rounded-[var(--radius-control)] outline-none focus-visible:ring-2"
           >
-            <PulseWave className="text-accent h-7 w-7" title="Pullse" />
-            <span className="text-text text-lg font-semibold tracking-tight">
-              Pullse
-            </span>
+            <PullseLogo className="text-text h-10 w-auto" title="Pullse" />
           </Link>
 
           {/* Explicit Navigation Links */}

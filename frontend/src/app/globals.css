@@ -699,6 +699,29 @@ textarea.ui-control {
   transform: none;
   box-shadow: var(--shadow-panel);
 }
+/* Superfícies de leitura sobre as cordas: cor opaca como fallback, blur quando
+   disponível. A transparência pertence ao fundo, nunca ao conteúdo do texto. */
+.wave-reading-surface {
+  background: var(--canvas);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 4%, transparent);
+}
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .wave-reading-surface {
+    background: color-mix(in srgb, var(--canvas) 88%, transparent);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+  }
+}
+
+.home-hero-grid {
+  grid-template-areas: "headline" "photo" "accent" "stats";
+}
+@media (min-width: 48rem) {
+  .home-hero-grid {
+    grid-template-areas: "headline photo" "accent photo" "stats photo";
+  }
+}
+
 .glass-header {
   background: color-mix(in srgb, var(--panel) 94%, transparent);
   backdrop-filter: blur(16px);
