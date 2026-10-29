@@ -26,6 +26,10 @@ export function Dialog({
   useEffect(() => {
     closeRef.current = onClose;
   }, [onClose]);
+  const requestClose = (event: { preventDefault: () => void }) => {
+    event.preventDefault();
+    closeRef.current();
+  };
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog || !open) return;
@@ -50,9 +54,17 @@ export function Dialog({
       className={`ui-dialog ${className}`}
       aria-labelledby={id + "-title"}
       aria-describedby={description ? id + "-description" : undefined}
-      onCancel={(event) => {
-        event.preventDefault();
-        closeRef.current();
+      onCancel={requestClose}
+      onKeyDown={(event) => {
+        if (
+          event.key !== "Escape" ||
+          event.nativeEvent.isComposing ||
+          event.defaultPrevented
+        )
+          return;
+        // Cancel the default action so the browser does not also emit cancel.
+        event.stopPropagation();
+        requestClose(event);
       }}
     >
       <div className="ui-dialog-heading">
