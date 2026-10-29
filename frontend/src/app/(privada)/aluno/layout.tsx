@@ -1,13 +1,6 @@
 import Header from "@/components/common/Header";
 import ThemeProvider from "@/components/marketing/ThemeProvider";
 
-/**
- * Wraps the whole aluno area (home, aula, perfil) in the same ThemeProvider
- * login/register already use — one shared "pullse-home-theme" localStorage
- * key, so a preference set anywhere carries across the app. Deliberately
- * overrides DESIGN.md's original "admin/aluno stay light" default per an
- * explicit request; the tradeoff was confirmed before implementing.
- */
 export default function StudentLayout({
   children,
 }: Readonly<{
@@ -15,9 +8,11 @@ export default function StudentLayout({
 }>) {
   return (
     <ThemeProvider>
-      <div className="bg-surface min-h-dvh">
+      <div className="bg-canvas text-text flex min-h-dvh flex-col transition-colors">
         <Header />
-        <main className="my-10 flex justify-center px-6">{children}</main>
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+          {children}
+        </main>
       </div>
     </ThemeProvider>
   );

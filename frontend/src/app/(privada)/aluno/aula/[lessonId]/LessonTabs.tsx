@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useId, useMemo, useState, useTransition } from "react";
 import {
   MdFolder,
   MdImage,
@@ -13,6 +13,8 @@ import {
 } from "react-icons/md";
 import { createLessonCommentAction } from "@/app/actions/comments";
 import { toast } from "@/components/ui/Toast";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 
 type Material = {
   id: number;
@@ -40,19 +42,13 @@ type LessonTabsProps = {
 };
 
 function materialIcon(type: string) {
-  if (type === "pdf") return <MdPictureAsPdf size={24} />;
-  if (type === "audio" || type === "mp3") return <MdMusicNote size={24} />;
-  if (type === "video") return <MdVideocam size={24} />;
-  if (type === "image") return <MdImage size={24} />;
-  return <MdInsertDriveFile size={24} />;
-}
-
-function materialAccent(type: string) {
-  if (type === "pdf") return "bg-red-50 text-red-500";
-  if (type === "audio" || type === "mp3") return "bg-blue-50 text-blue-500";
-  if (type === "video") return "bg-violet-50 text-violet-500";
-  if (type === "image") return "bg-amber-50 text-amber-500";
-  return "bg-slate-100 text-slate-500";
+  const t = type.toLowerCase();
+  if (t === "pdf") return <MdPictureAsPdf className="size-5" />;
+  if (t === "audio" || t === "mp3") return <MdMusicNote className="size-5" />;
+  if (t === "video") return <MdVideocam className="size-5" />;
+  if (t === "image" || t === "png" || t === "jpg")
+    return <MdImage className="size-5" />;
+  return <MdInsertDriveFile className="size-5" />;
 }
 
 export default function LessonTabs({
@@ -62,6 +58,7 @@ export default function LessonTabs({
   materials,
   comments: initialComments,
 }: LessonTabsProps) {
+  const tabsId = useId();
   const [activeTab, setActiveTab] = useState<"resumo" | "comentarios">(
     "resumo",
   );
@@ -79,7 +76,7 @@ export default function LessonTabs({
       const result = await createLessonCommentAction(lessonId, value);
 
       if (!result.success) {
-        toast("Nao foi possivel enviar comentario", {
+        toast("Não foi possível enviar o comentário", {
           description: result.error,
           variant: "error",
         });
@@ -103,158 +100,237 @@ export default function LessonTabs({
 
       setComments((prev) => [newComment, ...prev]);
       setCommentInput("");
+      toast("Comentário publicado!", { variant: "success" });
     });
   };
 
   return (
     <div>
-      <ul className="border-ink/15 flex gap-4 border-b px-4 pb-3">
-        <li>
-          <button
-            type="button"
-            onClick={() => setActiveTab("resumo")}
-            className={`cursor-pointer border-b-2 pb-1 text-sm font-bold transition-colors ${
-              activeTab === "resumo"
-                ? "text-ink border-accent"
-                : "text-ink/50 hover:text-ink/80 border-transparent"
-            }`}
-          >
-            Resumo da aula
-          </button>
-        </li>
-        <li>
-          <button
-            type="button"
-            onClick={() => setActiveTab("comentarios")}
-            className={`cursor-pointer border-b-2 pb-1 text-sm font-bold transition-colors ${
-              activeTab === "comentarios"
-                ? "text-ink border-accent"
-                : "text-ink/50 hover:text-ink/80 border-transparent"
-            }`}
-          >
-            Comentários ({commentsCount})
-          </button>
-        </li>
-      </ul>
+      {/* Tab Navigation */}
+      <div
+        role="tablist"
+        aria-label="Informações da aula"
+        className="border-border bg-canvas/40 flex border-b px-4 sm:px-6"
+      >
+        <button
+          type="button"
+          role="tab"
+          id={`${tabsId}-tab-resumo`}
+          aria-controls={`${tabsId}-panel-resumo`}
+          aria-selected={activeTab === "resumo"}
+          onClick={() => setActiveTab("resumo")}
+          className={`focus-visible:ring-accent flex cursor-pointer items-center gap-2 border-b-2 px-3 py-3.5 text-xs font-semibold transition-colors outline-none focus-visible:ring-2 sm:text-sm ${
+            activeTab === "resumo"
+              ? "border-accent text-accent"
+              : "text-text-muted hover:text-text border-transparent"
+          }`}
+        >
+          <span>Resumo da aula</span>
+        </button>
 
-      {activeTab === "resumo" ? (
-        <div className="flex w-full flex-col justify-between gap-10 p-8 lg:flex-row">
-          <div className="flex flex-1 flex-col gap-6 lg:max-w-1/2">
-            <p className="text-ink/85">{resumo}</p>
+        <button
+          type="button"
+          role="tab"
+          id={`${tabsId}-tab-comentarios`}
+          aria-controls={`${tabsId}-panel-comentarios`}
+          aria-selected={activeTab === "comentarios"}
+          onClick={() => setActiveTab("comentarios")}
+          className={`focus-visible:ring-accent flex cursor-pointer items-center gap-2 border-b-2 px-3 py-3.5 text-xs font-semibold transition-colors outline-none focus-visible:ring-2 sm:text-sm ${
+            activeTab === "comentarios"
+              ? "border-accent text-accent"
+              : "text-text-muted hover:text-text border-transparent"
+          }`}
+        >
+          <span>Comentários</span>
+          <Badge variant="neutral" className="px-1.5 py-0.5 text-[11px]">
+            {commentsCount}
+          </Badge>
+        </button>
+      </div>
+
+      {/* Tab Panel: Resumo */}
+      {activeTab === "resumo" && (
+        <div
+          role="tabpanel"
+          id={`${tabsId}-panel-resumo`}
+          aria-labelledby={`${tabsId}-tab-resumo`}
+          className="flex flex-col gap-8 p-5 sm:p-6 lg:flex-row lg:justify-between lg:p-8"
+        >
+          {/* Main Description */}
+          <div className="flex flex-1 flex-col gap-6 lg:max-w-xl">
+            <div>
+              <h2 className="text-text-muted text-sm font-bold tracking-wider uppercase">
+                Sobre este conteúdo
+              </h2>
+              <p className="text-text mt-2 text-sm leading-relaxed whitespace-pre-line sm:text-base">
+                {resumo}
+              </p>
+            </div>
 
             {dicas && (
-              <div className="border-accent bg-surface-soft rounded-bento-sm flex flex-col gap-1 border-l-4 px-4 py-2">
-                <h1 className="text-ink font-bold">Dicas para praticar</h1>
-                <p className="text-ink/80">{dicas}</p>
+              <div className="border-accent bg-accent/5 rounded-[var(--radius-panel)] border-l-4 p-4 sm:p-5">
+                <h3 className="text-accent text-sm font-bold">
+                  Dicas para praticar
+                </h3>
+                <p className="text-text-muted mt-1 text-xs leading-relaxed sm:text-sm">
+                  {dicas}
+                </p>
               </div>
             )}
           </div>
 
-          <div className="w-full space-y-4 lg:w-80">
-            <div className="mb-6 flex items-center gap-3">
-              <MdFolder className="text-accent size-7" />
-              <h2 className="text-ink text-lg leading-tight font-bold">
-                Materiais de <br /> Referência
-              </h2>
+          {/* Materials Sidebar */}
+          <div className="w-full shrink-0 space-y-3 lg:w-80">
+            <div className="border-border flex items-center gap-2 border-b pb-2">
+              <MdFolder className="text-accent size-5" />
+              <h3 className="text-text text-sm font-bold">
+                Materiais de apoio
+              </h3>
             </div>
 
-            {materials.length === 0 && (
-              <div className="border-ink/15 bg-surface-soft rounded-bento-sm text-ink/60 border border-dashed p-4 text-sm">
-                Esta aula ainda não possui materiais complementares.
+            {materials.length === 0 ? (
+              <div className="border-border text-text-muted rounded-[var(--radius-control)] border border-dashed p-4 text-center text-xs">
+                Nenhum arquivo complementar para esta aula.
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {materials.map((material) => (
+                  <a
+                    key={material.id}
+                    href={material.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group border-border bg-panel hover:bg-canvas focus-visible:ring-accent flex items-center justify-between rounded-[var(--radius-control)] border p-3 shadow-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="bg-accent/10 text-accent flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-xs)]">
+                        {materialIcon(material.type)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-text truncate text-xs font-medium sm:text-sm">
+                          {material.title}
+                        </p>
+                        <span className="text-text-muted text-[10px] font-bold uppercase">
+                          {material.type}
+                        </span>
+                      </div>
+                    </div>
+                    <MdOutlineFileDownload
+                      className="text-text-muted size-5 shrink-0 transition-transform group-hover:translate-y-0.5"
+                      aria-hidden="true"
+                    />
+                  </a>
+                ))}
               </div>
             )}
-
-            {materials.map((material) => (
-              <a
-                key={material.id}
-                href={material.url}
-                target="_blank"
-                rel="noreferrer"
-                className="border-ink/10 bg-surface-soft rounded-bento-sm flex items-center gap-4 border p-4 shadow-sm transition-shadow hover:shadow-md"
-              >
-                <div
-                  className={`flex size-12 items-center justify-center rounded-lg ${materialAccent(material.type)}`}
-                >
-                  {materialIcon(material.type)}
-                </div>
-
-                <div className="flex-1">
-                  <h3 className="text-ink text-sm leading-snug font-bold">
-                    {material.title}
-                  </h3>
-                  <p className="text-ink/40 text-[10px] font-medium uppercase">
-                    {material.type}
-                  </p>
-                </div>
-
-                <MdOutlineFileDownload className="text-ink/35 size-6" />
-              </a>
-            ))}
           </div>
         </div>
-      ) : (
-        <div className="bg-surface space-y-5 p-4 md:p-6">
-          {comments.length === 0 && (
-            <div className="bg-surface-soft text-ink/60 rounded-bento-md p-4 text-sm">
-              Nenhum comentário nesta aula ainda.
+      )}
+
+      {/* Tab Panel: Comentários */}
+      {activeTab === "comentarios" && (
+        <div
+          role="tabpanel"
+          id={`${tabsId}-panel-comentarios`}
+          aria-labelledby={`${tabsId}-tab-comentarios`}
+          className="flex flex-col gap-6 p-5 sm:p-6 lg:p-8"
+        >
+          {/* New Comment Input */}
+          <div className="border-border bg-canvas/40 rounded-[var(--radius-panel)] border p-4">
+            <label
+              htmlFor={`${tabsId}-comment-input`}
+              className="text-text mb-2 block text-xs font-semibold"
+            >
+              Tem alguma dúvida ou observação?
+            </label>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                id={`${tabsId}-comment-input`}
+                type="text"
+                value={commentInput}
+                onChange={(e) => setCommentInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddComment();
+                  }
+                }}
+                placeholder="Escreva sua dúvida sobre a aula..."
+                className="border-border bg-panel text-text placeholder:text-text-muted focus-visible:ring-accent flex-1 rounded-[var(--radius-control)] border px-3.5 py-2.5 text-sm outline-none focus-visible:ring-2"
+              />
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleAddComment}
+                loading={isSubmitting}
+                disabled={!commentInput.trim()}
+                className="shrink-0 cursor-pointer gap-2"
+              >
+                <MdSend className="size-4" />
+                <span>Enviar</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Comments List */}
+          {comments.length === 0 ? (
+            <div className="border-border text-text-muted rounded-[var(--radius-control)] border border-dashed p-6 text-center text-xs sm:text-sm">
+              Nenhum comentário registrado nesta aula ainda. Seja o primeiro a
+              participar!
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {comments.map((comment) => (
+                <article
+                  key={comment.id}
+                  className="border-border bg-panel rounded-[var(--radius-panel)] border p-4 shadow-xs transition-colors sm:p-5"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="bg-accent/15 text-accent flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold">
+                      {comment.avatar}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center justify-between gap-1">
+                        <span className="text-text text-sm font-semibold">
+                          {comment.author}
+                        </span>
+                        {comment.createdAt && (
+                          <time className="text-text-muted text-xs">
+                            {new Date(comment.createdAt).toLocaleDateString(
+                              "pt-BR",
+                              {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              },
+                            )}
+                          </time>
+                        )}
+                      </div>
+
+                      <p className="text-text mt-1.5 text-sm leading-relaxed whitespace-pre-line">
+                        {comment.message}
+                      </p>
+
+                      {/* Admin Reply */}
+                      {comment.adminReply && (
+                        <div className="border-accent/20 bg-accent/5 mt-3 rounded-[var(--radius-control)] border p-3.5">
+                          <span className="text-accent text-[11px] font-bold tracking-wider uppercase">
+                            Resposta do instrutor
+                          </span>
+                          <p className="text-text mt-1 text-xs leading-relaxed sm:text-sm">
+                            {comment.adminReply}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              ))}
             </div>
           )}
-
-          {comments.map((comment) => (
-            <article
-              key={comment.id}
-              className="bg-surface-soft rounded-bento-md flex items-start gap-3 p-4"
-            >
-              <div className="border-accent bg-accent/10 text-accent flex size-12 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold">
-                {comment.avatar}
-              </div>
-              <div>
-                <p className="text-ink font-bold">{comment.author}</p>
-                {comment.createdAt && (
-                  <p className="text-ink/40 text-xs">
-                    {new Date(comment.createdAt).toLocaleString("pt-BR")}
-                  </p>
-                )}
-                <p className="text-ink/85 mt-1 text-[19px] leading-6">
-                  {comment.message}
-                </p>
-                {comment.adminReply && (
-                  <div className="border-accent/25 bg-accent/10 rounded-bento-sm mt-3 border p-3">
-                    <p className="text-accent text-xs font-semibold tracking-wide uppercase">
-                      Resposta da equipe
-                    </p>
-                    <p className="text-accent-ink mt-1 text-sm">
-                      {comment.adminReply}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </article>
-          ))}
-
-          <div className="relative">
-            <input
-              type="text"
-              value={commentInput}
-              onChange={(event) => setCommentInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  handleAddComment();
-                }
-              }}
-              placeholder="Deixe seu comentário"
-              className="border-ink/12 bg-surface-soft text-ink placeholder:text-ink/45 focus:border-accent rounded-bento-md w-full border py-4 pr-14 pl-4 transition-colors outline-none"
-            />
-            <button
-              type="button"
-              onClick={handleAddComment}
-              disabled={isSubmitting}
-              className="bg-accent absolute top-1/2 right-2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-white transition-transform hover:scale-105 disabled:pointer-events-none disabled:opacity-60"
-              aria-label="Enviar comentário"
-            >
-              <MdSend className="size-5" />
-            </button>
-          </div>
         </div>
       )}
     </div>
