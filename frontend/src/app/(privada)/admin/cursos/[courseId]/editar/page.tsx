@@ -345,7 +345,7 @@ function LessonEditor({
                         readOnly={isExisting}
                         help={
                           isExisting
-                            ? "O t�tulo de um material salvo n�o pode ser alterado."
+                            ? "O título de um material salvo não pode ser alterado."
                             : undefined
                         }
                         onChange={(event) =>

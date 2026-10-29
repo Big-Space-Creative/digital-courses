@@ -307,7 +307,7 @@ export default function StudentsPage() {
         !Number.isSafeInteger(userId) ||
         userId < 1
       ) {
-        toast("Autor inv�lido", { variant: "error" });
+        toast("Autor inválido", { variant: "error" });
       } else {
         const result = await getUserDetailAction(userId);
         if (cancelled) return;
@@ -327,7 +327,7 @@ export default function StudentsPage() {
           );
           setEditingUser(target);
         } else
-          toast("N�o foi poss�vel abrir o autor", {
+          toast("Não foi possível abrir o autor", {
             description: result.error,
             variant: "error",
           });
