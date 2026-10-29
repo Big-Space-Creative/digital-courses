@@ -18,8 +18,7 @@ export function useUnsavedChanges(snapshot: string, ready: boolean) {
       event.preventDefault();
       event.returnValue = "";
     };
-    const message =
-      "Hï¿½ alteraï¿½ï¿½es nï¿½o salvas. Deseja sair e descartï¿½-las?";
+    const message = "Há alterações não salvas. Deseja sair e descartá-las?";
     const interceptLink = (event: MouseEvent) => {
       if (
         event.defaultPrevented ||
@@ -78,7 +77,7 @@ export function EditorStatus({
 }) {
   return (
     <div className="space-y-3">
-      {dirty && <Badge variant="warning">AlteraÃ§Ãµes nÃ£o salvas</Badge>}
+      {dirty && <Badge variant="warning">Alterações não salvas</Badge>}
       {upload && (
         <div
           role="status"
@@ -88,7 +87,7 @@ export function EditorStatus({
           <p className="font-medium">Envio do curso</p>
           <p className="text-text-muted mt-1 break-words">{upload}</p>
           <p className="text-text-muted mt-1 text-xs">
-            Mantenha esta pÃ¡gina aberta atÃ© a confirmaÃ§Ã£o.
+            Mantenha esta página aberta até a confirmação.
           </p>
         </div>
       )}
