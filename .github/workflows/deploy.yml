@@ -71,7 +71,9 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: ghcr.io/${{ steps.string.outputs.repo_name }}/backend:latest
+          tags: |
+            ghcr.io/${{ steps.string.outputs.repo_name }}/backend:latest
+            ghcr.io/${{ steps.string.outputs.repo_name }}/backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -82,7 +84,9 @@ jobs:
           context: .
           file: backend/docker/nginx/Dockerfile
           push: true
-          tags: ghcr.io/${{ steps.string.outputs.repo_name }}/nginx:latest
+          tags: |
+            ghcr.io/${{ steps.string.outputs.repo_name }}/nginx:latest
+            ghcr.io/${{ steps.string.outputs.repo_name }}/nginx:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -93,7 +97,9 @@ jobs:
           context: ./frontend
           file: frontend/Dockerfile
           push: true
-          tags: ghcr.io/${{ steps.string.outputs.repo_name }}/frontend:latest
+          tags: |
+            ghcr.io/${{ steps.string.outputs.repo_name }}/frontend:latest
+            ghcr.io/${{ steps.string.outputs.repo_name }}/frontend:${{ github.sha }}
           build-args: |
             NEXT_PUBLIC_API_URL=https://api-aulasviolao.bigspacecreative.com.br/api/v1
           cache-from: type=gha
