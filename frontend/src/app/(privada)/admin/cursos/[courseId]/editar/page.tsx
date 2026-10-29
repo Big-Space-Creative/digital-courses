@@ -461,12 +461,11 @@ export default function EditCoursePage() {
     setSaveError("");
     const messages: string[] = [];
     if (!courseTitle.trim()) messages.push("Informe o título do curso.");
-    if (!modules.length) messages.push("Adicione pelo menos um módulo.");
+    if (!modules.some((item) => item.lessons.length > 0))
+      messages.push("Adicione pelo menos uma aula ao curso.");
     modules.forEach((moduleItem, index) => {
       if (!moduleItem.name.trim())
         messages.push(`Informe o nome do módulo ${index + 1}.`);
-      if (!moduleItem.lessons.length)
-        messages.push(`Adicione uma aula ao módulo ${index + 1}.`);
       moduleItem.lessons.forEach((lesson, lessonIndex) => {
         if (!lesson.title.trim())
           messages.push(
@@ -682,19 +681,13 @@ export default function EditCoursePage() {
       throw new Error("Informe o título do curso.");
     }
 
-    if (modules.length === 0) {
-      throw new Error("Adicione pelo menos um módulo.");
+    if (!modules.some((item) => item.lessons.length > 0)) {
+      throw new Error("Adicione pelo menos uma aula ao curso.");
     }
 
     for (const moduleItem of modules) {
       if (!moduleItem.name.trim()) {
         throw new Error("Todo módulo precisa ter um título.");
-      }
-
-      if (moduleItem.lessons.length === 0) {
-        throw new Error(
-          `O módulo "${moduleItem.name}" precisa ter ao menos uma aula.`,
-        );
       }
 
       for (const lesson of moduleItem.lessons) {
