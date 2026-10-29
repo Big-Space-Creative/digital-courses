@@ -67,7 +67,7 @@ export default function Home() {
     <div className="flex justify-end">
       <Link
         href="/admin/dashboard"
-        className="inline-flex items-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-4 py-2.5 text-sm font-semibold text-orange-700 shadow-sm transition hover:bg-orange-100 hover:shadow-md"
+        className="border-accent/25 bg-accent/10 text-accent hover:bg-accent/15 rounded-bento-md inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors"
       >
         <MdOutlineAdminPanelSettings size={20} />
         Acessar Painel Administrativo
@@ -77,11 +77,15 @@ export default function Home() {
 
   if (loading && !course) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-10 p-4 sm:p-6 lg:p-8">
         {adminButton}
-        <p className="animate-pulse text-gray-500">
-          Carregando trilha de aprendizado...
-        </p>
+        <div className="rounded-bento-lg shimmer h-64 w-full md:h-56" />
+        <div className="flex flex-col gap-5">
+          <div className="shimmer rounded-bento-sm h-7 w-56" />
+          <div className="shimmer rounded-bento-md h-20 w-full" />
+          <div className="shimmer rounded-bento-md h-20 w-full" />
+          <div className="shimmer rounded-bento-md h-20 w-full" />
+        </div>
       </div>
     );
   }
@@ -90,11 +94,11 @@ export default function Home() {
     return (
       <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col items-center justify-center gap-6 p-6">
         {adminButton}
-        <div className="w-full rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
-          <h1 className="text-secondary text-2xl font-bold">
+        <div className="border-ink/10 bg-surface-soft rounded-bento-md w-full border p-8 text-center">
+          <h1 className="text-ink text-2xl font-bold">
             Nenhum curso disponível agora
           </h1>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="text-ink/60 mt-2 text-sm">
             {loadError ??
               "Assim que o administrador publicar um curso, ele aparecerá aqui."}
           </p>
@@ -118,28 +122,32 @@ export default function Home() {
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-10 p-4 sm:p-6 lg:p-8">
       {adminButton}
 
-      <div className="bg-secondary flex w-full flex-col-reverse items-center justify-between gap-10 rounded-2xl p-6 md:flex-row">
-        <div className="flex flex-col gap-2 md:w-2xl">
-          <h1 className="text-3xl font-bold text-white">
+      <div className="bg-ink rounded-bento-lg grid gap-6 overflow-hidden p-6 md:grid-cols-[1.4fr_1fr] md:p-8">
+        <div className="flex flex-col justify-center gap-3">
+          <h1 className="text-surface text-3xl font-bold text-balance">
             Bem-vindo de volta, {displayName}!
           </h1>
-          <p className="text-base text-white/60">
-            Você está cursando <strong>{course.title}</strong>.
+          <p className="text-surface/60 text-base">
+            Você está cursando{" "}
+            <strong className="text-surface/90">{course.title}</strong>.
           </p>
           {course.description && (
-            <p className="max-w-2xl text-sm leading-6 text-white/75">
+            <p className="text-surface/75 max-w-2xl text-sm leading-6 text-pretty">
               {course.description}
             </p>
           )}
-          <ProgressBar
-            label="Aulas concluídas"
-            current={completedLessons}
-            max={totalLessons === 0 ? 1 : totalLessons}
-          />
+          <div className="mt-1">
+            <ProgressBar
+              label="Aulas concluídas"
+              current={completedLessons}
+              max={totalLessons === 0 ? 1 : totalLessons}
+            />
+          </div>
           {currentLesson && (
             <Link
               href={`/aluno/aula/${currentLesson.id}`}
-              className="bg-primary hover:bg-primary-dark mt-2 flex size-fit items-center gap-2 rounded-lg px-6 py-3 text-white transition-colors"
+              className="gradient-animate mt-2 flex size-fit items-center gap-2 rounded-full px-6 py-3 text-white transition-transform duration-150 ease-out hover:-translate-y-0.5"
+              style={{ backgroundImage: "var(--gradient-pulse)" }}
             >
               <MdOutlinePlayCircleFilled className="size-5" />
               <p className="text-base">Continuar curso</p>
@@ -147,30 +155,45 @@ export default function Home() {
           )}
         </div>
 
-        <div className="relative size-52 rotate-3 overflow-hidden rounded-2xl shadow-xl">
+        <div className="rounded-bento-md relative min-h-[220px] overflow-hidden">
           {course.thumbnail ? (
             <img
               src={course.thumbnail}
               alt={course.title}
-              className="h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-orange-300 to-amber-600">
+            <div className="from-accent-500 to-accent-400 absolute inset-0 flex items-center justify-center bg-gradient-to-br">
               <span className="text-6xl font-bold text-white/50">
                 {course.title.charAt(0)}
               </span>
             </div>
           )}
+          <div className="from-ink via-ink/10 absolute inset-0 bg-gradient-to-t to-transparent" />
+          {currentLesson && (
+            <Link
+              href={`/aluno/aula/${currentLesson.id}`}
+              aria-label="Continuar assistindo"
+              className="focus-visible:ring-accent absolute inset-0 flex items-center justify-center transition-transform duration-150 ease-out hover:scale-[1.03] focus-visible:ring-2 focus-visible:outline-none"
+            >
+              <span className="text-ink grid size-16 place-items-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm">
+                <MdOutlinePlayCircleFilled size={32} />
+              </span>
+            </Link>
+          )}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4">
+            <p className="text-surface text-sm font-medium">{course.title}</p>
+          </div>
         </div>
       </div>
 
       <div className="flex w-full flex-col gap-5">
-        <h1 className="text-secondary border-b-2 border-black/20 pb-5 text-xl font-bold">
+        <h1 className="text-ink border-ink/15 border-b-2 pb-5 text-xl font-bold">
           Trilha de aprendizado
         </h1>
 
         {modules.length === 0 && (
-          <p className="text-gray-500">Este curso ainda não possui módulos.</p>
+          <p className="text-ink/60">Este curso ainda não possui módulos.</p>
         )}
 
         {modules.map((moduleItem) => {
@@ -181,32 +204,33 @@ export default function Home() {
           return (
             <div
               key={moduleItem.id}
-              className="flex flex-col items-center justify-between overflow-hidden rounded-xl border border-gray-100 shadow-sm"
+              className="border-ink/10 rounded-bento-md flex flex-col items-center justify-between overflow-hidden border transition-shadow hover:shadow-sm"
             >
               <button
                 type="button"
                 onClick={() => toggleModule(moduleItem.id)}
                 aria-expanded={isOpen}
                 aria-controls={`module-content-${moduleItem.id}`}
-                className="flex w-full cursor-pointer items-center justify-between bg-white p-6 transition-colors hover:bg-gray-50"
+                className="bg-surface-soft hover:bg-ink/5 flex w-full cursor-pointer items-center justify-between p-6 transition-colors"
               >
                 <div className="flex items-center gap-4">
-                  <div className="bg-primary rounded-full p-2 text-white">
+                  <div className="bg-accent rounded-full p-2 text-white">
                     <MdPlayArrow className="size-5" />
                   </div>
                   <div>
-                    <h2 className="font-bold text-gray-800">{moduleItem.title}</h2>
-                    <p className="text-sm text-gray-500">
-                      {modTotalLessons} {modTotalLessons === 1 ? "aula" : "aulas"}
+                    <h2 className="text-ink font-bold">{moduleItem.title}</h2>
+                    <p className="text-ink/55 text-sm">
+                      {modTotalLessons}{" "}
+                      {modTotalLessons === 1 ? "aula" : "aulas"}
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-4">
-                  <div className="bg-orange-200 text-primary hidden rounded-full px-3 py-1 text-xs font-semibold md:block">
+                <div className="flex items-center gap-4">
+                  <div className="bg-accent/15 text-accent hidden rounded-full px-3 py-1 text-xs font-semibold md:block">
                     Acessível
                   </div>
                   <MdArrowBackIos
-                    className={`text-gray-400 transition-transform duration-300 ${
+                    className={`text-ink/35 transition-transform duration-300 ease-out ${
                       isOpen ? "rotate-90" : "-rotate-90"
                     }`}
                   />
@@ -216,24 +240,26 @@ export default function Home() {
               <div
                 id={`module-content-${moduleItem.id}`}
                 className={`grid w-full transition-all duration-300 ease-in-out ${
-                  isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                  isOpen
+                    ? "grid-rows-[1fr] opacity-100"
+                    : "grid-rows-[0fr] opacity-0"
                 }`}
               >
-                <div className="overflow-hidden bg-gray-50">
+                <div className="bg-surface overflow-hidden">
                   <div className="flex w-full flex-col gap-2 p-4">
                     {moduleLessons.map((lesson, idx) => (
                       <Link
                         href={`/aluno/aula/${lesson.id}`}
                         key={lesson.id}
-                        className="flex items-center justify-between rounded-lg border border-transparent p-3 transition-colors hover:border-gray-200 hover:bg-white"
+                        className="hover:border-ink/10 hover:bg-surface-soft flex items-center justify-between rounded-lg border border-transparent p-3 transition-colors"
                       >
                         <div className="flex items-center gap-3">
-                          <MdPlayArrow className="size-5 text-gray-400" />
-                          <span className="text-sm font-medium text-gray-700">
+                          <MdPlayArrow className="text-ink/35 size-5" />
+                          <span className="text-ink/80 text-sm font-medium">
                             {idx + 1}. {lesson.title}
                           </span>
                         </div>
-                        <span className="text-xs font-medium text-gray-500">
+                        <span className="text-ink/50 text-xs font-medium">
                           {lesson.duration_in_minutes
                             ? `${lesson.duration_in_minutes} min`
                             : "Vídeo"}
@@ -242,7 +268,7 @@ export default function Home() {
                     ))}
 
                     {modTotalLessons === 0 && (
-                      <p className="p-3 text-sm text-gray-500">
+                      <p className="text-ink/55 p-3 text-sm">
                         Nenhuma aula neste módulo.
                       </p>
                     )}

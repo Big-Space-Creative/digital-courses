@@ -127,13 +127,13 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
   }
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5">
+    <div className="rounded-bento-sm bg-surface p-5 ring-1 ring-ink/10">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold tracking-[0.12em] text-gray-400 uppercase">
+          <p className="text-sm font-medium text-ink/70">
             Aula {lessonIndex + 1}
           </p>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-ink/70">
             Atualize tÃ­tulo, descriÃ§Ã£o, foto, vÃ­deo e materiais sempre que precisar.
           </p>
         </div>
@@ -149,18 +149,18 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-ink/85">
           TÃ­tulo da aula
           <input
             value={lesson.title}
             onChange={(event) =>
               onUpdate((current) => ({ ...current, title: event.target.value }))
             }
-            className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-300"
+            className="mt-2 w-full rounded-bento-sm border border-ink/20 bg-white text-ink px-4 py-3 text-sm outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
           />
         </label>
 
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-ink/85">
           DuraÃ§Ã£o em minutos
           <input
             type="number"
@@ -172,12 +172,12 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
                 durationMinutes: event.target.value,
               }))
             }
-            className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-300"
+            className="mt-2 w-full rounded-bento-sm border border-ink/20 bg-white text-ink px-4 py-3 text-sm outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
           />
         </label>
       </div>
 
-      <label className="mt-4 block text-sm font-medium text-gray-700">
+      <label className="mt-4 block text-sm font-medium text-ink/85">
         DescriÃ§Ã£o da aula
         <textarea
           rows={4}
@@ -185,15 +185,15 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
           onChange={(event) =>
             onUpdate((current) => ({ ...current, description: event.target.value }))
           }
-          className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-300"
+          className="mt-2 w-full rounded-bento-sm border border-ink/20 bg-white text-ink px-4 py-3 text-sm outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
         />
       </label>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-ink/85">
           Foto da aula
-          <div className="mt-2 rounded-2xl border border-dashed border-orange-200 bg-white p-4">
-            <div className="mb-3 flex items-center gap-2 text-sm text-gray-500">
+          <div className="mt-2 rounded-bento-md border border-dashed border-accent/40 bg-white p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm text-ink/70">
               <MdOutlineCollections size={18} />
               {lesson.thumbnailFile
                 ? lesson.thumbnailFile.name
@@ -217,15 +217,15 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
                   thumbnailFile: event.target.files?.[0] ?? null,
                 }))
               }
-              className="block w-full text-sm text-gray-500 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-100 file:px-4 file:py-2 file:font-medium file:text-orange-700"
+              className="block w-full text-sm text-ink/70 file:mr-3 file:rounded-lg file:border-0 file:bg-accent/15 file:px-4 file:py-2 file:font-medium file:text-accent-ink"
             />
           </div>
         </label>
 
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-ink/85">
           VÃ­deo da aula
-          <div className="mt-2 rounded-2xl border border-dashed border-orange-200 bg-white p-4">
-            <div className="mb-3 flex items-center gap-2 text-sm text-gray-500">
+          <div className="mt-2 rounded-bento-md border border-dashed border-accent/40 bg-white p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm text-ink/70">
               <MdOutlineOndemandVideo size={18} />
               {lesson.videoFile
                 ? lesson.videoFile.name
@@ -238,7 +238,7 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
                 href={lesson.videoUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="mb-3 inline-flex text-sm font-medium text-orange-700 underline underline-offset-4"
+                className="mb-3 inline-flex text-sm font-medium text-accent-ink underline underline-offset-4"
               >
                 Abrir vÃ­deo atual
               </a>
@@ -252,24 +252,24 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
                   videoFile: event.target.files?.[0] ?? null,
                 }))
               }
-              className="block w-full text-sm text-gray-500 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-100 file:px-4 file:py-2 file:font-medium file:text-orange-700"
+              className="block w-full text-sm text-ink/70 file:mr-3 file:rounded-lg file:border-0 file:bg-accent/15 file:px-4 file:py-2 file:font-medium file:text-accent-ink"
             />
           </div>
         </label>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-dashed border-orange-200 bg-white p-4">
+      <div className="mt-4 rounded-bento-md border border-dashed border-accent/40 bg-white p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-gray-700">Materiais da aula</p>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="text-sm font-medium text-ink/85">Materiais da aula</p>
+            <p className="mt-1 text-sm text-ink/70">
               Adicione PDFs, imagens e arquivos complementares para o aluno.
             </p>
           </div>
           <button
             type="button"
             onClick={() => materialInputRef.current?.click()}
-            className="inline-flex items-center gap-2 rounded-xl bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-700 hover:bg-orange-100"
+            className="inline-flex items-center gap-2 rounded-xl bg-accent/10 px-4 py-3 text-sm font-semibold text-accent-ink hover:bg-accent/20"
           >
             <MdOutlineUploadFile size={18} />
             Adicionar material
@@ -292,12 +292,12 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
               return (
                 <div
                   key={material.id}
-                  className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
+                  className="rounded-xl border border-ink/15 bg-surface px-4 py-3"
                 >
                   <div className="flex items-start gap-3">
                     <MdOutlineInsertDriveFile
                       size={18}
-                      className="mt-1 shrink-0 text-orange-500"
+                      className="mt-1 shrink-0 text-accent-500"
                     />
                     <div className="min-w-0 flex-1">
                       <input
@@ -308,10 +308,10 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
                             title: event.target.value,
                           }))
                         }
-                        className="w-full bg-transparent text-sm font-medium text-gray-800 outline-none"
+                        className="w-full bg-transparent text-sm font-medium text-ink outline-none"
                         placeholder="TÃ­tulo do material"
                       />
-                      <p className="mt-1 text-xs text-gray-500">
+                      <p className="mt-1 text-xs text-ink/70">
                         {material.file
                           ? `${material.file.name} • ${(material.file.size / 1024 / 1024).toFixed(1)} MB`
                           : isExisting
@@ -323,7 +323,7 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
                           href={material.path}
                           target="_blank"
                           rel="noreferrer"
-                          className="mt-2 inline-flex text-xs font-medium text-orange-700 underline underline-offset-4"
+                          className="mt-2 inline-flex text-xs font-medium text-accent-ink underline underline-offset-4"
                         >
                           Abrir material atual
                         </a>
@@ -344,7 +344,7 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
             })}
           </div>
         ) : (
-          <p className="mt-4 text-sm text-gray-500">Nenhum material cadastrado nesta aula.</p>
+          <p className="mt-4 text-sm text-ink/70">Nenhum material cadastrado nesta aula.</p>
         )}
       </div>
 
@@ -359,7 +359,7 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
         className={`mt-4 rounded-xl border px-4 py-3 text-sm font-medium ${
           lesson.isFreePreview
             ? "border-green-200 bg-green-50 text-green-700"
-            : "border-gray-200 bg-white text-gray-600"
+            : "border-ink/15 bg-white text-ink/75"
         }`}
       >
         {lesson.isFreePreview
@@ -665,30 +665,30 @@ export default function EditCoursePage() {
 
   if (loading) {
     return (
-      <div className="bg-background min-h-screen p-8">
-        <div className="mx-auto max-w-6xl rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-          <p className="text-sm text-gray-500">Carregando editor do curso...</p>
+      <div className="bg-surface min-h-screen p-8">
+        <div className="mx-auto max-w-6xl rounded-bento-md bg-surface-soft p-8 ring-1 ring-ink/10">
+          <p className="text-sm text-ink/70">Carregando editor do curso...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-surface min-h-screen">
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 sm:p-6 lg:p-8">
-        <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <section className="rounded-bento-md bg-surface-soft p-6 ring-1 ring-ink/10">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <button
                 type="button"
                 onClick={() => router.push("/admin/cursos/gerenciar")}
-                className="mb-3 inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700"
+                className="mb-3 inline-flex items-center gap-2 text-sm font-medium text-ink/70 hover:text-ink"
               >
                 <MdArrowBack size={16} />
                 Voltar para gerenciamento
               </button>
-              <h1 className="text-2xl font-bold text-gray-900">Editar curso</h1>
-              <p className="mt-1 text-sm text-gray-500">
+              <h1 className="text-2xl font-semibold text-ink">Editar curso</h1>
+              <p className="mt-1 text-sm text-ink/70">
                 Atualize o curso, crie novos módulos e ajuste as aulas quando precisar.
               </p>
             </div>
@@ -697,7 +697,7 @@ export default function EditCoursePage() {
               type="button"
               onClick={handleSubmit}
               disabled={isPending}
-              className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
+              className="bg-accent hover:bg-accent-500 inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-accent-ink disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
               <MdOutlineSave size={18} />
               {isPending ? "Salvando..." : "Salvar alterações"}
@@ -706,36 +706,36 @@ export default function EditCoursePage() {
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <article className="rounded-bento-md bg-surface-soft p-6 ring-1 ring-ink/10">
             <div className="mb-4 flex items-center gap-2">
-              <MdOutlineInfo size={18} className="text-primary" />
-              <h2 className="text-lg font-semibold text-gray-900">Dados do curso</h2>
+              <MdOutlineInfo size={18} className="text-accent-ink" />
+              <h2 className="text-lg font-semibold text-ink">Dados do curso</h2>
             </div>
 
             <div className="space-y-4">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-ink/85">
                 Título do curso
                 <input
                   value={courseTitle}
                   onChange={(e) => setCourseTitle(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-300"
+                  className="mt-2 w-full rounded-bento-sm border border-ink/20 bg-white text-ink px-4 py-3 text-sm outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
                 />
               </label>
 
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-ink/85">
                 Descrição
                 <textarea
                   rows={5}
                   value={courseDescription}
                   onChange={(e) => setCourseDescription(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-300"
+                  className="mt-2 w-full rounded-bento-sm border border-ink/20 bg-white text-ink px-4 py-3 text-sm outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
                 />
               </label>
 
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-ink/85">
                 Capa do curso
-                <div className="mt-2 rounded-2xl border border-dashed border-orange-200 bg-orange-50/50 p-4">
-                  <div className="mb-3 flex items-center gap-2 text-sm text-gray-500">
+                <div className="mt-2 rounded-bento-md border border-dashed border-accent/40 bg-accent/5 p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm text-ink/70">
                     <MdOutlineImage size={18} />
                     {courseThumbnailFile
                       ? courseThumbnailFile.name
@@ -754,7 +754,7 @@ export default function EditCoursePage() {
                     type="file"
                     accept="image/*"
                     onChange={(e) => setCourseThumbnailFile(e.target.files?.[0] ?? null)}
-                    className="block w-full text-sm text-gray-500 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-100 file:px-4 file:py-2 file:font-medium file:text-orange-700"
+                    className="block w-full text-sm text-ink/70 file:mr-3 file:rounded-lg file:border-0 file:bg-accent/15 file:px-4 file:py-2 file:font-medium file:text-accent-ink"
                   />
                 </div>
               </label>
@@ -765,7 +765,7 @@ export default function EditCoursePage() {
                 className={`rounded-xl border px-4 py-3 text-left text-sm font-medium ${
                   isPublished
                     ? "border-green-200 bg-green-50 text-green-700"
-                    : "border-gray-200 bg-gray-50 text-gray-600"
+                    : "border-ink/15 bg-surface text-ink/75"
                 }`}
               >
                 {isPublished
@@ -775,25 +775,25 @@ export default function EditCoursePage() {
             </div>
           </article>
 
-          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900">Resumo</h2>
-            <div className="mt-4 space-y-3 text-sm text-gray-600">
-              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                <p className="text-xs font-semibold tracking-[0.12em] text-gray-400 uppercase">
+          <article className="rounded-bento-md bg-surface-soft p-6 ring-1 ring-ink/10">
+            <h2 className="text-lg font-semibold text-ink">Resumo</h2>
+            <div className="mt-4 space-y-3 text-sm text-ink/75">
+              <div className="rounded-bento-sm bg-surface p-4">
+                <p className="text-sm font-medium text-ink/70">
                   Módulos
                 </p>
-                <p className="mt-1 text-2xl font-bold text-gray-900">{modules.length}</p>
+                <p className="mt-1 text-2xl font-semibold text-ink">{modules.length}</p>
               </div>
-              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                <p className="text-xs font-semibold tracking-[0.12em] text-gray-400 uppercase">
+              <div className="rounded-bento-sm bg-surface p-4">
+                <p className="text-sm font-medium text-ink/70">
                   Aulas
                 </p>
-                <p className="mt-1 text-2xl font-bold text-gray-900">{totalLessons}</p>
+                <p className="mt-1 text-2xl font-semibold text-ink">{totalLessons}</p>
               </div>
               <button
                 type="button"
                 onClick={addModule}
-                className="text-primary inline-flex items-center gap-2 rounded-xl bg-orange-50 px-4 py-3 font-semibold hover:bg-orange-100"
+                className="text-accent-ink inline-flex items-center gap-2 rounded-xl bg-accent/10 px-4 py-3 font-semibold hover:bg-accent/20"
               >
                 <MdAddCircleOutline size={18} />
                 Adicionar módulo
@@ -806,11 +806,11 @@ export default function EditCoursePage() {
           {modules.map((moduleItem, moduleIndex) => (
             <article
               key={moduleItem.id}
-              className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+              className="rounded-bento-md bg-surface-soft p-6 ring-1 ring-ink/10"
             >
               <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                 <div className="flex-1">
-                  <p className="text-primary mb-2 text-xs font-bold tracking-[0.15em] uppercase">
+                  <p className="text-accent-ink mb-2 text-sm font-semibold">
                     Módulo {moduleIndex + 1}
                   </p>
                   <input
@@ -821,7 +821,7 @@ export default function EditCoursePage() {
                         name: e.target.value,
                       }))
                     }
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium outline-none focus:border-orange-300"
+                    className="w-full rounded-bento-sm border border-ink/20 bg-white text-ink px-4 py-3 text-sm font-medium outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
                   />
                 </div>
 
@@ -839,14 +839,14 @@ export default function EditCoursePage() {
                 {moduleItem.lessons.map((lesson, lessonIndex) => (
                   <div
                     key={lesson.id}
-                    className="rounded-2xl border border-gray-100 bg-gray-50 p-5"
+                    className="rounded-bento-sm bg-surface p-5 ring-1 ring-ink/10"
                   >
                     <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <p className="text-xs font-semibold tracking-[0.12em] text-gray-400 uppercase">
+                        <p className="text-sm font-medium text-ink/70">
                           Aula {lessonIndex + 1}
                         </p>
-                        <p className="mt-1 text-sm text-gray-500">
+                        <p className="mt-1 text-sm text-ink/70">
                           Atualize título, descrição, foto e vídeo sempre que precisar.
                         </p>
                       </div>
@@ -862,7 +862,7 @@ export default function EditCoursePage() {
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm font-medium text-ink/85">
                         Título da aula
                         <input
                           value={lesson.title}
@@ -872,11 +872,11 @@ export default function EditCoursePage() {
                               title: e.target.value,
                             }))
                           }
-                          className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-300"
+                          className="mt-2 w-full rounded-bento-sm border border-ink/20 bg-white text-ink px-4 py-3 text-sm outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
                         />
                       </label>
 
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm font-medium text-ink/85">
                         Duração em minutos
                         <input
                           type="number"
@@ -888,12 +888,12 @@ export default function EditCoursePage() {
                               durationMinutes: e.target.value,
                             }))
                           }
-                          className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-300"
+                          className="mt-2 w-full rounded-bento-sm border border-ink/20 bg-white text-ink px-4 py-3 text-sm outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
                         />
                       </label>
                     </div>
 
-                    <label className="mt-4 block text-sm font-medium text-gray-700">
+                    <label className="mt-4 block text-sm font-medium text-ink/85">
                       Descrição da aula
                       <textarea
                         rows={4}
@@ -904,15 +904,15 @@ export default function EditCoursePage() {
                             description: e.target.value,
                           }))
                         }
-                        className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-300"
+                        className="mt-2 w-full rounded-bento-sm border border-ink/20 bg-white text-ink px-4 py-3 text-sm outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
                       />
                     </label>
 
                     <div className="mt-4 grid gap-4 md:grid-cols-2">
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm font-medium text-ink/85">
                         Foto da aula
-                        <div className="mt-2 rounded-2xl border border-dashed border-orange-200 bg-white p-4">
-                          <div className="mb-3 flex items-center gap-2 text-sm text-gray-500">
+                        <div className="mt-2 rounded-bento-md border border-dashed border-accent/40 bg-white p-4">
+                          <div className="mb-3 flex items-center gap-2 text-sm text-ink/70">
                             <MdOutlineCollections size={18} />
                             {lesson.thumbnailFile
                               ? lesson.thumbnailFile.name
@@ -936,15 +936,15 @@ export default function EditCoursePage() {
                                 thumbnailFile: e.target.files?.[0] ?? null,
                               }))
                             }
-                            className="block w-full text-sm text-gray-500 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-100 file:px-4 file:py-2 file:font-medium file:text-orange-700"
+                            className="block w-full text-sm text-ink/70 file:mr-3 file:rounded-lg file:border-0 file:bg-accent/15 file:px-4 file:py-2 file:font-medium file:text-accent-ink"
                           />
                         </div>
                       </label>
 
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm font-medium text-ink/85">
                         Vídeo da aula
-                        <div className="mt-2 rounded-2xl border border-dashed border-orange-200 bg-white p-4">
-                          <div className="mb-3 flex items-center gap-2 text-sm text-gray-500">
+                        <div className="mt-2 rounded-bento-md border border-dashed border-accent/40 bg-white p-4">
+                          <div className="mb-3 flex items-center gap-2 text-sm text-ink/70">
                             <MdOutlineOndemandVideo size={18} />
                             {lesson.videoFile
                               ? lesson.videoFile.name
@@ -957,7 +957,7 @@ export default function EditCoursePage() {
                               href={lesson.videoUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="mb-3 inline-flex text-sm font-medium text-orange-700 underline underline-offset-4"
+                              className="mb-3 inline-flex text-sm font-medium text-accent-ink underline underline-offset-4"
                             >
                               Abrir vídeo atual
                             </a>
@@ -971,7 +971,7 @@ export default function EditCoursePage() {
                                 videoFile: e.target.files?.[0] ?? null,
                               }))
                             }
-                            className="block w-full text-sm text-gray-500 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-100 file:px-4 file:py-2 file:font-medium file:text-orange-700"
+                            className="block w-full text-sm text-ink/70 file:mr-3 file:rounded-lg file:border-0 file:bg-accent/15 file:px-4 file:py-2 file:font-medium file:text-accent-ink"
                           />
                         </div>
                       </label>
@@ -988,7 +988,7 @@ export default function EditCoursePage() {
                       className={`mt-4 rounded-xl border px-4 py-3 text-sm font-medium ${
                         lesson.isFreePreview
                           ? "border-green-200 bg-green-50 text-green-700"
-                          : "border-gray-200 bg-white text-gray-600"
+                          : "border-ink/15 bg-white text-ink/75"
                       }`}
                     >
                       {lesson.isFreePreview
@@ -1002,7 +1002,7 @@ export default function EditCoursePage() {
               <button
                 type="button"
                 onClick={() => addLesson(moduleItem.id)}
-                className="text-primary mt-4 inline-flex items-center gap-2 rounded-xl bg-orange-50 px-4 py-3 text-sm font-semibold hover:bg-orange-100"
+                className="text-accent-ink mt-4 inline-flex items-center gap-2 rounded-xl bg-accent/10 px-4 py-3 text-sm font-semibold hover:bg-accent/20"
               >
                 <MdAddCircleOutline size={18} />
                 Adicionar aula

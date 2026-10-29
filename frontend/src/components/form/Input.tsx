@@ -10,29 +10,29 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, icon: Icon, className, ...props }, ref) => {
     return (
-      <div className="flex w-full flex-col gap-2.5">
+      <div className="flex w-full flex-col gap-2">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-gray-700">{label}</label>
+          <label className="text-ink/80 text-sm font-medium">{label}</label>
 
           {error && <span className="text-xs text-red-500">{error}</span>}
         </div>
 
         <div
-          className={`group focus-within:ring-primary flex items-center gap-2 rounded-lg border p-2.5 transition-all duration-300 focus-within:border-transparent focus-within:ring-2 ${error ? "border-red-500 ring-red-200" : "border-gray-500/50"} ${className}`}
+          className={`group focus-within:ring-accent bg-surface-soft rounded-bento-md flex items-center gap-2 border p-3 transition-all duration-150 focus-within:border-transparent focus-within:ring-2 ${error ? "border-red-500 ring-1 ring-red-200" : "border-ink/12"} ${className ?? ""}`}
         >
           {Icon && (
             <Icon
-              className={`size-6 transition-colors ${
+              className={`size-5 shrink-0 transition-colors ${
                 error
                   ? "text-red-500"
-                  : "group-focus-within:text-primary text-gray-500/50"
+                  : "group-focus-within:text-accent text-ink/40"
               }`}
             />
           )}
 
           <input
             ref={ref}
-            className="w-full bg-transparent text-sm outline-none"
+            className="text-ink placeholder:text-ink/70 w-full bg-transparent text-sm outline-none"
             {...props}
           />
         </div>

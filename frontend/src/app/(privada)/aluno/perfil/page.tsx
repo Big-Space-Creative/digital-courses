@@ -77,15 +77,15 @@ export default function Profile() {
   return (
     <div className="flex w-full max-w-4xl flex-col gap-10">
       <div className="flex flex-col gap-2">
-        <h1 className="text-secondary text-3xl font-bold">
+        <h1 className="text-ink text-3xl font-bold">
           Configurações da Conta
         </h1>
-        <p className="text-secondary/60 text-base">
+        <p className="text-ink/60 text-base">
           Gerencie seus dados pessoais, detalhes da assinatura e preferências.
         </p>
       </div>
-      <div className="bg-secondary flex items-center gap-4 rounded-2xl p-6">
-        <div className="group border-primary relative size-32 cursor-pointer overflow-hidden rounded-full border-4">
+      <div className="bg-ink rounded-bento-lg flex items-center gap-4 p-6">
+        <div className="group border-accent relative size-32 cursor-pointer overflow-hidden rounded-full border-4">
           <Image
             src={profile.urlPhoto}
             alt="foto"
@@ -93,7 +93,7 @@ export default function Profile() {
             className="object-cover hover:hidden"
             quality={60}
           />
-          <div className="bg-primary/80 absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          <div className="bg-accent/80 absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
             <span className="text-sm font-semibold text-white">
               Editar foto
             </span>
@@ -101,26 +101,28 @@ export default function Profile() {
         </div>
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-white">{profile.name}</h1>
-            <div className="bg-primary/20 text-primary border-primary/50 flex items-center gap-1 rounded-full border px-3 py-1 font-bold">
+            <h1 className="text-surface text-2xl font-bold">
+              {profile.name}
+            </h1>
+            <div className="bg-accent/20 text-accent-400 border-accent/50 flex items-center gap-1 rounded-full border px-3 py-1 font-bold">
               <MdOutlineStarBorder className="size-4" />
               <p className="text-xs uppercase">{profile.subscriptionType}</p>
             </div>
           </div>
-          <p className="text-primary">{profile.email}</p>
-          <p className="text-white/50">Membro desde Março de 2023</p>
+          <p className="text-accent-400">{profile.email}</p>
+          <p className="text-surface/50">Membro desde Março de 2023</p>
         </div>
       </div>
       <div className="flex flex-col gap-4">
-        <div className="border-secondary/10 flex gap-4 border-b-2">
-          <p className="text-primary border-primary w-fit border-b-4 pb-4 font-bold tracking-wider">
+        <div className="border-ink/10 flex gap-4 border-b-2">
+          <p className="text-accent border-accent w-fit border-b-4 pb-4 font-bold tracking-wider">
             Perfil
           </p>
         </div>
         <div className="flex justify-between gap-10">
-          <form className="flex flex-1 flex-col gap-8 rounded-2xl bg-white p-6">
+          <form className="border-ink/10 bg-surface-soft rounded-bento-md flex flex-1 flex-col gap-8 border p-6">
             <div className="flex flex-col gap-4">
-              <h1 className="text-secondary font-bold">Informações Pessoais</h1>
+              <h1 className="text-ink font-bold">Informações Pessoais</h1>
               <div className="flex gap-4">
                 <Input
                   label="Nome Completo"
@@ -137,7 +139,7 @@ export default function Profile() {
               </div>
             </div>
             <div className="flex flex-col gap-4">
-              <h1 className="text-secondary font-bold">Segurança</h1>
+              <h1 className="text-ink font-bold">Segurança</h1>
               <div className="flex gap-4">
                 <Input
                   label="Nova Senha"
@@ -153,21 +155,24 @@ export default function Profile() {
                 />
               </div>
             </div>
-            <button className="bg-primary hover:bg-primary-dark flex w-fit cursor-pointer items-center gap-2 rounded-lg px-8 py-3 text-white">
+            <button
+              className="gradient-animate flex w-fit cursor-pointer items-center gap-2 rounded-full px-8 py-3 text-white transition-transform duration-150 ease-out hover:-translate-y-0.5"
+              style={{ backgroundImage: "var(--gradient-pulse)" }}
+            >
               <MdOutlineSave /> Salvar Alterações
             </button>
           </form>
-          <div className="flex flex-col gap-4 rounded-2xl bg-white p-6">
-            <h1 className="text-secondary font-bold">Ações da Conta</h1>
+          <div className="border-ink/10 bg-surface-soft rounded-bento-md flex flex-col gap-4 border p-6">
+            <h1 className="text-ink font-bold">Ações da Conta</h1>
             <button
               onClick={() => handleLogout()}
-              className="border-secondary/20 text-secondary/80 flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-10 py-2 hover:border-red-500 hover:text-red-500"
+              className="border-ink/15 text-ink/70 flex cursor-pointer items-center justify-center gap-2 rounded-full border px-10 py-2 hover:border-red-500 hover:text-red-500"
             >
               <MdOutlineExitToApp className="size-5" /> Sair da Conta
             </button>
             <button
               onClick={() => setIsDeleteOpen(true)}
-              className="cursor-pointer rounded-lg bg-red-100 px-10 py-2 text-sm text-red-500 hover:bg-red-200"
+              className="cursor-pointer rounded-full bg-red-100 px-10 py-2 text-sm text-red-500 hover:bg-red-200"
             >
               Excluir minha conta
             </button>
@@ -177,20 +182,21 @@ export default function Profile() {
 
       {isDeleteOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="flex w-full max-w-md flex-col gap-4 rounded-2xl bg-white p-6">
-            <h2 className="text-secondary text-xl font-bold">
+          <div className="bg-surface-soft rounded-bento-md flex w-full max-w-md flex-col gap-4 p-6">
+            <h2 className="text-ink text-xl font-bold">
               Excluir minha conta
             </h2>
-            <p className="text-secondary/70 text-sm">
-              Esta ação é permanente. Seus dados serão anonimizados ou eliminados
-              conforme a Política de Privacidade. Digite sua senha para confirmar.
+            <p className="text-ink/70 text-sm">
+              Esta ação é permanente. Seus dados serão anonimizados ou
+              eliminados conforme a Política de Privacidade. Digite sua senha
+              para confirmar.
             </p>
             <input
               type="password"
               value={deletePassword}
               onChange={(e) => setDeletePassword(e.target.value)}
               placeholder="Sua senha atual"
-              className="border-secondary/20 focus:border-primary rounded-lg border px-4 py-2 outline-none"
+              className="border-ink/15 focus:border-accent rounded-bento-sm border px-4 py-2 outline-none"
             />
             <div className="flex justify-end gap-3">
               <button
@@ -199,14 +205,14 @@ export default function Profile() {
                   setDeletePassword("");
                 }}
                 disabled={isDeleting}
-                className="border-secondary/20 text-secondary/80 cursor-pointer rounded-lg border px-6 py-2 hover:bg-gray-50 disabled:opacity-50"
+                className="border-ink/15 text-ink/70 hover:bg-ink/5 cursor-pointer rounded-full border px-6 py-2 disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => handleDeleteAccount()}
                 disabled={isDeleting}
-                className="cursor-pointer rounded-lg bg-red-500 px-6 py-2 text-white hover:bg-red-600 disabled:opacity-50"
+                className="cursor-pointer rounded-full bg-red-500 px-6 py-2 text-white hover:bg-red-600 disabled:opacity-50"
               >
                 {isDeleting ? "Excluindo..." : "Excluir conta"}
               </button>

@@ -52,13 +52,13 @@ const ToastIcon = ({ variant }: { variant: ToastVariant }) => {
   const size = "20px";
   switch (variant) {
     case "success":
-      return <MdCheckCircle size={size} className="text-emerald-600" />;
+      return <MdCheckCircle size={size} className="text-emerald-700" />;
     case "error":
-      return <MdError size={size} className="text-red-500" />;
+      return <MdError size={size} className="text-red-700" />;
     case "info":
-      return <MdInfo size={size} className="text-primary" />;
+      return <MdInfo size={size} className="text-accent-ink" />;
     default:
-      return <MdInfo size={size} className="text-secondary" />;
+      return <MdInfo size={size} className="text-ink/70" />;
   }
 };
 
@@ -83,40 +83,28 @@ function ToastCard({ item }: { item: ToastItem }) {
     <div
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      className={`group pointer-events-auto relative flex w-full max-w-sm items-start gap-3 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-[0_16px_40px_-20px_rgba(15,23,42,0.6)] backdrop-blur transition-all duration-300 ${isClosing ? "translate-x-6 opacity-0" : "translate-x-0 opacity-100"}`}
+      className={`group pointer-events-auto relative flex w-full max-w-sm items-start gap-3 overflow-hidden rounded-bento-md border border-ink/10 bg-surface-soft p-4 shadow-[0_16px_40px_-20px_rgba(29,30,31,0.5)] transition-[transform,opacity] duration-300 motion-reduce:transition-opacity ${isClosing ? "translate-x-6 opacity-0" : "translate-x-0 opacity-100"}`}
     >
-      <div
-        className={`absolute top-0 left-0 h-full w-1 ${
-          item.variant === "success"
-            ? "bg-emerald-500"
-            : item.variant === "error"
-              ? "bg-red-500"
-              : item.variant === "info"
-                ? "bg-primary"
-                : "bg-secondary"
-        }`}
-      />
-
       <div
         className={`flex size-9 items-center justify-center rounded-full ${
           item.variant === "success"
-            ? "bg-emerald-50"
+            ? "bg-emerald-100"
             : item.variant === "error"
-              ? "bg-red-50"
+              ? "bg-red-100"
               : item.variant === "info"
-                ? "bg-primary/10"
-                : "bg-secondary/10"
+                ? "bg-accent/15"
+                : "bg-ink/8"
         }`}
       >
         <ToastIcon variant={item.variant} />
       </div>
 
       <div className="flex flex-1 flex-col gap-1">
-        <h3 className="text-sm leading-none font-semibold text-slate-900">
+        <h3 className="text-sm leading-none font-semibold text-ink">
           {item.title}
         </h3>
         {item.description && (
-          <p className="text-xs leading-tight text-slate-500">
+          <p className="text-xs leading-tight text-ink/70">
             {item.description}
           </p>
         )}
@@ -124,7 +112,8 @@ function ToastCard({ item }: { item: ToastItem }) {
 
       <button
         onClick={handleClose}
-        className="cursor-pointer rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900"
+        aria-label="Fechar notificação"
+        className="cursor-pointer rounded-md p-1 text-ink/60 transition-colors hover:bg-ink/5 hover:text-ink focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
       >
         <MdClose size="18px" />
       </button>
@@ -147,7 +136,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
-      <div className="pointer-events-none fixed top-4 right-4 z-40 flex w-[90%] max-w-sm flex-col gap-3">
+      <div role="status" aria-live="polite" className="pointer-events-none fixed top-4 right-4 z-[70] flex w-[90%] max-w-sm flex-col gap-3">
         {items.map((item) => (
           <ToastCard key={item.id} item={item} />
         ))}

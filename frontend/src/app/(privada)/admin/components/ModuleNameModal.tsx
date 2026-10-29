@@ -29,18 +29,28 @@ export default function ModuleNameModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-        <div className="mb-4 flex items-start justify-between">
+    <div className="bg-ink/40 fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="module-modal-title"
+        className="rounded-bento-lg bg-surface-soft w-full max-w-md p-6 shadow-xl"
+      >
+        <div className="mb-5 flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-            <p className="mt-1 text-sm text-gray-500">{description}</p>
+            <h3
+              id="module-modal-title"
+              className="text-ink text-lg font-semibold"
+            >
+              {title}
+            </h3>
+            <p className="text-ink/70 mt-1 text-sm">{description}</p>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="text-ink/60 hover:bg-ink/5 hover:text-ink focus-visible:ring-accent rounded-lg p-2 focus-visible:ring-2 focus-visible:outline-none"
             aria-label="Fechar modal"
           >
             <MdClose size={20} />
@@ -48,28 +58,28 @@ export default function ModuleNameModal({
         </div>
 
         <form onSubmit={onSubmit}>
-          <label className="block text-xs font-semibold tracking-wide text-gray-500 uppercase">
+          <label className="text-ink/80 block text-sm font-medium">
             {inputLabel}
             <input
               value={value}
               onChange={(event) => onChange(event.target.value)}
               placeholder={inputPlaceholder}
-              className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-normal text-gray-700 outline-none focus:border-orange-300"
+              className="border-ink/15 text-ink placeholder:text-ink/60 focus:ring-accent rounded-bento-md mt-2 w-full border bg-white px-4 py-3 text-sm font-normal outline-none focus:border-transparent focus:ring-2"
               autoFocus
             />
           </label>
 
-          <div className="mt-5 flex justify-end gap-2">
+          <div className="mt-6 flex justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              className="border-ink/15 text-ink/80 hover:bg-ink/5 focus-visible:ring-accent rounded-full border bg-white px-5 py-2.5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="bg-primary hover:bg-primary-dark rounded-lg px-4 py-2 text-sm font-semibold text-white"
+              className="bg-accent text-accent-ink hover:bg-accent-500 focus-visible:ring-accent rounded-full px-5 py-2.5 text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
             >
               {confirmLabel}
             </button>

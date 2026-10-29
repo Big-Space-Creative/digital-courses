@@ -1,12 +1,13 @@
 "use client";
 import Image from "next/image";
-import Logo from "./Logo";
+import PulseWave from "@/components/brand/PulseWave";
 import { useState } from "react";
 import Link from "next/link";
 import { logoutAction } from "@/app/actions/auth";
 import { toast } from "../ui/Toast";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
+import ThemeToggle from "@/components/marketing/ThemeToggle";
 
 export default function Header() {
   const router = useRouter();
@@ -38,40 +39,47 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-secondary flex items-center justify-between px-6 py-4 md:px-20">
-      <Logo />
+    <header className="bg-surface-soft border-ink/8 flex items-center justify-between border-b px-6 py-4 md:px-20">
+      <Link href="/aluno/home" className="flex items-center gap-2.5">
+        <PulseWave className="pulse-glow h-8 w-8" title="" />
+        <span className="text-ink text-lg font-semibold tracking-tight">
+          Pullse
+        </span>
+      </Link>
       <div className="flex items-center gap-4">
-        <div className="flex flex-col items-end">
-          <p className="text-base text-white">{profile.name}</p>
-          <p className="text-sm text-white/60">
+        <ThemeToggle />
+        <div className="hidden flex-col items-end sm:flex">
+          <p className="text-ink text-sm font-medium">{profile.name}</p>
+          <p className="text-ink/50 text-xs">
             Plano {profile.subscriptionType}
           </p>
         </div>
         <div className="relative">
-          <div
+          <button
+            type="button"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="border-primary relative size-12 cursor-pointer overflow-hidden rounded-full border-2"
+            className="border-accent/60 relative size-11 shrink-0 cursor-pointer overflow-hidden rounded-full border-2 transition-opacity hover:opacity-90"
           >
             <Image
               src={profile.urlPhoto}
-              alt="foto"
+              alt="Foto de perfil"
               fill
               className="object-cover"
               quality={60}
             />
-          </div>
+          </button>
           {isMenuOpen && (
-            <div className="absolute right-0 z-50 mt-2 w-48 overflow-hidden rounded-md bg-white shadow-xl ring-1 ring-black/5">
+            <div className="border-ink/10 bg-surface-soft rounded-bento-md absolute right-0 z-50 mt-2 w-48 overflow-hidden border shadow-lg">
               <div className="flex flex-col">
                 <Link
                   href="/aluno/perfil"
                   onClick={() => setIsMenuOpen(false)}
-                  className="text-secondary px-4 py-3 text-left text-sm transition-colors hover:bg-gray-100"
+                  className="text-ink hover:bg-ink/5 px-4 py-3 text-left text-sm transition-colors"
                 >
                   Ver perfil
                 </Link>
 
-                <hr className="border-gray-100" />
+                <hr className="border-ink/10" />
 
                 <button
                   onClick={() => handleLogout()}

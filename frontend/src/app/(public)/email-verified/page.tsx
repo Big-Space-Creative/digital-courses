@@ -4,7 +4,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { MdCheckCircle, MdError, MdInfo, MdMusicNote } from "react-icons/md";
+import { MdCheckCircle, MdError, MdInfo } from "react-icons/md";
+import AuthLayout from "@/components/marketing/AuthLayout";
 
 const API_BASE = process.env.API_BASE_URL ?? "http://backend:8000/api/v1/";
 
@@ -15,7 +16,10 @@ async function exchangeTokenAndLogin(oneTimeToken: string) {
   try {
     const res = await fetch(`${API_BASE}email/token-exchange`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
       body: JSON.stringify({ token: oneTimeToken }),
       cache: "no-store",
     });
@@ -31,7 +35,7 @@ async function exchangeTokenAndLogin(oneTimeToken: string) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60,       // 1 hora
+      maxAge: 60 * 60, // 1 hora
       path: "/",
     });
 
@@ -57,7 +61,7 @@ export default async function EmailVerifiedPage({
 }) {
   const params = await searchParams;
   const status = params.status ?? "invalid";
-  const token  = params.token ?? "";
+  const token = params.token ?? "";
 
   // Auto-login: se o backend enviou um token de uso único, tenta fazer login
   if (status === "success" && token) {
@@ -75,71 +79,64 @@ export default async function EmailVerifiedPage({
     title: string;
     description: string;
     cta: { label: string; href: string };
-    ring: string;
-    bg: string;
+    tile: string;
   };
 
   const configs: Record<string, UIConfig> = {
     success: {
       // token ausente ou expirado (mais de 5min após verificar o e-mail)
-      icon: <MdCheckCircle className="text-4xl text-green-500" />,
+      icon: <MdCheckCircle className="text-3xl" aria-hidden="true" />,
       title: "E-mail verificado!",
       description:
         "Seu e-mail foi confirmado. O login automático não foi possível (link expirado). Faça login normalmente.",
       cta: { label: "Ir para o login", href: "/login" },
-      ring: "ring-green-200",
-      bg: "bg-green-50",
+      tile: "bg-accent/10 text-accent",
     },
     "already-verified": {
-      icon: <MdInfo className="text-4xl text-blue-500" />,
+      icon: <MdInfo className="text-3xl" aria-hidden="true" />,
       title: "Já verificado",
       description:
         "Este e-mail já havia sido confirmado anteriormente. Faça login normalmente.",
       cta: { label: "Ir para o login", href: "/login" },
-      ring: "ring-blue-200",
-      bg: "bg-blue-50",
+      tile: "bg-ink/8 text-ink",
     },
     invalid: {
-      icon: <MdError className="text-4xl text-red-500" />,
+      icon: <MdError className="text-3xl" aria-hidden="true" />,
       title: "Link inválido ou expirado",
       description:
         "O link de confirmação é inválido ou expirou (validade de 24h). Solicite um novo e-mail de verificação.",
       cta: { label: "Solicitar novo link", href: "/verify-email" },
-      ring: "ring-red-200",
-      bg: "bg-red-50",
+      tile: "bg-red-500/10 text-red-600",
     },
   };
 
   const cfg = configs[status] ?? configs.invalid;
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-gray-50 px-4">
-      <div
-        className={`w-full max-w-md rounded-2xl border border-gray-100 bg-white p-10 text-center shadow-lg ring-4 ${cfg.ring}`}
-      >
-        {/* Ícone */}
-        <div className="mb-6 flex justify-center">
-          <div className={`rounded-full p-5 ${cfg.bg}`}>{cfg.icon}</div>
-        </div>
-
-        <h1 className="mb-3 text-2xl font-bold text-gray-900">{cfg.title}</h1>
-        <p className="mb-8 text-sm leading-relaxed text-gray-500">
-          {cfg.description}
-        </p>
-
-        <Link
-          href={cfg.cta.href}
-          className="bg-primary hover:bg-primary/90 active:bg-primary/80 inline-block w-full rounded-lg py-3 text-sm font-semibold text-white transition-colors"
+    <AuthLayout>
+      <div className="flex flex-col gap-4">
+        <span
+          className={`flex h-14 w-14 items-center justify-center rounded-full ${cfg.tile}`}
         >
-          {cfg.cta.label}
-        </Link>
+          {cfg.icon}
+        </span>
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-ink text-3xl font-semibold tracking-[-0.01em]">
+            {cfg.title}
+          </h1>
+          <p className="text-ink/60 text-sm leading-relaxed">
+            {cfg.description}
+          </p>
+        </div>
       </div>
 
-      {/* Brand */}
-      <div className="mt-8 flex items-center gap-1.5 text-gray-400">
-        <MdMusicNote className="text-primary size-4" />
-        <span className="text-sm font-medium">Digital Courses</span>
-      </div>
-    </div>
+      <Link
+        href={cfg.cta.href}
+        className="gradient-animate focus-visible:ring-accent flex h-14 w-full items-center justify-center rounded-full text-sm font-medium text-white shadow-lg transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-60"
+        style={{ backgroundImage: "var(--gradient-pulse)" }}
+      >
+        {cfg.cta.label}
+      </Link>
+    </AuthLayout>
   );
 }

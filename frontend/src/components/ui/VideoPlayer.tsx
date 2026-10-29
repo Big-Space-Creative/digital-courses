@@ -5,7 +5,10 @@ export default function VideoPlayer({
 }) {
   if (!lessonVideoUrl) {
     return (
-      <div className="flex aspect-video w-full items-center justify-center rounded-2xl bg-black text-sm text-white/60">
+      <div
+        role="status"
+        className="flex aspect-video w-full items-center justify-center rounded-bento-md bg-ink px-6 text-center text-sm text-surface/80"
+      >
         Vídeo ainda não disponível para esta aula.
       </div>
     );
@@ -16,7 +19,7 @@ export default function VideoPlayer({
       src={lessonVideoUrl}
       controls
       controlsList="nodownload"
-      className="aspect-video w-full rounded-2xl bg-black shadow-2xl"
+      className="aspect-video w-full rounded-bento-md bg-ink ring-1 ring-ink/10"
     />
   );
 }

@@ -20,28 +20,35 @@ export default function DeleteConfirmModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-        <p className="mt-2 text-sm text-gray-600">
+    <div className="bg-ink/40 fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="delete-modal-title"
+        className="rounded-bento-lg bg-surface-soft w-full max-w-md p-6 shadow-xl"
+      >
+        <h3 id="delete-modal-title" className="text-ink text-lg font-semibold">
+          {title}
+        </h3>
+        <p className="text-ink/75 mt-2 text-sm">
           {description ?? `Tem certeza que deseja apagar ${label}?`}
         </p>
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="text-ink/65 mt-1 text-xs">
           Esta acao nao pode ser desfeita.
         </p>
 
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-6 flex justify-end gap-2">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            className="border-ink/15 text-ink/80 hover:bg-ink/5 focus-visible:ring-accent rounded-full border bg-white px-5 py-2.5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
           >
             Cancelar
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+            className="rounded-full bg-red-700 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-800 focus-visible:ring-2 focus-visible:ring-red-700 focus-visible:ring-offset-2 focus-visible:outline-none"
           >
             {confirmLabel}
           </button>

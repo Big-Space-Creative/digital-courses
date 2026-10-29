@@ -108,15 +108,15 @@ export default function LessonTabs({
 
   return (
     <div>
-      <ul className="border-secondary/20 flex gap-4 border-b px-4 pb-3">
+      <ul className="border-ink/15 flex gap-4 border-b px-4 pb-3">
         <li>
           <button
             type="button"
             onClick={() => setActiveTab("resumo")}
             className={`cursor-pointer border-b-2 pb-1 text-sm font-bold transition-colors ${
               activeTab === "resumo"
-                ? "text-secondary border-primary"
-                : "border-transparent text-slate-500 hover:text-slate-700"
+                ? "text-ink border-accent"
+                : "text-ink/50 hover:text-ink/80 border-transparent"
             }`}
           >
             Resumo da aula
@@ -128,8 +128,8 @@ export default function LessonTabs({
             onClick={() => setActiveTab("comentarios")}
             className={`cursor-pointer border-b-2 pb-1 text-sm font-bold transition-colors ${
               activeTab === "comentarios"
-                ? "text-secondary border-primary"
-                : "border-transparent text-slate-500 hover:text-slate-700"
+                ? "text-ink border-accent"
+                : "text-ink/50 hover:text-ink/80 border-transparent"
             }`}
           >
             Comentários ({commentsCount})
@@ -140,26 +140,26 @@ export default function LessonTabs({
       {activeTab === "resumo" ? (
         <div className="flex w-full flex-col justify-between gap-10 p-8 lg:flex-row">
           <div className="flex flex-1 flex-col gap-6 lg:max-w-1/2">
-            <p>{resumo}</p>
+            <p className="text-ink/85">{resumo}</p>
 
             {dicas && (
-              <div className="flex flex-col gap-1 rounded-lg border-l-4 bg-slate-200 px-4 py-2">
-                <h1 className="text-secondary font-bold">Dicas para praticar</h1>
-                <p>{dicas}</p>
+              <div className="border-accent bg-surface-soft rounded-bento-sm flex flex-col gap-1 border-l-4 px-4 py-2">
+                <h1 className="text-ink font-bold">Dicas para praticar</h1>
+                <p className="text-ink/80">{dicas}</p>
               </div>
             )}
           </div>
 
           <div className="w-full space-y-4 lg:w-80">
             <div className="mb-6 flex items-center gap-3">
-              <MdFolder className="size-7 text-orange-500" />
-              <h2 className="text-lg leading-tight font-bold text-slate-800">
+              <MdFolder className="text-accent size-7" />
+              <h2 className="text-ink text-lg leading-tight font-bold">
                 Materiais de <br /> Referência
               </h2>
             </div>
 
             {materials.length === 0 && (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
+              <div className="border-ink/15 bg-surface-soft rounded-bento-sm text-ink/60 border border-dashed p-4 text-sm">
                 Esta aula ainda não possui materiais complementares.
               </div>
             )}
@@ -170,7 +170,7 @@ export default function LessonTabs({
                 href={material.url}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+                className="border-ink/10 bg-surface-soft rounded-bento-sm flex items-center gap-4 border p-4 shadow-sm transition-shadow hover:shadow-md"
               >
                 <div
                   className={`flex size-12 items-center justify-center rounded-lg ${materialAccent(material.type)}`}
@@ -179,23 +179,23 @@ export default function LessonTabs({
                 </div>
 
                 <div className="flex-1">
-                  <h3 className="text-sm leading-snug font-bold text-slate-800">
+                  <h3 className="text-ink text-sm leading-snug font-bold">
                     {material.title}
                   </h3>
-                  <p className="text-[10px] font-medium text-slate-400 uppercase">
+                  <p className="text-ink/40 text-[10px] font-medium uppercase">
                     {material.type}
                   </p>
                 </div>
 
-                <MdOutlineFileDownload className="size-6 text-slate-400" />
+                <MdOutlineFileDownload className="text-ink/35 size-6" />
               </a>
             ))}
           </div>
         </div>
       ) : (
-        <div className="space-y-5 bg-[#f2f2f2] p-4 md:p-6">
+        <div className="bg-surface space-y-5 p-4 md:p-6">
           {comments.length === 0 && (
-            <div className="rounded-2xl bg-white p-4 text-sm text-slate-500">
+            <div className="bg-surface-soft text-ink/60 rounded-bento-md p-4 text-sm">
               Nenhum comentário nesta aula ainda.
             </div>
           )}
@@ -203,27 +203,29 @@ export default function LessonTabs({
           {comments.map((comment) => (
             <article
               key={comment.id}
-              className="flex items-start gap-3 rounded-2xl bg-white p-4"
+              className="bg-surface-soft rounded-bento-md flex items-start gap-3 p-4"
             >
-              <div className="border-primary flex size-12 shrink-0 items-center justify-center rounded-full border-2 bg-orange-50 text-xs font-bold text-orange-600">
+              <div className="border-accent bg-accent/10 text-accent flex size-12 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold">
                 {comment.avatar}
               </div>
               <div>
-                <p className="text-secondary font-bold">{comment.author}</p>
+                <p className="text-ink font-bold">{comment.author}</p>
                 {comment.createdAt && (
-                  <p className="text-xs text-slate-400">
+                  <p className="text-ink/40 text-xs">
                     {new Date(comment.createdAt).toLocaleString("pt-BR")}
                   </p>
                 )}
-                <p className="text-secondary/90 mt-1 text-[19px] leading-6">
+                <p className="text-ink/85 mt-1 text-[19px] leading-6">
                   {comment.message}
                 </p>
                 {comment.adminReply && (
-                  <div className="mt-3 rounded-xl border border-orange-100 bg-orange-50 p-3">
-                    <p className="text-xs font-semibold tracking-wide text-orange-700 uppercase">
+                  <div className="border-accent/25 bg-accent/10 rounded-bento-sm mt-3 border p-3">
+                    <p className="text-accent text-xs font-semibold tracking-wide uppercase">
                       Resposta da equipe
                     </p>
-                    <p className="mt-1 text-sm text-orange-900">{comment.adminReply}</p>
+                    <p className="text-accent-ink mt-1 text-sm">
+                      {comment.adminReply}
+                    </p>
                   </div>
                 )}
               </div>
@@ -241,13 +243,13 @@ export default function LessonTabs({
                 }
               }}
               placeholder="Deixe seu comentário"
-              className="w-full rounded-xl border border-slate-300 bg-white py-4 pr-14 pl-4 text-slate-700 transition-colors outline-none placeholder:text-slate-400 focus:border-orange-400"
+              className="border-ink/12 bg-surface-soft text-ink placeholder:text-ink/45 focus:border-accent rounded-bento-md w-full border py-4 pr-14 pl-4 transition-colors outline-none"
             />
             <button
               type="button"
               onClick={handleAddComment}
               disabled={isSubmitting}
-              className="bg-primary absolute top-1/2 right-2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-white transition-transform hover:scale-105"
+              className="bg-accent absolute top-1/2 right-2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-white transition-transform hover:scale-105 disabled:pointer-events-none disabled:opacity-60"
               aria-label="Enviar comentário"
             >
               <MdSend className="size-5" />

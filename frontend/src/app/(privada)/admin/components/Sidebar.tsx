@@ -54,7 +54,7 @@ export default function Sidebar() {
   }
 
   const renderNavLinks = (onClick?: () => void) => (
-    <nav className="mt-4 flex-1 space-y-2 px-4">
+    <nav aria-label="Navegação do painel" className="mt-2 flex-1 space-y-1 px-3">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isCoursesRoute = item.href.includes("/admin/cursos");
@@ -68,26 +68,28 @@ export default function Sidebar() {
             key={item.name}
             href={item.href}
             onClick={onClick}
-            className={`flex items-center gap-3 rounded-md px-4 py-3 transition-colors ${
+            aria-current={isActive ? "page" : undefined}
+            className={`rounded-bento-sm focus-visible:ring-accent flex items-center gap-3 px-3.5 py-3 text-sm font-medium transition-colors duration-150 focus-visible:ring-2 focus-visible:outline-none ${
               isActive
-                ? "rounded-l-none border-l-4 border-[#F26A21] bg-white/5 text-[#F26A21]"
-                : "text-gray-300 hover:bg-white/5 hover:text-white"
+                ? "bg-accent text-accent-ink"
+                : "text-ink/75 hover:bg-ink/5 hover:text-ink"
             }`}
           >
             <Icon
               size={20}
-              className={isActive ? "text-[#F26A21]" : "text-gray-400"}
+              aria-hidden="true"
+              className={isActive ? "text-accent-ink" : "text-ink/55"}
             />
-            <span className="text-sm font-medium">{item.name}</span>
+            <span>{item.name}</span>
           </Link>
         );
       })}
     </nav>
   );
 
-  const UserAvatar = ({ size = "h-9 w-9" }: { size?: string }) => (
+  const renderAvatar = (size = "h-9 w-9") => (
     <div
-      className={`relative ${size} flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-600 bg-gradient-to-br from-orange-400 to-amber-600`}
+      className={`relative ${size} bg-accent/15 text-accent-ink flex shrink-0 items-center justify-center overflow-hidden rounded-full`}
     >
       {user?.urlPhoto ? (
         <Image
@@ -97,7 +99,7 @@ export default function Sidebar() {
           className="object-cover"
         />
       ) : (
-        <span className="text-xs font-bold text-white">
+        <span className="text-xs font-semibold">
           {(displayName || "")
             .split(" ")
             .filter(Boolean)
@@ -110,21 +112,32 @@ export default function Sidebar() {
     </div>
   );
 
+  const logoutButton = (
+    <button
+      type="button"
+      onClick={handleLogout}
+      className="rounded-bento-sm text-ink/75 focus-visible:ring-accent flex w-full items-center gap-3 px-3.5 py-3 text-sm font-medium transition-colors duration-150 hover:bg-red-50 hover:text-red-700 focus-visible:ring-2 focus-visible:outline-none"
+    >
+      <MdOutlineLogout size={20} aria-hidden="true" className="text-ink/55" />
+      <span>Sair</span>
+    </button>
+  );
+
   return (
     <>
-      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-[#2a3150] bg-[#1A1F36] px-4 py-3 text-white lg:hidden">
+      <header className="glass-strong border-ink/10 sticky top-0 z-40 flex items-center justify-between border-b px-4 py-3 lg:hidden">
         <Link href="/admin/perfil" className="flex items-center gap-3">
-          <UserAvatar />
-          <div className="leading-tight text-left">
-            <p className="text-sm font-semibold">{displayName}</p>
-            <p className="text-xs text-gray-400">{displayRole}</p>
+          {renderAvatar()}
+          <div className="text-left leading-tight">
+            <p className="text-ink text-sm font-semibold">{displayName}</p>
+            <p className="text-ink/65 text-xs">{displayRole}</p>
           </div>
         </Link>
 
         <button
           type="button"
           onClick={() => setIsMobileMenuOpen(true)}
-          className="rounded-md p-2 text-gray-200 hover:bg-white/10"
+          className="text-ink/80 hover:bg-ink/5 focus-visible:ring-accent rounded-lg p-2.5 focus-visible:ring-2 focus-visible:outline-none"
           aria-label="Abrir menu"
         >
           <MdMenu size={22} />
@@ -135,25 +148,25 @@ export default function Sidebar() {
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-black/40"
+            className="bg-ink/40 absolute inset-0"
             onClick={() => setIsMobileMenuOpen(false)}
             aria-label="Fechar menu"
           />
 
-          <aside className="relative z-10 flex h-full w-72 max-w-[86vw] flex-col bg-[#1A1F36] text-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-[#2a3150] p-4">
+          <aside className="bg-surface-soft text-ink relative z-10 flex h-full w-72 max-w-[86vw] flex-col shadow-xl">
+            <div className="border-ink/10 flex items-center justify-between border-b p-4">
               <Link href="/admin/perfil" className="flex items-center gap-3">
-                <UserAvatar />
-                <div className="leading-tight text-left">
+                {renderAvatar()}
+                <div className="text-left leading-tight">
                   <p className="text-sm font-semibold">{displayName}</p>
-                  <p className="text-xs text-gray-400">{displayRole}</p>
+                  <p className="text-ink/65 text-xs">{displayRole}</p>
                 </div>
               </Link>
 
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="rounded-md p-2 text-gray-200 hover:bg-white/10"
+                className="text-ink/80 hover:bg-ink/5 focus-visible:ring-accent rounded-lg p-2.5 focus-visible:ring-2 focus-visible:outline-none"
                 aria-label="Fechar menu"
               >
                 <MdClose size={20} />
@@ -162,39 +175,26 @@ export default function Sidebar() {
 
             {renderNavLinks(() => setIsMobileMenuOpen(false))}
 
-            <div className="border-t border-gray-800 p-4">
-              <button
-                onClick={handleLogout}
-                className="flex w-full items-center gap-3 rounded-md px-4 py-3 text-gray-300 transition-colors hover:bg-white/5 hover:text-red-400"
-              >
-                <MdOutlineLogout size={20} className="text-gray-400" />
-                <span className="text-sm font-medium">Sair</span>
-              </button>
-            </div>
+            <div className="border-ink/10 border-t p-3">{logoutButton}</div>
           </aside>
         </div>
       )}
 
-      <aside className="hidden h-screen w-64 shrink-0 flex-col bg-[#1A1F36] text-white lg:flex">
-        <Link href="/admin/perfil" className="flex items-center gap-3 p-6 pt-8 hover:bg-white/5 transition-colors">
-          <UserAvatar size="h-10 w-10" />
-          <div className="flex flex-col text-left">
-            <span className="text-sm font-bold tracking-wide">{displayName}</span>
-            <span className="text-xs text-gray-400">{displayRole}</span>
+      <aside className="bg-surface-soft border-ink/10 text-ink hidden h-screen w-64 shrink-0 flex-col border-r lg:flex">
+        <Link
+          href="/admin/perfil"
+          className="hover:bg-ink/5 focus-visible:ring-accent m-3 mt-5 flex items-center gap-3 rounded-bento-sm p-3 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+        >
+          {renderAvatar("h-10 w-10")}
+          <div className="flex min-w-0 flex-col text-left">
+            <span className="truncate text-sm font-semibold">{displayName}</span>
+            <span className="text-ink/65 text-xs">{displayRole}</span>
           </div>
         </Link>
 
         {renderNavLinks()}
 
-        <div className="border-t border-gray-800 p-4">
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-md px-4 py-3 text-gray-300 transition-colors hover:bg-white/5 hover:text-red-400"
-          >
-            <MdOutlineLogout size={20} className="text-gray-400" />
-            <span className="text-sm font-medium">Sair</span>
-          </button>
-        </div>
+        <div className="border-ink/10 border-t p-3">{logoutButton}</div>
       </aside>
     </>
   );

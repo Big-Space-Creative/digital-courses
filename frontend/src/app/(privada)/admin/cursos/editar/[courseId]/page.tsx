@@ -112,19 +112,19 @@ function LessonCard({
   }
 
   return (
-    <article className="rounded-xl border border-gray-200 bg-white p-5">
+    <article className="rounded-bento-sm bg-white p-5 ring-1 ring-ink/10">
       <header className="mb-4 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-          <MdOutlineInfo className="text-primary" size={16} />
+        <div className="flex items-center gap-2 text-sm font-semibold text-ink/85">
+          <MdOutlineInfo className="text-accent-ink" size={16} />
           Aula {String(lessonNumber).padStart(2, "0")}
         </div>
 
-        <div className="flex items-center gap-1 text-gray-500">
+        <div className="flex items-center gap-1 text-ink/70">
           <button
             type="button"
             onClick={onMoveUp}
             disabled={!canMoveUp}
-            className="rounded-md p-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-md p-1 hover:bg-ink/5 disabled:cursor-not-allowed disabled:opacity-40"
             aria-label={`Mover aula ${lessonNumber} para cima`}
           >
             <MdKeyboardArrowUp size={18} />
@@ -133,7 +133,7 @@ function LessonCard({
             type="button"
             onClick={onMoveDown}
             disabled={!canMoveDown}
-            className="rounded-md p-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-md p-1 hover:bg-ink/5 disabled:cursor-not-allowed disabled:opacity-40"
             aria-label={`Mover aula ${lessonNumber} para baixo`}
           >
             <MdKeyboardArrowDown size={18} />
@@ -150,18 +150,18 @@ function LessonCard({
       </header>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <label className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+        <label className="text-sm font-medium text-ink/80">
           Título da aula *
           <input
             value={lesson.title}
             onChange={(e) => onChange({ ...lesson, title: e.target.value })}
             placeholder="Ex: Conhecendo as partes da guitarra"
             required
-            className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-normal text-gray-700 outline-none focus:border-orange-300"
+            className="mt-2 w-full rounded-bento-sm border border-ink/20 bg-white px-3 py-2.5 text-sm font-normal text-ink/85 outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
           />
         </label>
 
-        <label className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+        <label className="text-sm font-medium text-ink/80">
           Duração (minutos)
           <input
             type="number"
@@ -171,19 +171,19 @@ function LessonCard({
               onChange({ ...lesson, durationMinutes: e.target.value })
             }
             placeholder="Ex: 15"
-            className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-normal text-gray-700 outline-none focus:border-orange-300"
+            className="mt-2 w-full rounded-bento-sm border border-ink/20 bg-white px-3 py-2.5 text-sm font-normal text-ink/85 outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
           />
         </label>
       </div>
 
-      <label className="mt-4 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
+      <label className="mt-4 block text-sm font-medium text-ink/80">
         Resumo da aula
         <textarea
           rows={3}
           value={lesson.description}
           onChange={(e) => onChange({ ...lesson, description: e.target.value })}
           placeholder="Descreva o que o aluno aprenderá nesta aula..."
-          className="mt-2 w-full resize-none rounded-lg border border-gray-200 px-3 py-3 text-sm font-normal text-gray-700 outline-none focus:border-orange-300"
+          className="mt-2 w-full resize-none rounded-bento-sm border border-ink/20 bg-white px-3 py-3 text-sm font-normal text-ink/85 outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
         />
       </label>
 
@@ -192,10 +192,10 @@ function LessonCard({
         onClick={() =>
           onChange({ ...lesson, isFreePreview: !lesson.isFreePreview })
         }
-        className="mt-3 flex items-center gap-2 text-xs font-semibold text-gray-500 hover:text-gray-700"
+        className="mt-3 flex items-center gap-2 text-xs font-semibold text-ink/70 hover:text-ink"
       >
         {lesson.isFreePreview ? (
-          <MdOutlineCheckBox size={18} className="text-primary" />
+          <MdOutlineCheckBox size={18} className="text-accent-ink" />
         ) : (
           <MdOutlineCheckBoxOutlineBlank size={18} />
         )}
@@ -203,7 +203,7 @@ function LessonCard({
       </button>
 
       <div className="mt-4">
-        <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+        <p className="text-sm font-medium text-ink/80">
           Vídeo da aula *
         </p>
 
@@ -213,7 +213,7 @@ function LessonCard({
             <span className="flex-1 truncate text-sm text-green-700">
               {lesson.videoFile.name}
             </span>
-            <span className="shrink-0 text-xs text-green-500">
+            <span className="shrink-0 text-xs text-green-700">
               ({(lesson.videoFile.size / 1024 / 1024).toFixed(1)} MB)
             </span>
             <button
@@ -222,7 +222,7 @@ function LessonCard({
                 onChange({ ...lesson, videoFile: null });
                 if (videoInputRef.current) videoInputRef.current.value = "";
               }}
-              className="shrink-0 text-gray-400 hover:text-red-500"
+              className="shrink-0 text-ink/60 hover:text-red-500"
               aria-label="Remover vídeo"
             >
               <MdClose size={16} />
@@ -239,7 +239,7 @@ function LessonCard({
               onClick={() => {
                 onChange({ ...lesson, videoPath: undefined }); // Removes the existing video reference
               }}
-              className="shrink-0 text-gray-400 hover:text-red-500"
+              className="shrink-0 text-ink/60 hover:text-red-500"
               aria-label="Substituir vídeo"
             >
               <MdClose size={16} />
@@ -249,13 +249,13 @@ function LessonCard({
           <button
             type="button"
             onClick={() => videoInputRef.current?.click()}
-            className="mt-2 w-full rounded-lg border border-dashed border-orange-200 bg-orange-50/40 p-5 text-center hover:bg-orange-50"
+            className="mt-2 w-full rounded-lg border border-dashed border-accent/40 bg-accent/5 p-5 text-center hover:bg-accent/10"
           >
-            <MdOutlineUploadFile className="mx-auto text-gray-400" size={22} />
-            <p className="mt-2 text-xs font-medium text-gray-500 normal-case">
+            <MdOutlineUploadFile className="mx-auto text-ink/60" size={22} />
+            <p className="mt-2 text-xs font-medium text-ink/70 normal-case">
               Clique para selecionar o arquivo de vídeo
             </p>
-            <p className="mt-1 text-xs text-gray-400 normal-case">
+            <p className="mt-1 text-xs text-ink/60 normal-case">
               MP4, MOV, AVI, MKV, WebM
             </p>
           </button>
@@ -271,7 +271,7 @@ function LessonCard({
       </div>
 
       <div className="mt-4">
-        <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+        <p className="text-sm font-medium text-ink/80">
           Materiais de referência
         </p>
 
@@ -280,25 +280,25 @@ function LessonCard({
             {lesson.materials.map((mat) => (
               <div
                 key={mat.id}
-                className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2"
+                className="flex items-center gap-2 rounded-lg border border-ink/15 bg-surface px-3 py-2"
               >
                 <MdOutlineInsertDriveFile
                   size={16}
-                  className="shrink-0 text-orange-400"
+                  className="shrink-0 text-accent-500"
                 />
                 <input
                   value={mat.title}
                   onChange={(e) => handleMatTitleChange(mat.id, e.target.value)}
-                  className="flex-1 bg-transparent text-sm text-gray-700 outline-none"
+                  className="flex-1 bg-transparent text-sm text-ink/85 outline-none"
                   placeholder="Título do material"
                 />
-                <span className="shrink-0 text-xs text-gray-400">
+                <span className="shrink-0 text-xs text-ink/60">
                   {mat.file ? `(${(mat.file.size / 1024).toFixed(0)} KB)` : '(Salvo)'}
                 </span>
                 <button
                   type="button"
                   onClick={() => handleRemoveMaterial(mat.id)}
-                  className="shrink-0 text-gray-400 hover:text-red-500"
+                  className="shrink-0 text-ink/60 hover:text-red-500"
                   aria-label="Remover material"
                 >
                   <MdClose size={15} />
@@ -311,9 +311,9 @@ function LessonCard({
         <button
           type="button"
           onClick={() => matInputRef.current?.click()}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-orange-200 bg-orange-50/40 p-3 text-xs font-medium text-gray-500 hover:bg-orange-50 normal-case"
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-accent/40 bg-accent/5 p-3 text-xs font-medium text-ink/70 hover:bg-accent/10 normal-case"
         >
-          <MdOutlineAdd size={16} className="text-primary" />
+          <MdOutlineAdd size={16} className="text-accent-ink" />
           Adicionar material (PDF, imagem, MP3)
         </button>
 
@@ -371,7 +371,7 @@ export default function EditCoursePage() {
         const loadedModules: ModuleState[] = (res.data.modules || []).map((m) => ({
           id: m.id,
           name: m.title,
-          lessons: (m.lessons || []).map((l: any) => ({
+          lessons: (m.lessons || []).map((l) => ({
             id: l.id,
             title: l.title,
             description: l.description || "",
@@ -379,7 +379,9 @@ export default function EditCoursePage() {
             isFreePreview: l.is_free_preview,
             videoPath: l.video_url,
             videoFile: null,
-            materials: (l.materials || []).map((mat: any) => ({
+            materials: (
+              (l as { materials?: { id: string | number; title: string; file_path: string }[] }).materials || []
+            ).map((mat) => ({
               id: mat.id,
               title: mat.title,
               path: mat.file_path,
@@ -639,24 +641,24 @@ export default function EditCoursePage() {
 
   if (isLoading) {
     return (
-      <div className="bg-background min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Carregando dados do curso...</p>
+      <div className="bg-surface min-h-screen flex items-center justify-center">
+        <p className="text-ink/70">Carregando dados do curso...</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-surface min-h-screen">
       <main className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8">
-        <nav className="mb-3 flex items-center gap-1 text-sm text-gray-500">
+        <nav className="mb-3 flex items-center gap-1 text-sm text-ink/70">
           <span>Gerenciar Cursos</span>
           <MdKeyboardArrowRight size={16} />
-          <span className="font-medium text-gray-700">Editar Curso</span>
+          <span className="font-medium text-ink/85">Editar Curso</span>
         </nav>
 
         <section className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="text-secondary text-2xl font-bold sm:text-3xl">
+            <h2 className="text-ink text-2xl font-semibold sm:text-3xl">
               Editar Curso
             </h2>
           </div>
@@ -666,7 +668,7 @@ export default function EditCoursePage() {
               type="button"
               onClick={() => router.back()}
               disabled={isPending}
-              className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 disabled:opacity-50"
+              className="rounded-full border border-ink/15 bg-white px-5 py-2.5 text-sm font-medium text-ink/75 transition hover:bg-ink/5 disabled:opacity-50"
             >
               Descartar
             </button>
@@ -674,36 +676,36 @@ export default function EditCoursePage() {
               type="button"
               onClick={handleSubmitCourse}
               disabled={isPending}
-              className="bg-primary hover:bg-primary-dark rounded-lg px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition disabled:opacity-60"
+              className="bg-accent hover:bg-accent-500 rounded-full px-6 py-2.5 text-sm font-semibold text-accent-ink transition disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
               {isPending ? "Salvando..." : "Salvar Alterações"}
             </button>
           </div>
         </section>
 
-        <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
-            <MdOutlineInfo className="text-primary" size={18} />
+        <section className="rounded-bento-md bg-surface-soft p-6 ring-1 ring-ink/10">
+          <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-ink">
+            <MdOutlineInfo className="text-accent-ink" size={18} />
             Informações Gerais
           </h3>
 
           <div className="flex flex-col gap-4">
-            <label className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+            <label className="text-sm font-medium text-ink/80">
               Título do curso *
               <input
                 value={courseTitle}
                 onChange={(e) => setCourseTitle(e.target.value)}
                 placeholder="Ex: Guitarra do zero ao avançado"
                 required
-                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-normal text-gray-700 outline-none focus:border-orange-300"
+                className="mt-2 w-full rounded-bento-sm border border-ink/20 bg-white px-3 py-2.5 text-sm font-normal text-ink/85 outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
               />
             </label>
 
-            <label className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+            <label className="text-sm font-medium text-ink/80">
               Foto do card do curso
-              <div className="mt-2 rounded-lg border border-dashed border-orange-200 bg-orange-50/40 p-4 text-center">
-                <MdOutlineImage className="mx-auto text-gray-400" size={20} />
-                <p className="mt-2 text-xs font-normal text-gray-500 normal-case">
+              <div className="mt-2 rounded-lg border border-dashed border-accent/40 bg-accent/5 p-4 text-center">
+                <MdOutlineImage className="mx-auto text-ink/60" size={20} />
+                <p className="mt-2 text-xs font-normal text-ink/70 normal-case">
                   Clique para selecionar ou arraste a imagem da capa do curso
                 </p>
                 {courseThumbnail ? (
@@ -719,29 +721,29 @@ export default function EditCoursePage() {
                   type="file"
                   accept="image/*"
                   onChange={(e) => setCourseThumbnail(e.target.files?.[0] ?? null)}
-                  className="mt-3 block w-full text-xs font-normal text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-orange-100 file:px-3 file:py-2 file:font-medium file:text-orange-700 hover:file:bg-orange-200"
+                  className="mt-3 block w-full text-xs font-normal text-ink/70 file:mr-3 file:rounded-md file:border-0 file:bg-accent/15 file:px-3 file:py-2 file:font-medium file:text-accent-ink hover:file:bg-accent/25"
                 />
               </div>
             </label>
 
-            <label className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+            <label className="text-sm font-medium text-ink/80">
               Descrição do curso
               <textarea
                 rows={4}
                 value={courseDescription}
                 onChange={(e) => setCourseDescription(e.target.value)}
                 placeholder="Descreva o que o aluno aprenderá neste curso..."
-                className="mt-2 w-full resize-none rounded-lg border border-gray-200 px-3 py-3 text-sm font-normal text-gray-700 outline-none focus:border-orange-300"
+                className="mt-2 w-full resize-none rounded-bento-sm border border-ink/20 bg-white px-3 py-3 text-sm font-normal text-ink/85 outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
               />
             </label>
 
             <button
               type="button"
               onClick={() => setIsPublished((current) => !current)}
-              className="flex items-center gap-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase"
+              className="flex items-center gap-2 text-left text-sm font-medium text-ink/80"
             >
               {isPublished ? (
-                <MdOutlineCheckBox size={18} className="text-primary" />
+                <MdOutlineCheckBox size={18} className="text-accent-ink" />
               ) : (
                 <MdOutlineCheckBoxOutlineBlank size={18} />
               )}
@@ -752,13 +754,13 @@ export default function EditCoursePage() {
 
         <section className="mt-6">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-gray-800">
+            <h3 className="text-xl font-semibold text-ink">
               Estrutura de Módulos
             </h3>
             <button
               type="button"
               onClick={() => setIsModuleModalOpen(true)}
-              className="text-primary rounded-lg bg-orange-100 px-3 py-2 text-sm font-semibold hover:bg-orange-200"
+              className="text-accent-ink rounded-lg bg-accent/15 px-3 py-2 text-sm font-semibold hover:bg-accent/25"
             >
               + Novo Módulo
             </button>
@@ -766,7 +768,7 @@ export default function EditCoursePage() {
 
           <div className="space-y-4">
             {modules.length === 0 && (
-              <article className="rounded-xl border border-dashed border-orange-300 bg-orange-50/40 p-6 text-center text-sm text-gray-500">
+              <article className="rounded-xl border border-dashed border-accent/50 bg-accent/5 p-6 text-center text-sm text-ink/70">
                 Nenhum módulo criado. Clique em + Novo Módulo para começar.
               </article>
             )}
@@ -774,22 +776,22 @@ export default function EditCoursePage() {
             {modules.map((module, moduleIndex) => (
               <article
                 key={module.id}
-                className="rounded-xl border border-gray-200 bg-gray-50 p-4"
+                className="rounded-bento-sm bg-surface p-4 ring-1 ring-ink/10"
               >
-                <header className="mb-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3">
+                <header className="mb-4 flex items-center justify-between rounded-full border border-ink/15 bg-white px-4 py-3">
                   <div>
-                    <p className="text-primary text-xs font-bold tracking-wider uppercase">
+                    <p className="text-accent-ink text-sm font-semibold">
                       Módulo {String(moduleIndex + 1).padStart(2, "0")}
                     </p>
-                    <h4 className="font-semibold text-gray-900">{module.name}</h4>
+                    <h4 className="font-semibold text-ink">{module.name}</h4>
                   </div>
 
-                  <div className="flex items-center gap-1 text-gray-500">
+                  <div className="flex items-center gap-1 text-ink/70">
                     <button
                       type="button"
                       onClick={() => handleMoveModule(module.id, "up")}
                       disabled={moduleIndex === 0}
-                      className="rounded-md p-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="rounded-md p-1 hover:bg-ink/5 disabled:cursor-not-allowed disabled:opacity-40"
                       aria-label={`Mover módulo ${moduleIndex + 1} para cima`}
                     >
                       <MdKeyboardArrowUp size={19} />
@@ -798,7 +800,7 @@ export default function EditCoursePage() {
                       type="button"
                       onClick={() => handleMoveModule(module.id, "down")}
                       disabled={moduleIndex === modules.length - 1}
-                      className="rounded-md p-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="rounded-md p-1 hover:bg-ink/5 disabled:cursor-not-allowed disabled:opacity-40"
                       aria-label={`Mover módulo ${moduleIndex + 1} para baixo`}
                     >
                       <MdKeyboardArrowDown size={19} />
@@ -811,12 +813,12 @@ export default function EditCoursePage() {
                     >
                       <MdOutlineDelete size={17} />
                     </button>
-                    <MdOutlineDragIndicator size={18} className="text-gray-400" />
+                    <MdOutlineDragIndicator size={18} className="text-ink/60" />
                   </div>
                 </header>
 
                 {module.lessons.length === 0 && (
-                  <div className="mb-4 rounded-lg border border-dashed border-gray-300 bg-white px-4 py-6 text-center text-sm text-gray-500">
+                  <div className="mb-4 rounded-lg border border-dashed border-ink/25 bg-white px-4 py-6 text-center text-sm text-ink/70">
                     Módulo vazio. Clique em Adicionar Aula para inserir a primeira aula.
                   </div>
                 )}
@@ -843,7 +845,7 @@ export default function EditCoursePage() {
                 <button
                   type="button"
                   onClick={() => handleAddLesson(module.id)}
-                  className="text-primary mt-4 flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-orange-300 py-2.5 text-sm font-semibold hover:bg-orange-50"
+                  className="text-accent-ink mt-4 flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-accent/50 py-2.5 text-sm font-semibold hover:bg-accent/10"
                 >
                   <MdOutlineAdd size={16} />
                   Adicionar Aula

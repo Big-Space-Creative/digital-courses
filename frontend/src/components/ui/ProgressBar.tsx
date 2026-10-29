@@ -19,21 +19,21 @@ export default function ProgressBar({
       {(label || showPercentage) && (
         <div className="flex items-end justify-between">
           {label && (
-            <span className="text-sm font-medium text-white">{label}</span>
+            <span className="text-surface text-sm font-medium">{label}</span>
           )}
           {showPercentage && (
-            <span className="text-primary text-xs font-semibold">
+            <span className="text-accent text-xs font-semibold">
               {Math.round(percentage)}%
             </span>
           )}
         </div>
       )}
 
-      {/* Container da barra (fundo) */}
-      <div className="h-4 w-full overflow-hidden rounded-full bg-gray-200 shadow-inner">
-        {/* Progresso preenchido (cor dinamicamente calculada) */}
+      {/* Trilho — bg-surface/20 em vez de uma cor fixa: sobre o tile bg-ink
+          isso sempre lê como "um tom oposto ao tile", em ambos os temas. */}
+      <div className="bg-surface/20 h-4 w-full overflow-hidden rounded-full shadow-inner">
         <div
-          className="bg-primary h-full rounded-full transition-all duration-500 ease-out"
+          className="bg-accent h-full rounded-full transition-all duration-500 ease-out"
           style={{ width: `${percentage}%` }}
           aria-valuenow={current}
           aria-valuemin={0}
@@ -42,7 +42,7 @@ export default function ProgressBar({
         />
       </div>
 
-      <p className="text-right text-[10px] text-gray-400 italic">
+      <p className="text-surface/50 text-right text-[10px] italic">
         {current} de {max} unidades
       </p>
     </div>

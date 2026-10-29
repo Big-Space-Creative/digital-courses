@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MdMusicNote, MdOutlineEmail } from "react-icons/md";
+import { MdOutlineEmail } from "react-icons/md";
 
 //Components
 import { Input } from "@/components/form/Input";
+import AuthLayout from "@/components/marketing/AuthLayout";
 import { forgotPasswordAction } from "@/app/actions/auth";
 import { toast } from "@/components/ui/Toast";
 
@@ -39,47 +40,46 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-5">
-      <div className="flex w-full flex-col gap-5 md:w-md">
-        <div className="flex items-center">
-          <MdMusicNote className="text-primary size-6" />
-          <h1 className="text-xl font-bold">AulasViolão</h1>
-        </div>
-        <h1 className="text-secondary text-3xl font-bold">Esqueceu a senha?</h1>
-        <p className="text-base font-normal text-gray-500">
+    <AuthLayout>
+      <div className="flex flex-col gap-1.5">
+        <h1 className="text-ink text-3xl font-semibold tracking-[-0.01em]">
+          Esqueceu a senha?
+        </h1>
+        <p className="text-ink/60 text-sm leading-relaxed">
           Informe o e-mail da sua conta e enviaremos um link para você criar uma
           nova senha.
         </p>
-        <form
-          onSubmit={handleSubmit(handleForgot)}
-          className="flex flex-col gap-5"
-        >
-          <Input
-            label="Email"
-            type="email"
-            icon={MdOutlineEmail}
-            placeholder="email@exemplo.com"
-            error={errors.email?.message}
-            {...register("email")}
-          />
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-primary hover:bg-primary-dark active:bg-primary-dark rounded-lg py-5 text-sm font-semibold text-white transition-colors duration-300 disabled:opacity-60"
-          >
-            {isSubmitting ? "Enviando..." : "Enviar link de redefinição"}
-          </button>
-          <p className="mt-2 text-sm">
-            Lembrou a senha?{" "}
-            <Link
-              href="/login"
-              className="text-primary hover:text-primary-dark active:text-primary-dark"
-            >
-              Voltar para o login
-            </Link>
-          </p>
-        </form>
       </div>
-    </div>
+      <form
+        onSubmit={handleSubmit(handleForgot)}
+        className="flex flex-col gap-5"
+      >
+        <Input
+          label="Email"
+          type="email"
+          icon={MdOutlineEmail}
+          placeholder="email@exemplo.com"
+          error={errors.email?.message}
+          {...register("email")}
+        />
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="gradient-animate focus-visible:ring-accent flex h-14 w-full items-center justify-center rounded-full text-sm font-medium text-white shadow-lg transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-60"
+          style={{ backgroundImage: "var(--gradient-pulse)" }}
+        >
+          {isSubmitting ? "Enviando..." : "Enviar link de redefinição"}
+        </button>
+        <p className="text-ink/70 mt-2 flex gap-1 text-sm">
+          Lembrou a senha?{" "}
+          <Link
+            href="/login"
+            className="text-accent hover:text-ink font-medium transition-colors"
+          >
+            Voltar para o login
+          </Link>
+        </p>
+      </form>
+    </AuthLayout>
   );
 }

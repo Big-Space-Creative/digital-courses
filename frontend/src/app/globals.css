@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @theme {
+  /* Legacy tokens — kept for backward compat until legacy pages migrate */
   --color-primary: #f0620f;
   --color-primary-dark: #d1520a;
   --color-secondary: #171f34;
@@ -8,10 +9,244 @@
   --color-background: #f8f6f5;
   --color-white-soft: #f9f7f7;
 
+  /* Pullse palette (see DESIGN.md) */
+  --color-ink: #1d1e1f;
+  --color-surface: #f5f7f8;
+  --color-surface-soft: #fefefe;
+  --color-accent: #ff6b07;
+  --color-accent-400: #ff6a07;
+  --color-accent-500: #fb7502;
+  --color-accent-ink: #582807;
+
+  /* Pulse Bento radius scale (see DESIGN.md §5) — namespaced so it doesn't
+     override Tailwind's default rounded-* scale used elsewhere in the app. */
+  --radius-bento-sm: 12px;
+  --radius-bento-md: 20px;
+  --radius-bento-lg: 28px;
+  --radius-bento-xl: 40px;
+
   --font-lexend: var(--font-lexend), sans-serif;
 }
 
+:root {
+  /* Signature gradient */
+  --gradient-pulse: linear-gradient(135deg, #fb7502 0%, #ff6a07 100%);
+
+  /* Type scale */
+  --text-hero: clamp(2.5rem, 1.5rem + 4vw, 5rem);
+  --text-h2: clamp(1.75rem, 1.2rem + 2vw, 2.75rem);
+
+  /* Motion tokens */
+  --dur-fast: 150ms;
+  --dur-normal: 300ms;
+  --dur-slow: 600ms;
+  --dur-pulse: 2600ms;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Glass */
+  --glass-bg: color-mix(in oklab, var(--color-surface-soft) 62%, transparent);
+  --glass-border: color-mix(in oklab, white 55%, transparent);
+  --glass-shadow: 0 8px 32px -12px color-mix(in oklab, var(--color-ink) 30%, transparent);
+  --glass-shadow-hover: 0 18px 48px -16px color-mix(in oklab, var(--color-ink) 40%, transparent);
+}
+
+/* ─────────────── Dark theme (marketing home only — see ThemeProvider) ───
+   Scoped to a wrapper class, never to :root/html, so /admin and /aluno stay
+   on the light --color-surface regardless of this toggle (Canvas Split
+   Rule, PRODUCT.md Design Principle 5). Built from the existing Deep Signal
+   Brown / accent-ink family rather than a neutral gray, per the "studio at
+   night" direction: the canvas is accent-ink itself, tiles lift one step
+   lighter off of it so the bento fills stay legible against the canvas, and
+   accent-ink's own role as text-on-orange is left untouched. */
+.theme-dark {
+  --color-surface: #582807;
+  --color-surface-soft: #7a3c12;
+  --color-ink: #f3e8dc;
+
+  --glass-border: color-mix(in oklab, var(--color-ink) 45%, transparent);
+  --glass-shadow:
+    0 8px 32px -12px color-mix(in oklab, black 55%, transparent),
+    0 0 28px -14px color-mix(in oklab, var(--color-accent) 30%, transparent);
+  --glass-shadow-hover:
+    0 18px 48px -16px color-mix(in oklab, black 65%, transparent),
+    0 0 40px -12px color-mix(in oklab, var(--color-accent) 40%, transparent);
+}
+
 body {
-  background: var(--color-background);
+  background: var(--color-surface);
+  color: var(--color-ink);
   font-family: var(--font-lexend);
+}
+
+/* ─────────────── Translucency (glassmorphism) ─────────────── */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 1rem;
+  transition:
+    transform var(--dur-normal) var(--ease-out-expo),
+    box-shadow var(--dur-normal) var(--ease-out-expo);
+}
+.glass:hover,
+.glass:focus-within {
+  transform: translateY(-4px);
+  box-shadow: var(--glass-shadow-hover);
+}
+.glass-strong {
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  background: color-mix(in oklab, var(--color-surface-soft) 78%, transparent);
+}
+.glass-accent {
+  background: color-mix(in oklab, var(--color-accent) 14%, var(--glass-bg));
+  border-color: color-mix(in oklab, var(--color-accent) 45%, transparent);
+}
+/* Opaque fallback where backdrop-filter is unsupported */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass,
+  .glass-strong {
+    background: color-mix(in oklab, var(--color-surface-soft) 94%, transparent);
+  }
+}
+
+/* ─────────────── Gradient text + animated sweep ─────────────── */
+.text-gradient {
+  background: var(--gradient-pulse);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.gradient-animate {
+  background-size: 200% 200%;
+  animation: gradient-shift var(--dur-slow) linear infinite alternate;
+}
+@keyframes gradient-shift {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+}
+
+/* ─────────────── Pulse glow ─────────────── */
+.pulse-glow {
+  animation: pulse-glow var(--dur-pulse) var(--ease-in-out-soft) infinite;
+}
+@keyframes pulse-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    filter: drop-shadow(0 0 14px color-mix(in oklab, var(--color-accent) 65%, transparent));
+  }
+}
+
+/* ─────────────── Pulse grid (static background texture) ───────────────
+   background-size must match CELL_SIZE in PulseField.tsx — the JS wave
+   overlay draws its glow dots at these exact coordinates so a passing wave
+   reads as this grid lighting up, not a separate floating layer. */
+.pulse-grid {
+  background-image: radial-gradient(
+    color-mix(in oklab, var(--color-ink) 10%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 44px 44px;
+}
+
+/* ─────────────── Reveal on scroll ─────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity var(--dur-slow) var(--ease-out-expo),
+    transform var(--dur-slow) var(--ease-out-expo);
+}
+.reveal[data-revealed="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* ─────────────── Pulse waveline draw ─────────────── */
+.pulse-path {
+  stroke-dasharray: var(--pulse-len, 2000);
+  stroke-dashoffset: var(--pulse-len, 2000);
+  animation: pulse-draw var(--dur-pulse) var(--ease-in-out-soft) forwards;
+}
+@keyframes pulse-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.pulse-head {
+  stroke-dasharray: 44 4000;
+  animation: pulse-head var(--dur-pulse) linear infinite;
+  opacity: 0.9;
+}
+@keyframes pulse-head {
+  from {
+    stroke-dashoffset: var(--pulse-len, 2000);
+  }
+  to {
+    stroke-dashoffset: calc(var(--pulse-len, 2000) * -1);
+  }
+}
+
+/* ─────────────── Journey connector (draws on reveal) ─────────────── */
+.journey-path {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  transition: stroke-dashoffset var(--dur-slow) var(--ease-out-expo);
+}
+.journey-line[data-revealed="true"] .journey-path {
+  stroke-dashoffset: 0;
+}
+
+/* ─────────────── Shimmer (skeletons) ─────────────── */
+.shimmer {
+  background: linear-gradient(
+    100deg,
+    color-mix(in oklab, var(--color-ink) 6%, transparent) 30%,
+    color-mix(in oklab, var(--color-ink) 12%, transparent) 50%,
+    color-mix(in oklab, var(--color-ink) 6%, transparent) 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* ─────────────── Reduced motion ─────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .gradient-animate,
+  .pulse-glow,
+  .pulse-path,
+  .pulse-head,
+  .shimmer {
+    animation: none !important;
+  }
+  .pulse-path {
+    stroke-dashoffset: 0;
+  }
+  .journey-path {
+    transition-duration: 1ms;
+  }
+  .reveal {
+    transition-duration: 120ms;
+  }
+  .glass:hover,
+  .glass:focus-within {
+    transform: none;
+  }
 }

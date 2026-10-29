@@ -33,18 +33,6 @@ function formatDate(iso: string) {
   });
 }
 
-const thumbGradients = [
-  "from-orange-300 to-amber-600",
-  "from-cyan-300 to-blue-500",
-  "from-violet-300 to-purple-600",
-  "from-green-300 to-emerald-600",
-  "from-pink-300 to-rose-600",
-];
-
-function thumbGradient(id: number) {
-  return thumbGradients[id % thumbGradients.length];
-}
-
 export default function ManageCoursesPage() {
   const { user } = useUser();
   const isAdmin = user?.role === "admin";
@@ -166,17 +154,17 @@ export default function ManageCoursesPage() {
   }
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-surface min-h-screen">
       <main className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">
-        <section className="mb-6 rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-5 shadow-sm">
+        <section className="mb-6 rounded-bento-lg bg-surface-soft p-6 ring-1 ring-ink/10">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h2 className="text-secondary text-2xl font-bold">
+              <h2 className="text-ink text-2xl font-semibold">
                 Gerenciar Cursos
               </h2>
-              <p className="mt-1 max-w-2xl text-sm text-gray-600">
+              <p className="mt-1 max-w-2xl text-sm text-ink/75">
                 O curso publicado aqui é o mesmo que aparece para o aluno em
-                <span className="font-semibold text-gray-800"> /aluno/home</span>.
+                <span className="font-semibold text-ink"> /aluno/home</span>.
               </p>
             </div>
 
@@ -184,15 +172,16 @@ export default function ManageCoursesPage() {
               <button
                 type="button"
                 onClick={fetchCourses}
+                aria-label="Atualizar lista"
                 disabled={loading}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                className="rounded-full border border-ink/15 bg-white px-3 py-2.5 text-sm font-medium text-ink/75 hover:bg-ink/5 disabled:opacity-50"
               >
-                <MdRefresh size={17} className={loading ? "animate-spin" : ""} />
+                <MdRefresh size={17} aria-hidden className={loading ? "animate-spin motion-reduce:animate-none" : ""} />
               </button>
               {isAdmin && (
                 <Link
                   href="/admin/cursos/criar"
-                  className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors"
+                  className="bg-accent hover:bg-accent-500 inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-accent-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 >
                   <MdAddCircleOutline size={20} />
                   Novo Curso
@@ -201,26 +190,26 @@ export default function ManageCoursesPage() {
             </div>
           </div>
 
-          <div className="mt-4 rounded-xl border border-orange-200 bg-white/80 p-4">
+          <div className="mt-5 rounded-bento-sm bg-surface p-4">
             {featuredCourse ? (
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-bold tracking-[0.12em] text-orange-600 uppercase">
+                  <p className="text-sm font-semibold text-accent-ink">
                     Curso em destaque
                   </p>
-                  <p className="mt-1 font-semibold text-gray-800">
+                  <p className="mt-1 font-semibold text-ink">
                     {featuredCourse.title}
                   </p>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-ink/70">
                     Esse é o curso atualmente exibido para os alunos.
                   </p>
                 </div>
-                <span className="rounded-lg border border-dashed border-gray-200 bg-white px-4 py-2 text-sm text-gray-500">
+                <span className="rounded-full bg-white px-4 py-2 ring-1 ring-ink/10 text-sm text-ink/70">
                   Edição detalhada em consolidação
                 </span>
               </div>
             ) : (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-ink/75">
                 Nenhum curso publicado no momento. Crie ou publique um curso para
                 atualizar /aluno/home.
               </p>
@@ -228,9 +217,9 @@ export default function ManageCoursesPage() {
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 p-4 sm:p-5">
-            <h3 className="font-semibold text-gray-800">
+        <section className="overflow-hidden rounded-bento-md bg-surface-soft ring-1 ring-ink/10">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ink/10 p-4 sm:p-5">
+            <h3 className="font-semibold text-ink">
               {loading
                 ? "Carregando cursos..."
                 : `${meta.total} curso${meta.total !== 1 ? "s" : ""} cadastrado${meta.total !== 1 ? "s" : ""}`}
@@ -238,14 +227,14 @@ export default function ManageCoursesPage() {
             <label className="relative block">
               <MdSearch
                 size={18}
-                className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
+                className="absolute top-1/2 left-3 -translate-y-1/2 text-ink/60"
               />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar curso..."
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pr-4 pl-10 text-sm text-gray-700 outline-none focus:border-orange-300 sm:w-72"
+                className="w-full rounded-full border border-ink/20 bg-white py-2.5 pr-4 pl-10 text-sm text-ink/85 outline-none focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30 sm:w-72"
               />
             </label>
           </div>
@@ -253,7 +242,7 @@ export default function ManageCoursesPage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[820px] border-collapse text-left">
               <thead>
-                <tr className="bg-gray-100 text-xs font-semibold tracking-[0.12em] text-gray-500 uppercase">
+                <tr className="bg-ink/5 text-sm font-medium text-ink/70">
                   <th className="px-6 py-4">Curso</th>
                   <th className="px-6 py-4">Módulos</th>
                   <th className="px-6 py-4">Aulas</th>
@@ -263,34 +252,34 @@ export default function ManageCoursesPage() {
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-gray-100 text-sm">
+              <tbody className="divide-y divide-ink/10 text-sm">
                 {loading &&
                   Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
+                    <tr key={i} aria-hidden>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-lg bg-gray-200" />
+                          <div className="h-10 w-10 rounded-lg shimmer" />
                           <div>
-                            <div className="h-3 w-40 rounded bg-gray-200" />
-                            <div className="mt-1.5 h-2.5 w-28 rounded bg-gray-100" />
+                            <div className="h-3 w-40 rounded shimmer" />
+                            <div className="mt-1.5 h-2.5 w-28 rounded bg-ink/5" />
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4"><div className="h-3 w-8 rounded bg-gray-200" /></td>
-                      <td className="px-6 py-4"><div className="h-3 w-8 rounded bg-gray-200" /></td>
-                      <td className="px-6 py-4"><div className="h-5 w-20 rounded-full bg-gray-200" /></td>
-                      <td className="px-6 py-4"><div className="h-3 w-24 rounded bg-gray-200" /></td>
-                      <td className="px-6 py-4"><div className="mx-auto h-7 w-20 rounded-lg bg-gray-200" /></td>
+                      <td className="px-6 py-4"><div className="h-3 w-8 rounded shimmer" /></td>
+                      <td className="px-6 py-4"><div className="h-3 w-8 rounded shimmer" /></td>
+                      <td className="px-6 py-4"><div className="h-5 w-20 rounded-full shimmer" /></td>
+                      <td className="px-6 py-4"><div className="h-3 w-24 rounded shimmer" /></td>
+                      <td className="px-6 py-4"><div className="mx-auto h-7 w-20 rounded-lg shimmer" /></td>
                     </tr>
                   ))}
 
                 {!loading && courses.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-12 text-center text-ink/70">
                       Nenhum curso cadastrado ainda.{" "}
                       <Link
                         href="/admin/cursos/criar"
-                        className="text-primary font-semibold underline"
+                        className="text-accent-ink font-semibold underline"
                       >
                         Criar primeiro curso
                       </Link>
@@ -305,7 +294,7 @@ export default function ManageCoursesPage() {
                     return (
                       <tr
                         key={course.id}
-                        className={`hover:bg-gray-50/70 ${actionPending ? "opacity-60" : ""}`}
+                        className={`hover:bg-ink/[0.03] ${actionPending ? "opacity-60" : ""}`}
                       >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
@@ -313,28 +302,28 @@ export default function ManageCoursesPage() {
                               <img
                                 src={course.thumbnail}
                                 alt={course.title}
-                                className="h-10 w-10 rounded-lg object-cover"
+                                className="h-10 w-10 rounded-bento-sm object-cover"
                               />
                             ) : (
                               <div
-                                className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br text-white ${thumbGradient(course.id)}`}
+                                className="flex h-10 w-10 items-center justify-center rounded-bento-sm bg-accent/15 text-accent-ink"
                               >
                                 <MdOutlineBookmarks size={18} />
                               </div>
                             )}
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
-                                <p className="font-semibold text-gray-800">
+                                <p className="font-semibold text-ink">
                                   {course.title}
                                 </p>
                                 {isFeatured && (
-                                  <span className="rounded-full bg-orange-100 px-2.5 py-1 text-[11px] font-bold text-orange-700">
+                                  <span className="rounded-full bg-accent/15 px-2.5 py-1 text-[11px] font-bold text-accent-ink">
                                     Exibido em /aluno/home
                                   </span>
                                 )}
                               </div>
                               {course.description && (
-                                <p className="max-w-xs truncate text-xs text-gray-400">
+                                <p className="max-w-xs truncate text-xs text-ink/60">
                                   {course.description}
                                 </p>
                               )}
@@ -343,15 +332,15 @@ export default function ManageCoursesPage() {
                         </td>
 
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-1.5 text-gray-600">
-                            <MdOutlineBookmarks size={14} className="text-gray-400" />
+                          <div className="flex items-center gap-1.5 text-ink/75">
+                            <MdOutlineBookmarks size={14} className="text-ink/60" />
                             {course.modules?.length ?? "—"}
                           </div>
                         </td>
 
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-1.5 text-gray-600">
-                            <MdOutlineSchool size={14} className="text-gray-400" />
+                          <div className="flex items-center gap-1.5 text-ink/75">
+                            <MdOutlineSchool size={14} className="text-ink/60" />
                             {course.lessons_count ?? "—"}
                           </div>
                         </td>
@@ -368,17 +357,17 @@ export default function ManageCoursesPage() {
                           </span>
                         </td>
 
-                        <td className="px-6 py-4 text-gray-500">
+                        <td className="px-6 py-4 text-ink/70">
                           {formatDate(course.created_at)}
                         </td>
 
                         <td className="px-6 py-4">
-                          <div className="flex items-center justify-center gap-3 text-gray-400">
+                          <div className="flex items-center justify-center gap-3 text-ink/60">
                             <button
                               type="button"
                               onClick={() => handleTogglePublish(course)}
                               disabled={actionPending}
-                              className={`rounded-md p-1.5 transition hover:bg-gray-100 ${
+                              className={`rounded-full p-2 transition hover:bg-ink/5 ${
                                 course.is_published
                                   ? "hover:text-amber-500"
                                   : "hover:text-green-600"
@@ -403,7 +392,7 @@ export default function ManageCoursesPage() {
 
                             <Link
                               href={`/admin/cursos/${course.id}/editar`}
-                              className="rounded-md p-1.5 transition hover:bg-gray-100 hover:text-orange-600"
+                              className="rounded-full p-2 transition hover:bg-ink/5 hover:text-accent-ink"
                               aria-label={`Editar ${course.title}`}
                               title="Editar curso"
                             >
@@ -414,7 +403,7 @@ export default function ManageCoursesPage() {
                               type="button"
                               onClick={() => setDeleteTarget(course)}
                               disabled={actionPending}
-                              className="rounded-md p-1.5 transition hover:bg-red-50 hover:text-red-500"
+                              className="rounded-full p-2 transition hover:bg-red-50 hover:text-red-500"
                               aria-label={`Excluir ${course.title}`}
                               title="Excluir curso"
                             >
@@ -429,7 +418,7 @@ export default function ManageCoursesPage() {
             </table>
           </div>
 
-          <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 p-4 text-sm text-gray-500">
+          <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-ink/10 p-4 text-sm text-ink/70">
             <span>
               {loading
                 ? "Carregando..."
@@ -439,7 +428,7 @@ export default function ManageCoursesPage() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1 || loading}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-full border border-ink/15 bg-white px-3 py-1.5 hover:bg-ink/5 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 &lt;
               </button>
@@ -451,8 +440,8 @@ export default function ManageCoursesPage() {
                     disabled={loading}
                     className={`rounded-lg px-3 py-1.5 ${
                       p === page
-                        ? "bg-orange-500 font-semibold text-white"
-                        : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                        ? "bg-accent font-semibold text-accent-ink"
+                        : "border border-ink/15 bg-white text-ink/75 hover:bg-ink/5"
                     }`}
                   >
                     {p}
@@ -462,7 +451,7 @@ export default function ManageCoursesPage() {
               <button
                 onClick={() => setPage((p) => Math.min(meta.last_page, p + 1))}
                 disabled={page === meta.last_page || loading}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-full border border-ink/15 bg-white px-3 py-1.5 hover:bg-ink/5 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 &gt;
               </button>

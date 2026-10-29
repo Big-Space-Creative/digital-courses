@@ -16,7 +16,6 @@ import {
   getDashboardStatsAction,
   listCoursesAction,
   type ApiCourse,
-  type CoursesPaginated,
   type DashboardStats,
 } from "@/app/actions/courses";
 import {
@@ -25,7 +24,6 @@ import {
   MdEdit,
   MdOutlineChat,
   MdOutlineForum,
-  MdOutlinePeopleAlt,
   MdOutlineReply,
   MdOutlineSchool,
   MdPeople,
@@ -201,15 +199,48 @@ export default function Dashboard() {
     });
   }
 
+  const statTiles = [
+    {
+      label: "Total de Alunos",
+      icon: MdPeople,
+      value: statsLoading ? "—" : (stats?.users?.students ?? "—"),
+    },
+    {
+      label: "Aulas Ativas",
+      icon: MdPlayCircle,
+      value: statsLoading ? "—" : (stats?.lessons?.active ?? "—"),
+    },
+    {
+      label: "Comentarios na plataforma",
+      icon: MdOutlineForum,
+      value: commentStats.total,
+    },
+    {
+      label: "Cursos Publicados",
+      icon: MdOutlineSchool,
+      value: statsLoading ? "—" : (stats?.courses?.published ?? "—"),
+    },
+  ];
+
+  const tabClass = (isActive: boolean) =>
+    `inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
+      isActive
+        ? "bg-ink text-white"
+        : "text-ink/70 hover:bg-ink/5 hover:text-ink"
+    }`;
+
+  const iconBtn =
+    "inline-flex size-9 items-center justify-center rounded-full text-ink/60 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none";
+
   return (
-    <div className="bg-background flex min-h-screen flex-col font-sans">
+    <div className="bg-surface flex min-h-screen flex-col">
       <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6 lg:p-8">
         <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="text-secondary text-2xl font-bold">
+            <h1 className="text-ink text-2xl font-semibold text-balance">
               Bem-vindo ao seu painel, {displayName}!
-            </h2>
-            <p className="mt-1 text-gray-500">
+            </h1>
+            <p className="text-ink/70 mt-1 max-w-prose">
               {user?.role === "instructor"
                 ? "Aqui você acompanha os cursos e comentários dos alunos."
                 : "Aqui você acompanha cursos e comentários dos alunos em um único lugar."}
@@ -219,97 +250,69 @@ export default function Dashboard() {
           {isAdmin && (
             <Link
               href="/admin/cursos/criar"
-              className="bg-primary hover:bg-primary-dark inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors sm:w-auto"
+              className="bg-accent text-accent-ink hover:bg-accent-500 focus-visible:ring-accent inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:w-auto"
             >
-              <MdAddCircleOutline size={20} />
+              <MdAddCircleOutline size={20} aria-hidden="true" />
               Adicionar Novo Curso
             </Link>
           )}
         </div>
 
-        {/* Stats cards */}
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-start justify-between">
-              <div className="text-primary rounded-lg bg-orange-50 p-2">
-                <MdPeople size={20} />
+        {/* Stats tiles */}
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {statTiles.map((tile) => {
+            const Icon = tile.icon;
+            return (
+              <div
+                key={tile.label}
+                className="rounded-bento-md bg-surface-soft p-6"
+              >
+                <div className="bg-ink/5 text-ink/70 mb-5 inline-flex size-10 items-center justify-center rounded-full">
+                  <Icon size={20} aria-hidden="true" />
+                </div>
+                <p className="text-ink/70 text-sm font-medium">{tile.label}</p>
+                <p className="text-ink mt-1 text-3xl font-semibold tabular-nums">
+                  {tile.value}
+                </p>
               </div>
-            </div>
-            <p className="text-sm font-medium text-gray-500">Total de Alunos</p>
-            <p className="text-secondary mt-1 text-2xl font-bold">
-              {statsLoading ? "—" : (stats?.users?.students ?? "—")}
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-start justify-between">
-              <div className="rounded-lg bg-blue-50 p-2 text-blue-500">
-                <MdPlayCircle size={20} />
-              </div>
-            </div>
-            <p className="text-sm font-medium text-gray-500">Aulas Ativas</p>
-            <p className="text-secondary mt-1 text-2xl font-bold">
-              {statsLoading ? "—" : (stats?.lessons?.active ?? "—")}
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-start justify-between">
-              <div className="rounded-lg bg-violet-50 p-2 text-violet-500">
-                <MdOutlineForum size={20} />
-              </div>
-            </div>
-            <p className="text-sm font-medium text-gray-500">Comentarios na plataforma</p>
-            <p className="text-secondary mt-1 text-2xl font-bold">{commentStats.total}</p>
-          </div>
-
-          <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-start justify-between">
-              <div className="rounded-lg bg-emerald-50 p-2 text-emerald-500">
-                <MdOutlineSchool size={20} />
-              </div>
-            </div>
-            <p className="text-sm font-medium text-gray-500">Cursos Publicados</p>
-            <p className="text-secondary mt-1 text-2xl font-bold">
-              {statsLoading ? "—" : (stats?.courses?.published ?? "—")}
-            </p>
-          </div>
+            );
+          })}
         </div>
 
         {/* Tabs */}
-        <div className="mb-4 flex gap-2 border-b border-gray-200">
+        <div
+          role="tablist"
+          aria-label="Seções do painel"
+          className="bg-surface-soft mb-4 inline-flex gap-1 rounded-full p-1"
+        >
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === "overview"}
             onClick={() => setActiveTab("overview")}
-            className={`rounded-t-lg px-4 py-2 text-sm font-semibold transition-colors ${
-              activeTab === "overview"
-                ? "border border-b-0 border-gray-200 bg-white text-secondary"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={tabClass(activeTab === "overview")}
           >
             Visao geral
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === "comments"}
             onClick={() => setActiveTab("comments")}
-            className={`inline-flex items-center gap-2 rounded-t-lg px-4 py-2 text-sm font-semibold transition-colors ${
-              activeTab === "comments"
-                ? "border border-b-0 border-gray-200 bg-white text-secondary"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={tabClass(activeTab === "comments")}
           >
-            <MdOutlineChat size={16} />
+            <MdOutlineChat size={16} aria-hidden="true" />
             Comentarios (admin)
           </button>
         </div>
 
         {activeTab === "overview" ? (
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 p-4 sm:p-5">
-              <h3 className="font-semibold text-gray-800">Cursos Cadastrados</h3>
+          <div className="rounded-bento-lg bg-surface-soft overflow-hidden">
+            <div className="border-ink/10 flex flex-wrap items-center justify-between gap-3 border-b p-4 sm:p-5">
+              <h2 className="text-ink font-semibold">Cursos Cadastrados</h2>
               <Link
                 href="/admin/cursos/gerenciar"
-                className="text-sm font-semibold text-orange-600 hover:underline"
+                className="text-accent-ink focus-visible:ring-accent decoration-accent rounded text-sm font-semibold underline decoration-2 underline-offset-4 focus-visible:ring-2 focus-visible:outline-none"
               >
                 Ver todos →
               </Link>
@@ -318,27 +321,27 @@ export default function Dashboard() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] border-collapse text-left">
                 <thead>
-                  <tr className="bg-gray-100 text-xs font-semibold tracking-[0.12em] text-gray-500 uppercase">
-                    <th className="px-6 py-4">Nome do Curso</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4">Criado em</th>
-                    {isAdmin && <th className="px-6 py-4 text-center">Acoes</th>}
+                  <tr className="bg-ink/5 text-ink/70 text-xs font-semibold">
+                    <th className="px-6 py-3.5">Nome do Curso</th>
+                    <th className="px-6 py-3.5">Status</th>
+                    <th className="px-6 py-3.5">Criado em</th>
+                    {isAdmin && <th className="px-6 py-3.5 text-center">Acoes</th>}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 text-sm">
+                <tbody className="divide-ink/10 divide-y text-sm">
                   {coursesLoading &&
                     Array.from({ length: 3 }).map((_, i) => (
-                      <tr key={i} className="animate-pulse">
-                        <td className="px-6 py-4"><div className="h-3 w-48 rounded bg-gray-200" /></td>
-                        <td className="px-6 py-4"><div className="h-5 w-20 rounded-full bg-gray-200" /></td>
-                        <td className="px-6 py-4"><div className="h-3 w-24 rounded bg-gray-200" /></td>
-                        {isAdmin && <td className="px-6 py-4"><div className="mx-auto h-7 w-20 rounded bg-gray-200" /></td>}
+                      <tr key={i}>
+                        <td className="px-6 py-4"><div className="shimmer h-3 w-48 rounded" /></td>
+                        <td className="px-6 py-4"><div className="shimmer h-5 w-20 rounded-full" /></td>
+                        <td className="px-6 py-4"><div className="shimmer h-3 w-24 rounded" /></td>
+                        {isAdmin && <td className="px-6 py-4"><div className="shimmer mx-auto h-7 w-20 rounded" /></td>}
                       </tr>
                     ))}
 
                   {!coursesLoading && courses.length === 0 && (
                     <tr>
-                      <td colSpan={isAdmin ? 4 : 3} className="px-6 py-10 text-center text-gray-500">
+                      <td colSpan={isAdmin ? 4 : 3} className="text-ink/70 px-6 py-10 text-center">
                         Nenhum curso cadastrado ainda.
                       </td>
                     </tr>
@@ -346,30 +349,30 @@ export default function Dashboard() {
 
                   {!coursesLoading &&
                     courses.map((course) => (
-                      <tr key={course.id} className="hover:bg-gray-50/70">
+                      <tr key={course.id} className="hover:bg-ink/[0.03]">
                         <td className="px-6 py-4">
-                          <span className="font-semibold text-gray-800">{course.title}</span>
+                          <span className="text-ink font-semibold">{course.title}</span>
                         </td>
                         <td className="px-6 py-4">
                           <span
-                            className={`rounded-full px-3 py-1 text-xs font-bold ${
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
                               course.is_published
-                                ? "bg-green-100 text-green-700"
-                                : "bg-slate-100 text-slate-500"
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-ink/10 text-ink/70"
                             }`}
                           >
                             {course.is_published ? "Publicado" : "Rascunho"}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-gray-600">
+                        <td className="text-ink/70 px-6 py-4">
                           {new Date(course.created_at).toLocaleDateString("pt-BR")}
                         </td>
                         {isAdmin && (
                           <td className="px-6 py-4">
-                            <div className="flex items-center justify-center gap-4 text-gray-400">
+                            <div className="flex items-center justify-center gap-1">
                               <Link
                                 href={`/admin/cursos/${course.id}/editar`}
-                                className="hover:text-blue-500"
+                                className={`${iconBtn} hover:bg-ink/5 hover:text-ink`}
                                 aria-label={`Editar curso ${course.title}`}
                               >
                                 <MdEdit size={18} />
@@ -377,7 +380,7 @@ export default function Dashboard() {
                               <button
                                 type="button"
                                 onClick={() => setSelectedCourse(course)}
-                                className="hover:text-red-500"
+                                className={`${iconBtn} hover:bg-red-50 hover:text-red-700`}
                                 aria-label={`Excluir curso ${course.title}`}
                               >
                                 <MdDeleteOutline size={18} />
@@ -392,11 +395,11 @@ export default function Dashboard() {
             </div>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 p-4 sm:p-5">
+          <div className="rounded-bento-lg bg-surface-soft overflow-hidden">
+            <div className="border-ink/10 flex flex-wrap items-center justify-between gap-3 border-b p-4 sm:p-5">
               <div>
-                <h3 className="font-semibold text-gray-800">Comentarios das aulas</h3>
-                <p className="text-xs text-gray-500">
+                <h2 className="text-ink font-semibold">Comentarios das aulas</h2>
+                <p className="text-ink/70 text-xs">
                   Esta aba foi criada para moderacao e exclusao de comentarios.
                 </p>
               </div>
@@ -404,14 +407,16 @@ export default function Dashboard() {
               <div className="relative w-full sm:w-80">
                 <MdSearch
                   size={18}
-                  className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
+                  aria-hidden="true"
+                  className="text-ink/50 absolute top-1/2 left-3.5 -translate-y-1/2"
                 />
                 <input
                   type="text"
                   value={commentSearch}
                   onChange={(event) => setCommentSearch(event.target.value)}
                   placeholder="Buscar por aula, aluno ou texto..."
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pr-4 pl-10 text-sm text-gray-700 outline-none focus:border-orange-300"
+                  aria-label="Buscar comentarios"
+                  className="border-ink/15 text-ink placeholder:text-ink/60 focus:ring-accent w-full rounded-full border bg-white py-2.5 pr-4 pl-10 text-sm outline-none focus:border-transparent focus:ring-2"
                 />
               </div>
             </div>
@@ -419,29 +424,29 @@ export default function Dashboard() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[980px] border-collapse text-left">
                 <thead>
-                  <tr className="bg-gray-100 text-xs font-semibold tracking-[0.12em] text-gray-500 uppercase">
-                    <th className="px-6 py-4">Aula</th>
-                    <th className="px-6 py-4">Comentario</th>
-                    <th className="px-6 py-4">Aluno</th>
-                    <th className="px-6 py-4">Data</th>
-                    <th className="px-6 py-4 text-center">Acoes</th>
+                  <tr className="bg-ink/5 text-ink/70 text-xs font-semibold">
+                    <th className="px-6 py-3.5">Aula</th>
+                    <th className="px-6 py-3.5">Comentario</th>
+                    <th className="px-6 py-3.5">Aluno</th>
+                    <th className="px-6 py-3.5">Data</th>
+                    <th className="px-6 py-3.5 text-center">Acoes</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 text-sm">
+                <tbody className="divide-ink/10 divide-y text-sm">
                   {commentLoading &&
                     Array.from({ length: 5 }).map((_, index) => (
-                      <tr key={index} className="animate-pulse">
-                        <td className="px-6 py-4"><div className="h-3 w-36 rounded bg-gray-200" /></td>
-                        <td className="px-6 py-4"><div className="h-3 w-64 rounded bg-gray-200" /></td>
-                        <td className="px-6 py-4"><div className="h-3 w-28 rounded bg-gray-200" /></td>
-                        <td className="px-6 py-4"><div className="h-3 w-32 rounded bg-gray-200" /></td>
-                        <td className="px-6 py-4"><div className="mx-auto h-7 w-36 rounded bg-gray-200" /></td>
+                      <tr key={index}>
+                        <td className="px-6 py-4"><div className="shimmer h-3 w-36 rounded" /></td>
+                        <td className="px-6 py-4"><div className="shimmer h-3 w-64 rounded" /></td>
+                        <td className="px-6 py-4"><div className="shimmer h-3 w-28 rounded" /></td>
+                        <td className="px-6 py-4"><div className="shimmer h-3 w-32 rounded" /></td>
+                        <td className="px-6 py-4"><div className="shimmer mx-auto h-7 w-36 rounded" /></td>
                       </tr>
                     ))}
 
                   {!commentLoading && comments.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
+                      <td colSpan={5} className="text-ink/70 px-6 py-10 text-center">
                         Nenhum comentario encontrado para os filtros atuais.
                       </td>
                     </tr>
@@ -449,23 +454,23 @@ export default function Dashboard() {
 
                   {!commentLoading &&
                     comments.map((comment) => (
-                      <tr key={comment.id} className="hover:bg-gray-50/70">
+                      <tr key={comment.id} className="hover:bg-ink/[0.03]">
                         <td className="px-6 py-4">
-                          <p className="font-semibold text-gray-800">
+                          <p className="text-ink font-semibold">
                             {comment.lesson?.title ?? "Aula nao identificada"}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-ink/70 text-xs">
                             {comment.lesson?.module?.course?.title ?? "Curso nao informado"}
                           </p>
                         </td>
-                        <td className="max-w-[360px] px-6 py-4 text-gray-700">
+                        <td className="text-ink/85 max-w-[360px] px-6 py-4">
                           <p className="line-clamp-3">{comment.content}</p>
                         </td>
                         <td className="px-6 py-4">
-                          <p className="font-semibold text-gray-800">{comment.user?.name ?? "Usuario"}</p>
-                          <p className="text-xs text-gray-500">{comment.user?.role ?? "student"}</p>
+                          <p className="text-ink font-semibold">{comment.user?.name ?? "Usuario"}</p>
+                          <p className="text-ink/70 text-xs">{comment.user?.role ?? "student"}</p>
                         </td>
-                        <td className="px-6 py-4 text-gray-600">
+                        <td className="text-ink/70 px-6 py-4">
                           {comment.created_at
                             ? new Date(comment.created_at).toLocaleString("pt-BR")
                             : "Sem data"}
@@ -475,23 +480,23 @@ export default function Dashboard() {
                             <button
                               type="button"
                               onClick={() => handleGoToUser(comment)}
-                              className="rounded-md border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                              className="border-ink/15 text-ink/80 hover:bg-ink/5 focus-visible:ring-accent rounded-full border bg-white px-3 py-1.5 text-xs font-semibold focus-visible:ring-2 focus-visible:outline-none"
                             >
                               Perfil do aluno
                             </button>
                             <button
                               type="button"
                               disabled
-                              className="inline-flex cursor-not-allowed items-center gap-1 rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-700/70"
+                              className="bg-ink/5 text-ink/60 inline-flex cursor-not-allowed items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold"
                               title="Responder comentario sera implementado em proxima etapa"
                             >
-                              <MdOutlineReply size={14} />
+                              <MdOutlineReply size={14} aria-hidden="true" />
                               Responder (em breve)
                             </button>
                             <button
                               type="button"
                               onClick={() => setDeleteTargetComment(comment)}
-                              className="rounded-md border border-red-200 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
+                              className="rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-red-700 focus-visible:outline-none"
                             >
                               Deletar
                             </button>
@@ -503,7 +508,7 @@ export default function Dashboard() {
               </table>
             </div>
 
-            <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 p-4 text-sm text-gray-500">
+            <footer className="border-ink/10 text-ink/70 flex flex-wrap items-center justify-between gap-3 border-t p-4 text-sm">
               <span>
                 Exibindo {commentMeta.from ?? 0} - {commentMeta.to ?? 0} de {commentMeta.total} comentarios
               </span>
@@ -511,19 +516,24 @@ export default function Dashboard() {
                 <button
                   onClick={() => setCommentPage((p) => Math.max(1, p - 1))}
                   disabled={commentPage === 1 || commentLoading}
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Pagina anterior"
+                  className="border-ink/15 text-ink/80 hover:bg-ink/5 focus-visible:ring-accent rounded-full border bg-white px-3.5 py-1.5 focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   &lt;
                 </button>
-                <button className="rounded-lg bg-orange-500 px-3 py-1.5 font-semibold text-white">
+                <span
+                  aria-current="page"
+                  className="bg-ink rounded-full px-3.5 py-1.5 font-semibold text-white"
+                >
                   {commentMeta.current_page}
-                </button>
+                </span>
                 <button
                   onClick={() =>
                     setCommentPage((p) => Math.min(commentMeta.last_page, p + 1))
                   }
                   disabled={commentPage >= commentMeta.last_page || commentLoading}
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Proxima pagina"
+                  className="border-ink/15 text-ink/80 hover:bg-ink/5 focus-visible:ring-accent rounded-full border bg-white px-3.5 py-1.5 focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   &gt;
                 </button>

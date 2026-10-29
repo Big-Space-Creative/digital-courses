@@ -3,7 +3,8 @@
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { MdMailOutline, MdMusicNote, MdRefresh, MdCheckCircle } from "react-icons/md";
+import { MdMailOutline, MdRefresh, MdCheckCircle } from "react-icons/md";
+import AuthLayout from "@/components/marketing/AuthLayout";
 import { toast } from "@/components/ui/Toast";
 
 const API_BASE =
@@ -48,89 +49,85 @@ function VerifyEmailContent() {
   };
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-gray-50 px-4">
-      {/* Card */}
-      <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-10 text-center shadow-lg">
-        {/* Ícone animado */}
-        <div className="mb-6 flex justify-center">
-          <div className="relative flex h-20 w-20 items-center justify-center">
-            {/* Pulso de fundo */}
-            <span className="absolute inset-0 animate-ping rounded-full bg-blue-100 opacity-75" />
-            <div className="relative rounded-full bg-blue-50 p-4">
-              <MdMailOutline className="text-primary text-4xl" />
-            </div>
-          </div>
-        </div>
-
-        <h1 className="mb-2 text-2xl font-bold text-gray-900">
-          Verifique seu e-mail
-        </h1>
-        <p className="mb-1 text-sm text-gray-500">Enviamos um link de confirmação para:</p>
-        {email && (
-          <p className="mb-6 break-all font-semibold text-gray-800">{email}</p>
-        )}
-
-        {/* Passos */}
-        <div className="mb-8 rounded-xl bg-gray-50 px-5 py-4 text-left">
-          <ol className="space-y-2 text-sm text-gray-600">
-            <li className="flex items-center gap-2">
-              <span className="bg-primary flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white">
-                1
-              </span>
-              Acesse sua caixa de entrada (ou spam)
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="bg-primary flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white">
-                2
-              </span>
-              Abra o e-mail de confirmação enviado por nós
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="bg-primary flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white">
-                3
-              </span>
-              Clique em <strong className="text-gray-800">"Confirmar e-mail"</strong>
-            </li>
-          </ol>
-          <p className="mt-3 text-xs text-gray-400">
-            O link expira em <strong>24 horas</strong>.
+    <AuthLayout>
+      <div className="flex flex-col gap-4">
+        <span className="bg-accent/10 text-accent flex h-14 w-14 items-center justify-center rounded-full">
+          <MdMailOutline
+            className="pulse-glow rounded-full text-3xl"
+            aria-hidden="true"
+          />
+        </span>
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-ink text-3xl font-semibold tracking-[-0.01em]">
+            Verifique seu e-mail
+          </h1>
+          <p className="text-ink/60 text-sm leading-relaxed">
+            Enviamos um link de confirmação para:
           </p>
-        </div>
-
-        {/* Botão reenvio */}
-        {sent ? (
-          <div className="flex items-center justify-center gap-2 rounded-lg bg-green-50 py-3 text-sm font-medium text-green-700">
-            <MdCheckCircle className="text-lg" />
-            E-mail reenviado com sucesso
-          </div>
-        ) : (
-          <button
-            onClick={handleResend}
-            disabled={loading || !email}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 active:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <MdRefresh className={loading ? "animate-spin" : ""} />
-            {loading ? "Enviando..." : "Reenviar e-mail de verificação"}
-          </button>
-        )}
-
-        {/* Já verificou? */}
-        <div className="mt-5 border-t border-gray-100 pt-5">
-          <Link
-            href="/login"
-            className="text-primary hover:text-primary/80 text-sm font-medium transition-colors"
-          >
-            Já confirmou? Entrar na plataforma →
-          </Link>
+          {email && <p className="text-ink font-semibold break-all">{email}</p>}
         </div>
       </div>
 
-      {/* Brand */}
-      <div className="mt-8 flex items-center gap-1.5 text-gray-400">
-        <MdMusicNote className="text-primary size-4" />
-        <span className="text-sm font-medium">Digital Courses</span>
+      <div className="bg-surface-soft border-ink/10 rounded-bento-md border px-5 py-4">
+        <ol className="text-ink/80 space-y-3 text-sm">
+          <li className="flex items-center gap-3">
+            <span className="bg-ink/8 text-ink flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+              1
+            </span>
+            Acesse sua caixa de entrada (ou spam)
+          </li>
+          <li className="flex items-center gap-3">
+            <span className="bg-ink/8 text-ink flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+              2
+            </span>
+            Abra o e-mail de confirmação enviado por nós
+          </li>
+          <li className="flex items-center gap-3">
+            <span className="bg-ink/8 text-ink flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+              3
+            </span>
+            Clique em{" "}
+            <strong className="text-ink font-semibold">
+              &ldquo;Confirmar e-mail&rdquo;
+            </strong>
+          </li>
+        </ol>
+        <p className="text-ink/60 mt-4 text-xs">
+          O link expira em <strong className="text-ink">24 horas</strong>.
+        </p>
       </div>
-    </div>
+
+      {sent ? (
+        <div
+          role="status"
+          className="bg-ink/5 text-ink flex h-14 items-center justify-center gap-2 rounded-full text-sm font-medium"
+        >
+          <MdCheckCircle className="text-accent text-lg" aria-hidden="true" />
+          E-mail reenviado com sucesso
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={handleResend}
+          disabled={loading || !email}
+          className="gradient-animate focus-visible:ring-accent flex h-14 w-full items-center justify-center rounded-full text-sm font-medium text-white shadow-lg transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-60"
+          style={{ backgroundImage: "var(--gradient-pulse)" }}
+        >
+          <MdRefresh
+            className={`mr-2 ${loading ? "animate-spin motion-reduce:animate-none" : ""}`}
+            aria-hidden="true"
+          />
+          {loading ? "Enviando..." : "Reenviar e-mail de verificação"}
+        </button>
+      )}
+
+      <Link
+        href="/login"
+        className="text-accent hover:text-ink text-sm font-medium transition-colors"
+      >
+        Já confirmou? Entrar na plataforma →
+      </Link>
+    </AuthLayout>
   );
 }
 

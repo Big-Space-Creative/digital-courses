@@ -6,10 +6,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MdLockOutline, MdMusicNote } from "react-icons/md";
+import { MdLockOutline } from "react-icons/md";
 
 //Components
 import { Input } from "@/components/form/Input";
+import AuthLayout from "@/components/marketing/AuthLayout";
 import { resetPasswordAction } from "@/app/actions/auth";
 import { toast } from "@/components/ui/Toast";
 
@@ -66,72 +67,73 @@ function ResetPasswordForm() {
   };
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-5">
-      <div className="flex w-full flex-col gap-5 md:w-md">
-        <div className="flex items-center">
-          <MdMusicNote className="text-primary size-6" />
-          <h1 className="text-xl font-bold">AulasViolão</h1>
-        </div>
-        <h1 className="text-secondary text-3xl font-bold">Criar nova senha</h1>
-
-        {!isLinkValid ? (
-          <>
-            <p className="text-base font-normal text-gray-500">
-              Este link de redefinição é inválido ou está incompleto. Solicite um
-              novo link para continuar.
-            </p>
-            <Link
-              href="/esqueci-senha"
-              className="bg-primary hover:bg-primary-dark rounded-lg py-5 text-center text-sm font-semibold text-white transition-colors duration-300"
-            >
-              Solicitar novo link
-            </Link>
-          </>
+    <AuthLayout>
+      <div className="flex flex-col gap-1.5">
+        <h1 className="text-ink text-3xl font-semibold tracking-[-0.01em]">
+          Criar nova senha
+        </h1>
+        {isLinkValid ? (
+          <p className="text-ink/60 text-sm leading-relaxed">
+            Defina uma nova senha para{" "}
+            <strong className="text-ink font-semibold break-all">
+              {email}
+            </strong>
+            .
+          </p>
         ) : (
-          <>
-            <p className="text-base font-normal text-gray-500">
-              Defina uma nova senha para <strong>{email}</strong>.
-            </p>
-            <form
-              onSubmit={handleSubmit(handleReset)}
-              className="flex flex-col gap-5"
-            >
-              <Input
-                label="Nova senha"
-                type="password"
-                icon={MdLockOutline}
-                placeholder="******"
-                error={errors.password?.message}
-                {...register("password")}
-              />
-              <Input
-                label="Confirmar nova senha"
-                type="password"
-                icon={MdLockOutline}
-                placeholder="******"
-                error={errors.password_confirmation?.message}
-                {...register("password_confirmation")}
-              />
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-primary hover:bg-primary-dark active:bg-primary-dark rounded-lg py-5 text-sm font-semibold text-white transition-colors duration-300 disabled:opacity-60"
-              >
-                {isSubmitting ? "Salvando..." : "Redefinir senha"}
-              </button>
-              <p className="mt-2 text-sm">
-                <Link
-                  href="/login"
-                  className="text-primary hover:text-primary-dark active:text-primary-dark"
-                >
-                  Voltar para o login
-                </Link>
-              </p>
-            </form>
-          </>
+          <p className="text-ink/60 text-sm leading-relaxed">
+            Este link de redefinição é inválido ou está incompleto. Solicite um
+            novo link para continuar.
+          </p>
         )}
       </div>
-    </div>
+
+      {!isLinkValid ? (
+        <Link
+          href="/esqueci-senha"
+          className="gradient-animate focus-visible:ring-accent flex h-14 w-full items-center justify-center rounded-full text-sm font-medium text-white shadow-lg transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-60"
+          style={{ backgroundImage: "var(--gradient-pulse)" }}
+        >
+          Solicitar novo link
+        </Link>
+      ) : (
+        <form
+          onSubmit={handleSubmit(handleReset)}
+          className="flex flex-col gap-5"
+        >
+          <Input
+            label="Nova senha"
+            type="password"
+            icon={MdLockOutline}
+            placeholder="******"
+            error={errors.password?.message}
+            {...register("password")}
+          />
+          <Input
+            label="Confirmar nova senha"
+            type="password"
+            icon={MdLockOutline}
+            placeholder="******"
+            error={errors.password_confirmation?.message}
+            {...register("password_confirmation")}
+          />
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="gradient-animate focus-visible:ring-accent flex h-14 w-full items-center justify-center rounded-full text-sm font-medium text-white shadow-lg transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-60"
+            style={{ backgroundImage: "var(--gradient-pulse)" }}
+          >
+            {isSubmitting ? "Salvando..." : "Redefinir senha"}
+          </button>
+          <Link
+            href="/login"
+            className="text-accent hover:text-ink mt-2 self-start text-sm font-medium transition-colors"
+          >
+            Voltar para o login
+          </Link>
+        </form>
+      )}
+    </AuthLayout>
   );
 }
 
