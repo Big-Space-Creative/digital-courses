@@ -26,6 +26,7 @@ export default function DeleteConfirmModal({
   return (
     <Dialog
       open={open}
+      dismissible={!pending}
       onClose={() => {
         if (!pending) onCancel();
       }}

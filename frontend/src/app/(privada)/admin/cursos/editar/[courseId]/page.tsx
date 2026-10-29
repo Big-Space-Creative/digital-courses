@@ -408,12 +408,9 @@ export default function EditCoursePage() {
     setSaveError("");
     const messages: string[] = [];
     if (!courseTitle.trim()) messages.push("Informe o título do curso.");
-    if (!modules.length) messages.push("Adicione pelo menos um módulo.");
     modules.forEach((moduleItem, index) => {
       if (!moduleItem.name.trim())
         messages.push(`Informe o nome do módulo ${index + 1}.`);
-      if (!moduleItem.lessons.length)
-        messages.push(`Adicione uma aula ao módulo ${index + 1}.`);
       moduleItem.lessons.forEach((lesson, lessonIndex) => {
         if (!lesson.title.trim())
           messages.push(
@@ -748,10 +745,12 @@ export default function EditCoursePage() {
                 toast(`Enviando material (${mat.title.substring(0, 10)}...)`, {
                   variant: "info",
                 });
-                // We don't upload materials to S3 directly here because `uploadDirectlyToS3` returns S3 path but the Material API needs `file` multipart currently for lessons edit.
-                // Wait, if it's a new material on a new lesson, the backend route handles it! Let's just upload directly to S3 and pass path.
-                const matPath = await uploadDirectlyToS3(mat.file);
-                fd.append(`mat_path_${lesson.id}_${mat.id}`, matPath);
+                if (typeof lesson.id === "number") {
+                  fd.append(`mat_file_${lesson.id}_${mat.id}`, mat.file);
+                } else {
+                  const matPath = await uploadDirectlyToS3(mat.file);
+                  fd.append(`mat_path_${lesson.id}_${mat.id}`, matPath);
+                }
               } else if (mat.path) {
                 fd.append(`mat_path_${lesson.id}_${mat.id}`, mat.path);
               }

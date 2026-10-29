@@ -37,7 +37,11 @@ export default function Sidebar() {
     { name: "Minha conta", href: "/admin/perfil", icon: MdOutlineSettings },
   ];
   async function logout() {
-    if (leaving) return;
+    if (
+      leaving ||
+      !window.dispatchEvent(new Event("admin:leave", { cancelable: true }))
+    )
+      return;
     setLeaving(true);
     setError("");
     try {

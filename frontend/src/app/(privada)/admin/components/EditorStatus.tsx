@@ -18,8 +18,74 @@ export function useUnsavedChanges(snapshot: string, ready: boolean) {
       event.preventDefault();
       event.returnValue = "";
     };
+    const message = "H� altera��es n�o salvas. Deseja sair e descart�-las?";
+    const interceptLink = (event: MouseEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      )
+        return;
+      const anchor = (event.target as Element).closest<HTMLAnchorElement>(
+        "a[href]",
+      );
+      if (
+        !anchor ||
+        anchor.target === "_blank" ||
+        anchor.hasAttribute("download")
+      )
+        return;
+      const destination = new URL(anchor.href, window.location.href);
+      if (
+        destination.href === window.location.href ||
+        (destination.pathname === window.location.pathname &&
+          destination.search === window.location.search &&
+          destination.hash)
+      )
+        return;
+      if (!window.confirm(message)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    // A same-URL entry lets Back reach the guard before Next changes the route.
+    const interceptAction = (event: Event) => {
+      if (!window.confirm(message)) event.preventDefault();
+    };
+    const url = window.location.href;
+    window.history.pushState(
+      { ...window.history.state, adminEditorGuard: true },
+      "",
+      url,
+    );
+    let passing = false;
+    const interceptBack = (event: PopStateEvent) => {
+      if (passing) return;
+      event.stopImmediatePropagation();
+      if (window.confirm(message)) {
+        passing = true;
+        window.history.back();
+      } else {
+        window.history.pushState(
+          { ...window.history.state, adminEditorGuard: true },
+          "",
+          url,
+        );
+      }
+    };
     window.addEventListener("beforeunload", prevent);
-    return () => window.removeEventListener("beforeunload", prevent);
+    document.addEventListener("click", interceptLink, true);
+    window.addEventListener("admin:leave", interceptAction);
+    window.addEventListener("popstate", interceptBack, true);
+    return () => {
+      window.removeEventListener("beforeunload", prevent);
+      document.removeEventListener("click", interceptLink, true);
+      window.removeEventListener("admin:leave", interceptAction);
+      window.removeEventListener("popstate", interceptBack, true);
+    };
   }, [dirty]);
   return { dirty, markSaved: () => setBaseline(snapshot) };
 }

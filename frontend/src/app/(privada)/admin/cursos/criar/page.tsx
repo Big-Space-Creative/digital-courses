@@ -371,12 +371,11 @@ export default function CreateCoursePage() {
     setSaveError("");
     const messages: string[] = [];
     if (!courseTitle.trim()) messages.push("Informe o título do curso.");
-    if (!modules.length) messages.push("Adicione pelo menos um módulo.");
+    if (!modules.some((item) => item.lessons.length > 0))
+      messages.push("Adicione pelo menos uma aula ao curso.");
     modules.forEach((moduleItem, index) => {
       if (!moduleItem.name.trim())
         messages.push(`Informe o nome do módulo ${index + 1}.`);
-      if (!moduleItem.lessons.length)
-        messages.push(`Adicione uma aula ao módulo ${index + 1}.`);
       moduleItem.lessons.forEach((lesson, lessonIndex) => {
         if (!lesson.title.trim())
           messages.push(

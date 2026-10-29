@@ -9,6 +9,7 @@ import {
   updateUserRoleAction,
   updateUserSubscriptionAction,
   updateUserDetailsAction,
+  getUserDetailAction,
   deleteUserAction,
   type ApiUser,
   type UserRole,
@@ -144,6 +145,7 @@ function EditUserModal({
   return (
     <Dialog
       open
+      dismissible={!isPending}
       onClose={() => {
         if (!isPending) onClose();
       }}
@@ -294,51 +296,51 @@ export default function StudentsPage() {
   }, [fetchUsers]);
 
   useEffect(() => {
-    if (hasProcessedManageFromComment || loading || users.length === 0) return;
-
-    const userIdParam = searchParams.get("manageFromComment");
-    if (!userIdParam) return;
-
-    const userId = Number(userIdParam);
-    if (!Number.isFinite(userId)) return;
-
-    const target = users.find((user) => user.id === userId);
-    if (!target) return;
-
-    const targetRole =
-      (searchParams.get("targetRole") as UserRole | null) ?? target.role;
-    const targetPlan =
-      (searchParams.get("targetPlan") as SubscriptionType | null) ??
-      target.subscription_type ??
-      "free";
-
-    // Wait for the navigation frame before opening the native dialog so focus
-    // is restored to a mounted page control when the dialog closes.
-    const frame = requestAnimationFrame(() => {
+    if (hasProcessedManageFromComment) return;
+    const parameter = searchParams.get("manageFromComment");
+    if (!parameter) return;
+    let cancelled = false;
+    async function resolveAuthor() {
+      const userId = Number(parameter);
+      if (
+        !/^\d+$/.test(parameter!) ||
+        !Number.isSafeInteger(userId) ||
+        userId < 1
+      ) {
+        toast("Autor inv�lido", { variant: "error" });
+      } else {
+        const result = await getUserDetailAction(userId);
+        if (cancelled) return;
+        if (result.success) {
+          const target = result.data;
+          const role = searchParams.get("targetRole") as UserRole;
+          const plan = searchParams.get("targetPlan") as SubscriptionType;
+          setSuggestedRole(
+            ["student", "instructor", "admin"].includes(role)
+              ? role
+              : target.role,
+          );
+          setSuggestedPlan(
+            ["free", "premium"].includes(plan)
+              ? plan
+              : (target.subscription_type ?? "free"),
+          );
+          setEditingUser(target);
+        } else
+          toast("N�o foi poss�vel abrir o autor", {
+            description: result.error,
+            variant: "error",
+          });
+      }
+      if (cancelled) return;
       setHasProcessedManageFromComment(true);
-
-      setSuggestedRole(
-        ["student", "instructor", "admin"].includes(targetRole)
-          ? targetRole
-          : target.role,
-      );
-      setSuggestedPlan(
-        ["free", "premium"].includes(targetPlan)
-          ? targetPlan
-          : (target.subscription_type ?? "free"),
-      );
-      setEditingUser(target);
       router.replace("/admin/alunos");
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [
-    fetchUsers,
-    hasProcessedManageFromComment,
-    loading,
-    router,
-    searchParams,
-    users,
-  ]);
+    }
+    void resolveAuthor();
+    return () => {
+      cancelled = true;
+    };
+  }, [hasProcessedManageFromComment, router, searchParams]);
 
   function handleUserSaved(updated: ApiUser) {
     setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));

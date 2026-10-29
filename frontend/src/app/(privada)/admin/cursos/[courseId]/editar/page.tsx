@@ -342,6 +342,12 @@ function LessonEditor({
                       <Input
                         label="Título do material"
                         value={material.title}
+                        readOnly={isExisting}
+                        help={
+                          isExisting
+                            ? "O t�tulo de um material salvo n�o pode ser alterado."
+                            : undefined
+                        }
                         onChange={(event) =>
                           updateMaterial(material.id, (current) => ({
                             ...current,

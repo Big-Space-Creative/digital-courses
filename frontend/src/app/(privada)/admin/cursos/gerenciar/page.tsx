@@ -82,6 +82,12 @@ export default function ManageCoursesPage() {
         setFeaturedCourse(featuredResult.data);
         setFeaturedError("");
         setFeaturedCourseId(featuredResult.data.id);
+      } else if (
+        featuredResult.error === "Nenhum curso publicado disponivel ainda."
+      ) {
+        setFeaturedCourse(null);
+        setFeaturedCourseId(null);
+        setFeaturedError("");
       } else setFeaturedError(featuredResult.error);
       if (!coursesResult.success) {
         setError(coursesResult.error);

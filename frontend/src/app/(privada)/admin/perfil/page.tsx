@@ -35,12 +35,13 @@ export default function AdminProfilePage() {
       : user?.role === "instructor"
         ? "Instrutor"
         : "Membro";
-  const memberSince = user
-    ? new Date(user.createdAt ?? "").toLocaleDateString("pt-BR", {
-        month: "long",
-        year: "numeric",
-      })
-    : "—";
+  const memberSince =
+    user?.createdAt && !Number.isNaN(new Date(user.createdAt).getTime())
+      ? new Date(user.createdAt).toLocaleDateString("pt-BR", {
+          month: "long",
+          year: "numeric",
+        })
+      : "—";
 
   // ── Nome ─────────────────────────────────────────────────────────────────────
   const [nameValue, setName] = useState<string | null>(null);
