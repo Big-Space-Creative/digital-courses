@@ -79,6 +79,32 @@ export async function listUsersAction(params: {
   }
 }
 
+// ─── Detalhes de um usuário ───────────────────────────────────────────────────
+
+export async function getUserDetailAction(
+  userId: number,
+): Promise<{ success: true; data: ApiUser } | { success: false; error: string }> {
+  const token = await getToken();
+  if (!token) return { success: false, error: "Não autenticado" };
+
+  try {
+    const res = await fetch(`${API_URL}admin/users/${userId}`, {
+      headers: authHeaders(token),
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { success: false, error: err?.message ?? `Erro ${res.status}` };
+    }
+
+    const json = await res.json();
+    return { success: true, data: json.data };
+  } catch {
+    return { success: false, error: "Falha de conexão com o servidor" };
+  }
+}
+
 // ─── Alterar role ─────────────────────────────────────────────────────────────
 
 export async function updateUserRoleAction(
