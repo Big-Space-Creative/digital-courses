@@ -49,7 +49,7 @@ import { toast } from "@/components/ui/Toast";`;
 
 export default function Guidelines() {
   return (
-    <div className="grid gap-8 lg:grid-cols-2">
+    <div className="grid gap-8 lg:grid-cols-2 [&>*]:min-w-0">
       <ul className="bg-panel border-border divide-border flex flex-col divide-y rounded-[var(--radius-panel)] border">
         {RULES.map((rule) => (
           <li key={rule.title} className="flex flex-col gap-1 px-5 py-4">

@@ -106,7 +106,7 @@ export default function DesignSystemPage() {
           title="Diálogo e notificações"
           description="Diálogo nativo com foco, Escape e retorno ao gatilho. Pode ser não dispensável durante uma ação pendente. Notificações no canto inferior direito."
         >
-          <div className="grid gap-8 lg:grid-cols-2">
+          <div className="grid gap-8 lg:grid-cols-2 [&>*]:min-w-0">
             <div className="bg-panel border-border rounded-[var(--radius-panel)] border p-6">
               <DialogDemo />
             </div>
@@ -129,7 +129,7 @@ export default function DesignSystemPage() {
           title="Abas e listas"
           description="Abas acessíveis com setas e listas que viram linhas com rótulos no celular."
         >
-          <div className="grid gap-8">
+          <div className="grid gap-8 [&>*]:min-w-0">
             <div className="bg-panel border-border rounded-[var(--radius-panel)] border p-6">
               <TabsDemo />
             </div>
