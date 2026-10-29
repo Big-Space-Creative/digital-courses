@@ -9,6 +9,7 @@ export type DialogProps = {
   children: ReactNode;
   initialFocusRef?: RefObject<HTMLElement | null>;
   className?: string;
+  dismissible?: boolean;
 };
 /** Native modal supplies top-layer inertness, focus trapping and Escape semantics. */
 export function Dialog({
@@ -19,6 +20,7 @@ export function Dialog({
   children,
   initialFocusRef,
   className = "",
+  dismissible = true,
 }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const id = useId();
@@ -28,7 +30,7 @@ export function Dialog({
   }, [onClose]);
   const requestClose = (event: { preventDefault: () => void }) => {
     event.preventDefault();
-    closeRef.current();
+    if (dismissible) closeRef.current();
   };
   useEffect(() => {
     const dialog = ref.current;
@@ -69,7 +71,12 @@ export function Dialog({
     >
       <div className="ui-dialog-heading">
         <h2 id={id + "-title"}>{title}</h2>
-        <Button variant="ghost" aria-label="Fechar diálogo" onClick={onClose}>
+        <Button
+          variant="ghost"
+          aria-label="Fechar diálogo"
+          disabled={!dismissible}
+          onClick={requestClose}
+        >
           ×
         </Button>
       </div>

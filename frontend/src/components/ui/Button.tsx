@@ -1,5 +1,16 @@
-"use client";
 import { ComponentPropsWithRef } from "react";
+export type ButtonStyleProps = {
+  variant?: "primary" | "secondary" | "ghost" | "danger";
+  size?: "sm" | "md" | "lg";
+  className?: string;
+};
+export function buttonClassName({
+  variant = "primary",
+  size = "md",
+  className = "",
+}: ButtonStyleProps = {}) {
+  return `ui-button ui-button--${variant} ui-button--${size} ${className}`;
+}
 export type ButtonProps = ComponentPropsWithRef<"button"> & {
   variant?: "primary" | "secondary" | "ghost" | "danger";
   size?: "sm" | "md" | "lg";
@@ -21,7 +32,7 @@ export function Button({
       type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={`ui-button ui-button--${variant} ui-button--${size} ${className}`}
+      className={buttonClassName({ variant, size, className })}
     >
       {loading && (
         <svg

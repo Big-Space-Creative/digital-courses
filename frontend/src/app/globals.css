@@ -5,6 +5,7 @@
   --color-panel: var(--panel);
   --color-panel-elevated: var(--panel-elevated);
   --color-border: var(--border);
+  --color-control-border: var(--control-border);
   --color-text: var(--text);
   --color-text-muted: var(--text-muted);
   --color-on-accent: var(--on-accent);

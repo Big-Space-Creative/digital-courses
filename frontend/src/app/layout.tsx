@@ -5,6 +5,7 @@ import { ToastProvider } from "@/components/ui/Toast";
 import { UserProvider } from "@/context/UserContext";
 import { getUserFromToken } from "./actions/user";
 import CookieBanner from "@/components/ui/CookieBanner";
+import ThemeProvider from "@/components/marketing/ThemeProvider";
 
 const lexend = Lexend({
   variable: "--font-lexend",
@@ -27,12 +28,14 @@ export default async function RootLayout({
   const user = await getUserFromToken();
 
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${lexend.variable} antialiased`}>
-        <UserProvider initialUser={user}>
-          <ToastProvider>{children}</ToastProvider>
-        </UserProvider>
-        <CookieBanner />
+        <ThemeProvider>
+          <UserProvider initialUser={user}>
+            <ToastProvider>{children}</ToastProvider>
+          </UserProvider>
+          <CookieBanner />
+        </ThemeProvider>
       </body>
     </html>
   );
