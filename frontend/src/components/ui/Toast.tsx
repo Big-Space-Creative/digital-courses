@@ -7,6 +7,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { Button } from "./Button";
+import { MdCheckCircle, MdError, MdInfo } from "react-icons/md";
 export type ToastVariant = "default" | "success" | "error" | "info";
 export type ToastOptions = {
   description?: string;
@@ -57,7 +58,7 @@ function ToastCard({ item }: { item: ToastItem }) {
   }, [hovered, focused, item.id, item.duration]);
   return (
     <div
-      className="ui-toast"
+      className={`ui-toast ui-toast--${item.variant ?? "default"}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onFocusCapture={() => setFocused(true)}
@@ -66,6 +67,15 @@ function ToastCard({ item }: { item: ToastItem }) {
           setFocused(false);
       }}
     >
+      <span className="ui-toast-icon" aria-hidden="true">
+        {item.variant === "success" ? (
+          <MdCheckCircle />
+        ) : item.variant === "error" ? (
+          <MdError />
+        ) : (
+          <MdInfo />
+        )}
+      </span>
       <div
         role={item.variant === "error" ? "alert" : "status"}
         className="min-w-0 flex-1"

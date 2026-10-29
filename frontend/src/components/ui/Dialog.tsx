@@ -33,9 +33,12 @@ export function Dialog({
     const overflow = document.body.style.overflow;
     dialog.showModal();
     document.body.style.overflow = "hidden";
-    if (initialFocusRef?.current) initialFocusRef.current.focus();
+    const firstField = dialog.querySelector<HTMLElement>(
+      "input:not(:disabled), select:not(:disabled), textarea:not(:disabled)",
+    );
+    (initialFocusRef?.current ?? firstField ?? dialog).focus();
     return () => {
-      dialog.close();
+      if (dialog.open) dialog.close();
       document.body.style.overflow = overflow;
       if (trigger?.isConnected) trigger.focus();
     };
@@ -43,6 +46,7 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
+      tabIndex={-1}
       className={`ui-dialog ${className}`}
       aria-labelledby={id + "-title"}
       aria-describedby={description ? id + "-description" : undefined}

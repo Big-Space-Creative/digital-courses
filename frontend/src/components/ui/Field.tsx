@@ -34,7 +34,7 @@ export function Field({
         </p>
       )}
       {error && (
-        <p id={id + "-error"} className="ui-error">
+        <p role="alert" id={id + "-error"} className="ui-error">
           {error}
         </p>
       )}
@@ -176,7 +176,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           </p>
         )}
         {error && (
-          <p className="ui-error" id={id + "-error"}>
+          <p role="alert" className="ui-error" id={id + "-error"}>
             {error}
           </p>
         )}
