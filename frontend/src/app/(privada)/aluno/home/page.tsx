@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useUser } from "@/context/UserContext";
-import { Button } from "@/components/ui/Button";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -42,11 +42,20 @@ export default function Home() {
 
       if (!result.success) {
         setCourse(null);
-        setLoadError(result.error);
-        toast("Curso indisponível", {
-          description: result.error,
-          variant: "error",
-        });
+        // Q10: Distinguir catálogo vazio de erro técnico/rede
+        const isCatalogEmpty =
+          result.error.toLowerCase().includes("nenhum curso publicado") ||
+          result.error.toLowerCase().includes("nenhum curso disponivel");
+
+        if (isCatalogEmpty) {
+          setLoadError(null);
+        } else {
+          setLoadError(result.error);
+          toast("Curso indisponível", {
+            description: result.error,
+            variant: "error",
+          });
+        }
         return;
       }
 
@@ -74,7 +83,7 @@ export default function Home() {
     <div className="flex justify-end">
       <Link
         href="/admin/dashboard"
-        className="border-accent/30 bg-accent/10 text-accent hover:bg-accent/15 focus-visible:ring-accent inline-flex items-center gap-2 rounded-[var(--radius-control)] border px-3.5 py-2 text-xs font-semibold transition-colors outline-none focus-visible:ring-2"
+        className="border-accent/30 bg-accent/10 text-accent-text hover:bg-accent/15 focus-visible:ring-accent inline-flex items-center gap-2 rounded-[var(--radius-control)] border px-3.5 py-2 text-xs font-semibold transition-colors outline-none focus-visible:ring-2"
       >
         <MdOutlineAdminPanelSettings className="size-4" aria-hidden="true" />
         Painel Administrativo
@@ -113,7 +122,7 @@ export default function Home() {
     );
   }
 
-  // 2. Error State (C14: erro ≠ vazio)
+  // 2. Error State (Q10: erro técnico/rede ≠ vazio legítimo)
   if (loadError) {
     return (
       <div className="mx-auto flex min-h-[50vh] w-full max-w-3xl flex-col items-center justify-center p-4">
@@ -128,14 +137,14 @@ export default function Home() {
     );
   }
 
-  // 3. Empty State (C14: vazio honesto)
+  // 3. Empty State (Q10: alcançável quando catálogo está vazio)
   if (!course) {
     return (
       <div className="mx-auto flex min-h-[50vh] w-full max-w-3xl flex-col items-center justify-center p-4">
         {adminButton}
         <EmptyState
           title="Nenhum curso disponível no momento"
-          description="Assim que a equipe publicar novos conteúdos, você os verá listados aqui."
+          description="Assim que novos conteúdos forem publicados pelo instrutor, você os verá listados aqui."
           icon={<MdOutlineMenuBook className="text-text-muted size-10" />}
           className="border-border bg-panel w-full rounded-[var(--radius-panel)] border p-8 text-center"
         />
@@ -157,7 +166,7 @@ export default function Home() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
       {adminButton}
 
-      {/* Hero / Continuar Card (M01: Compacto e honesto) */}
+      {/* Hero / Curso Card (Q08: honesto, sem afirmações sem dados) */}
       <section
         aria-labelledby="hero-course-heading"
         className="border-border bg-panel relative overflow-hidden rounded-[var(--radius-panel)] border p-6 shadow-[var(--shadow-panel)] transition-colors sm:p-8"
@@ -166,7 +175,7 @@ export default function Home() {
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <Badge variant="accent" className="text-xs font-semibold">
-                Curso em andamento
+                Curso disponível
               </Badge>
               <span className="text-text-muted text-xs">
                 {modules.length} {modules.length === 1 ? "módulo" : "módulos"} ·{" "}
@@ -182,8 +191,9 @@ export default function Home() {
             </h1>
 
             <p className="text-text-muted text-sm leading-relaxed sm:text-base">
-              Você está matriculado em{" "}
-              <strong className="text-text font-medium">{course.title}</strong>.
+              Acesse o curso{" "}
+              <strong className="text-text font-medium">{course.title}</strong>{" "}
+              e acompanhe as aulas organizadas por módulo.
             </p>
 
             {course.description && (
@@ -194,24 +204,22 @@ export default function Home() {
 
             {firstLesson ? (
               <div className="mt-3 flex items-center gap-3">
-                <Link
+                {/* Q04: ButtonLink sem aninhamento <a><button> */}
+                <ButtonLink
                   href={`/aluno/aula/${firstLesson.id}`}
-                  className="inline-flex"
+                  variant="primary"
+                  size="md"
+                  className="gap-2 font-semibold shadow-sm"
+                  aria-label={`Abrir curso: ${firstLesson.title}`}
                 >
-                  <Button
-                    variant="primary"
-                    size="md"
-                    className="cursor-pointer gap-2 font-semibold shadow-sm"
-                  >
-                    <MdOutlinePlayCircleFilled
-                      className="size-5"
-                      aria-hidden="true"
-                    />
-                    <span>Continuar curso</span>
-                  </Button>
-                </Link>
+                  <MdOutlinePlayCircleFilled
+                    className="size-5"
+                    aria-hidden="true"
+                  />
+                  <span>Abrir curso</span>
+                </ButtonLink>
                 <span className="text-text-muted hidden truncate text-xs sm:inline">
-                  Próxima: {firstLesson.title}
+                  Começar pela primeira aula: {firstLesson.title}
                 </span>
               </div>
             ) : (
@@ -221,7 +229,7 @@ export default function Home() {
             )}
           </div>
 
-          {/* Thumbnail preview */}
+          {/* Thumbnail preview (Q02: Image unoptimized para MinIO/storage) */}
           <div className="border-border bg-media relative aspect-video w-full overflow-hidden rounded-[var(--radius-control)] border">
             {course.thumbnail ? (
               <Image
@@ -230,6 +238,7 @@ export default function Home() {
                 fill
                 sizes="(max-width: 768px) 100vw, 360px"
                 className="object-cover"
+                unoptimized
               />
             ) : (
               <div className="flex size-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-neutral-800 to-neutral-900 text-white/50">
@@ -243,8 +252,12 @@ export default function Home() {
                 aria-label={`Iniciar aula ${firstLesson.title}`}
                 className="group focus-visible:ring-accent absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-xs transition-opacity hover:bg-black/20 focus-visible:ring-2 focus-visible:outline-none"
               >
-                <span className="bg-accent text-on-accent flex size-14 items-center justify-center rounded-full shadow-md transition-transform group-hover:scale-110">
-                  <MdPlayArrow className="size-8 translate-x-0.5" />
+                {/* Q17: reduced-motion sem transform */}
+                <span className="bg-accent flex size-14 items-center justify-center rounded-full text-[var(--on-accent)] shadow-lg transition-transform group-hover:scale-110 motion-reduce:transform-none motion-reduce:transition-none motion-reduce:group-hover:scale-100">
+                  <MdOutlinePlayCircleFilled
+                    className="size-8"
+                    aria-hidden="true"
+                  />
                 </span>
               </Link>
             )}
@@ -252,37 +265,35 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trilha de Aprendizado */}
-      <section aria-labelledby="track-heading" className="flex flex-col gap-4">
-        <div className="border-border flex items-center justify-between border-b pb-3">
+      {/* Curriculum Accordion */}
+      <section aria-labelledby="curriculum-heading" className="space-y-4">
+        <div className="flex items-center justify-between">
           <div>
             <h2
-              id="track-heading"
+              id="curriculum-heading"
               className="text-text text-lg font-bold tracking-tight sm:text-xl"
             >
-              Trilha de aprendizado
+              Grade curricular
             </h2>
             <p className="text-text-muted text-xs sm:text-sm">
-              Siga os módulos sequencialmente para melhor aproveitamento.
+              Explore os módulos e acesse o conteúdo das aulas
             </p>
           </div>
-          <span className="text-text-muted text-xs font-medium">
-            {totalLessons} aulas no total
+          <span className="text-text-muted text-xs">
+            {modules.length} {modules.length === 1 ? "módulo" : "módulos"}
           </span>
         </div>
 
         {modules.length === 0 ? (
-          <EmptyState
-            title="Nenhum módulo disponível"
-            description="Este curso ainda não possui módulos cadastrados."
-            className="border-border bg-panel rounded-[var(--radius-panel)] border p-6"
-          />
+          <div className="border-border bg-panel text-text-muted rounded-[var(--radius-panel)] border p-8 text-center text-sm">
+            Nenhum módulo publicado para este curso até o momento.
+          </div>
         ) : (
           <div className="flex flex-col gap-3">
             {modules.map((moduleItem, modIdx) => {
-              const moduleLessons = moduleItem.lessons ?? [];
-              const modTotalLessons = moduleLessons.length;
               const isOpen = openModules.includes(moduleItem.id);
+              const moduleLessons = moduleItem.lessons || [];
+              const modTotalLessons = moduleLessons.length;
 
               return (
                 <div
@@ -298,7 +309,8 @@ export default function Home() {
                     className="hover:bg-canvas focus-visible:ring-accent flex w-full cursor-pointer items-center justify-between p-4 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset sm:p-5"
                   >
                     <div className="flex min-w-0 items-center gap-3.5">
-                      <div className="bg-accent/15 text-accent flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+                      {/* Q11: text-accent-text para contraste */}
+                      <div className="bg-accent/15 text-accent-text flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
                         {modIdx + 1}
                       </div>
                       <div className="min-w-0">
@@ -313,12 +325,6 @@ export default function Home() {
                     </div>
 
                     <div className="ml-2 flex shrink-0 items-center gap-3">
-                      <Badge
-                        variant="neutral"
-                        className="hidden text-xs sm:inline-flex"
-                      >
-                        Módulo {modIdx + 1}
-                      </Badge>
                       <MdExpandMore
                         className={`text-text-muted size-5 transition-transform duration-200 motion-reduce:transition-none ${
                           isOpen ? "rotate-180" : ""
@@ -347,8 +353,9 @@ export default function Home() {
                               className="group hover:bg-panel focus-visible:ring-accent flex items-center justify-between rounded-[var(--radius-control)] p-3 text-sm transition-colors hover:shadow-xs focus-visible:ring-2 focus-visible:outline-none"
                             >
                               <div className="flex min-w-0 items-center gap-3">
+                                {/* Q11 e Q17: text-accent-text e reduced-motion sem scale */}
                                 <MdPlayArrow
-                                  className="text-accent size-4 shrink-0 transition-transform group-hover:scale-125 motion-reduce:transition-none"
+                                  className="text-accent-text size-4 shrink-0 transition-transform group-hover:scale-125 motion-reduce:transform-none motion-reduce:transition-none motion-reduce:group-hover:scale-100"
                                   aria-hidden="true"
                                 />
                                 <span className="text-text truncate text-xs font-medium sm:text-sm">
@@ -367,7 +374,7 @@ export default function Home() {
                                   </span>
                                 )}
                                 <MdChevronRight
-                                  className="text-text-muted size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
+                                  className="text-text-muted size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
                                   aria-hidden="true"
                                 />
                               </div>

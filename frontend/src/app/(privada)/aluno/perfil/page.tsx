@@ -3,25 +3,25 @@
 import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 import { deleteAccountAction, logoutAction } from "@/app/actions/auth";
 import {
   changePasswordAction,
   updateProfileNameAction,
 } from "@/app/actions/users";
+import { toast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Dialog } from "@/components/ui/Dialog";
-import { Input } from "@/components/ui/Input";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { toast } from "@/components/ui/Toast";
-import { useUser } from "@/context/UserContext";
 import {
   MdLockOutline,
-  MdOutlineEmail,
   MdOutlineExitToApp,
   MdOutlinePersonOutline,
   MdOutlineSave,
   MdOutlineWarningAmber,
+  MdOutlineEmail,
 } from "react-icons/md";
 
 function getInitials(name?: string | null): string {
@@ -31,7 +31,7 @@ function getInitials(name?: string | null): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export default function Profile() {
+export default function Perfil() {
   const router = useRouter();
   const { user, setUser } = useUser();
 
@@ -60,9 +60,8 @@ export default function Profile() {
     urlPhoto: user?.urlPhoto,
   };
 
-  const isUnsplashDefault =
-    profile.urlPhoto?.includes("images.unsplash.com") ?? false;
-  const showPhoto = Boolean(profile.urlPhoto && !isUnsplashDefault);
+  // Q19: Só usar fallback de iniciais quando não houver URL válida
+  const showPhoto = Boolean(profile.urlPhoto && profile.urlPhoto.trim() !== "");
   const initials = getInitials(profile.name);
 
   const handleLogout = async () => {
@@ -86,9 +85,11 @@ export default function Profile() {
       return;
     }
 
-    if (newPassword || confirmPassword) {
-      if (newPassword.length < 6) {
-        setPasswordError("A nova senha deve ter no mínimo 6 caracteres.");
+    // Q03: Mínimo 8 caracteres e validação ANTES de qualquer mutação
+    const hasPasswordAttempt = Boolean(newPassword || confirmPassword);
+    if (hasPasswordAttempt) {
+      if (newPassword.length < 8) {
+        setPasswordError("A nova senha deve ter no mínimo 8 caracteres.");
         return;
       }
       if (newPassword !== confirmPassword) {
@@ -98,9 +99,10 @@ export default function Profile() {
     }
 
     startTransition(async () => {
-      let hasUpdates = false;
+      let nameUpdated = false;
+      let passwordUpdated = false;
 
-      // 1. Update name if changed
+      // 1. Atualiza nome se alterado
       if (trimmedName !== user?.name) {
         const nameRes = await updateProfileNameAction(trimmedName);
         if (!nameRes.success) {
@@ -112,28 +114,42 @@ export default function Profile() {
         if (user) {
           setUser({ ...user, name: trimmedName });
         }
-        hasUpdates = true;
+        nameUpdated = true;
       }
 
-      // 2. Update password if filled
-      if (newPassword && confirmPassword) {
+      // 2. Atualiza senha se preenchida
+      if (hasPasswordAttempt) {
         const passRes = await changePasswordAction({
           password: newPassword,
           password_confirmation: confirmPassword,
         });
+
         if (!passRes.success) {
-          toast(passRes.error ?? "Falha ao alterar a senha.", {
-            variant: "error",
-          });
+          // Q03: Informar falha parcial sem sugerir atomicidade inexistente
+          if (nameUpdated) {
+            toast(
+              `Nome atualizado com sucesso, mas ocorreu um erro ao alterar a senha: ${passRes.error ?? "Falha na senha"}`,
+              { variant: "error" },
+            );
+          } else {
+            toast(passRes.error ?? "Falha ao alterar a senha.", {
+              variant: "error",
+            });
+          }
           return;
         }
+
         setNewPassword("");
         setConfirmPassword("");
-        hasUpdates = true;
+        passwordUpdated = true;
       }
 
-      if (hasUpdates) {
+      if (nameUpdated && passwordUpdated) {
         toast("Alterações salvas com sucesso!", { variant: "success" });
+      } else if (nameUpdated) {
+        toast("Nome atualizado com sucesso!", { variant: "success" });
+      } else if (passwordUpdated) {
+        toast("Senha alterada com sucesso!", { variant: "success" });
       } else {
         toast("Nenhuma alteração detectada.");
       }
@@ -142,7 +158,7 @@ export default function Profile() {
 
   const handleDeleteAccount = async () => {
     if (!deletePassword) {
-      toast("Informe sua senha para confirmar a exclusão.", {
+      toast("Digite sua senha atual para confirmar a exclusão.", {
         variant: "error",
       });
       return;
@@ -153,7 +169,9 @@ export default function Profile() {
     setIsDeleting(false);
 
     if (!res.success) {
-      toast(res.error ?? "Falha ao excluir a conta.", { variant: "error" });
+      toast(res.error ?? "Não foi possível excluir sua conta.", {
+        variant: "error",
+      });
       return;
     }
 
@@ -176,7 +194,7 @@ export default function Profile() {
         description="Gerencie seus dados de acesso, preferências e segurança da conta."
       />
 
-      {/* Profile Card Header (C02/C04: Sem datas fictícias, avatar com iniciais fallback) */}
+      {/* Profile Card Header (Q08/Q09: Sem datas fictícias nem rótulos arbitrários) */}
       <section
         aria-label="Resumo do perfil"
         className="border-border bg-panel rounded-[var(--radius-panel)] border p-6 shadow-[var(--shadow-panel)] transition-colors"
@@ -190,10 +208,11 @@ export default function Profile() {
                 alt={`Foto de ${profile.name}`}
                 fill
                 sizes="96px"
+                unoptimized
                 className="object-cover"
               />
             ) : (
-              <div className="bg-accent/15 text-accent flex size-full items-center justify-center text-2xl font-bold">
+              <div className="bg-accent/15 text-accent-text flex size-full items-center justify-center text-2xl font-bold">
                 {initials}
               </div>
             )}
@@ -221,13 +240,13 @@ export default function Profile() {
             )}
 
             <p className="text-text-muted mt-1 text-xs">
-              Aluno verificado na plataforma Pullse.
+              Conta de aluno na plataforma Pullse.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Main Form & Account Actions Grid (C02/C04: layout responsivo) */}
+      {/* Main Form & Account Actions Grid */}
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_300px]">
         {/* Form Container */}
         <form
@@ -248,7 +267,7 @@ export default function Profile() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              help="Como você será identificado nas aulas e certificados."
+              help="Nome de exibição da sua conta."
             />
 
             <Input
@@ -278,10 +297,11 @@ export default function Profile() {
                 label="Nova Senha"
                 icon={MdLockOutline}
                 type="password"
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Mínimo 8 caracteres"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 error={passwordError}
+                help="No mínimo 8 caracteres."
               />
 
               <Input
@@ -311,22 +331,23 @@ export default function Profile() {
           </div>
         </form>
 
-        {/* Sidebar: Ações da Conta */}
+        {/* Actions Sidebar */}
         <aside
-          aria-label="Ações de encerramento da conta"
+          aria-label="Ações de conta"
           className="border-border bg-panel flex flex-col gap-4 rounded-[var(--radius-panel)] border p-6 shadow-[var(--shadow-panel)]"
         >
-          <h2 className="text-text text-base font-bold">Sessão e Conta</h2>
-          <p className="text-text-muted text-xs leading-relaxed">
-            Controle o encerramento da sua sessão ou a exclusão permanente do
-            seu acesso.
-          </p>
+          <div>
+            <h3 className="text-text text-sm font-bold">Ações da Conta</h3>
+            <p className="text-text-muted mt-1 text-xs">
+              Controle de sessão e encerramento de conta.
+            </p>
+          </div>
 
           <Button
             type="button"
             variant="secondary"
             onClick={handleLogout}
-            className="w-full cursor-pointer gap-2"
+            className="w-full cursor-pointer justify-center gap-2 text-xs"
           >
             <MdOutlineExitToApp className="size-4" />
             <span>Sair da Conta</span>
@@ -345,23 +366,26 @@ export default function Profile() {
         </aside>
       </div>
 
-      {/* Delete Account Modal (C02/C04: Usando Dialog com foco no Cancelar) */}
+      {/* Delete Account Modal (Q07: dismissible={!isDeleting} e Cancelar bloqueado; Q09: contrato real) */}
       <Dialog
         open={isDeleteOpen}
+        dismissible={!isDeleting}
         onClose={() => {
-          setIsDeleteOpen(false);
-          setDeletePassword("");
+          if (!isDeleting) {
+            setIsDeleteOpen(false);
+            setDeletePassword("");
+          }
         }}
         title="Excluir minha conta"
-        description="Esta ação é permanente e irreversível. Seus dados e inscrições serão apagados."
+        description="Esta ação é permanente. Seus dados serão anonimizados ou eliminados conforme a Política de Privacidade."
         initialFocusRef={cancelDeleteRef}
       >
         <div className="mt-2 flex flex-col gap-4">
           <div className="bg-danger/10 border-danger/20 text-danger flex items-start gap-3 rounded-[var(--radius-control)] border p-3 text-xs">
             <MdOutlineWarningAmber className="mt-0.5 size-5 shrink-0" />
             <p>
-              Todos os seus certificados, anotações e progresso serão
-              desvinculados permanentemente.
+              A exclusão da conta encerrará seu acesso à plataforma de forma
+              definitiva.
             </p>
           </div>
 
@@ -382,8 +406,10 @@ export default function Profile() {
               type="button"
               variant="secondary"
               onClick={() => {
-                setIsDeleteOpen(false);
-                setDeletePassword("");
+                if (!isDeleting) {
+                  setIsDeleteOpen(false);
+                  setDeletePassword("");
+                }
               }}
               disabled={isDeleting}
             >

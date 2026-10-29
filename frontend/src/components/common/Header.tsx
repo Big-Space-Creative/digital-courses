@@ -38,12 +38,11 @@ export default function Header() {
     urlPhoto: user?.urlPhoto,
   };
 
-  const isUnsplashDefault =
-    profile.urlPhoto?.includes("images.unsplash.com") ?? false;
-  const showPhoto = Boolean(profile.urlPhoto && !isUnsplashDefault);
+  // Q19: Só usar fallback quando não houver URL válida cadastrada
+  const showPhoto = Boolean(profile.urlPhoto && profile.urlPhoto.trim() !== "");
   const initials = getInitials(profile.name);
 
-  // Close menu on click outside or escape
+  // Close disclosure menu on click outside or escape
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape" && isMenuOpen) {
@@ -110,9 +109,10 @@ export default function Header() {
           >
             <Link
               href="/aluno/home"
+              aria-current={isCourseActive ? "page" : undefined}
               className={`inline-flex items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-1.5 text-sm font-medium transition-colors ${
                 isCourseActive
-                  ? "bg-accent/10 text-accent font-semibold"
+                  ? "bg-accent/10 text-accent-text font-semibold"
                   : "text-text-muted hover:bg-canvas hover:text-text"
               }`}
             >
@@ -122,9 +122,10 @@ export default function Header() {
 
             <Link
               href="/aluno/perfil"
+              aria-current={isProfileActive ? "page" : undefined}
               className={`inline-flex items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-1.5 text-sm font-medium transition-colors ${
                 isProfileActive
-                  ? "bg-accent/10 text-accent font-semibold"
+                  ? "bg-accent/10 text-accent-text font-semibold"
                   : "text-text-muted hover:bg-canvas hover:text-text"
               }`}
             >
@@ -150,23 +151,23 @@ export default function Header() {
                     ? "accent"
                     : "neutral"
                 }
-                className="px-1.5 py-0.5 text-[10px] font-semibold uppercase"
+                className="px-1.5 py-0.5 text-xs font-semibold uppercase"
               >
                 {profile.subscriptionType}
               </Badge>
             </div>
           </div>
 
-          {/* Avatar & Dropdown */}
+          {/* Avatar & Disclosure Dropdown (Q06: sem role menu) */}
           <div className="relative">
             <button
               ref={buttonRef}
               type="button"
               onClick={() => setIsMenuOpen((prev) => !prev)}
-              aria-haspopup="menu"
+              aria-controls="aluno-user-dropdown"
               aria-expanded={isMenuOpen}
-              aria-label="Abrir menu da conta do aluno"
-              className="border-border focus-visible:ring-accent relative flex size-10 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:outline-none"
+              aria-label="Menu da conta do aluno"
+              className="border-border focus-visible:ring-accent relative flex size-10 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:outline-none motion-reduce:transform-none motion-reduce:transition-none motion-reduce:hover:scale-100"
             >
               {showPhoto && profile.urlPhoto ? (
                 <Image
@@ -174,10 +175,11 @@ export default function Header() {
                   alt={`Foto de ${profile.name}`}
                   fill
                   sizes="40px"
+                  unoptimized
                   className="object-cover"
                 />
               ) : (
-                <span className="bg-accent/15 text-accent flex size-full items-center justify-center text-xs font-bold">
+                <span className="bg-accent/15 text-accent-text flex size-full items-center justify-center text-xs font-bold">
                   {initials}
                 </span>
               )}
@@ -185,9 +187,8 @@ export default function Header() {
 
             {isMenuOpen && (
               <div
+                id="aluno-user-dropdown"
                 ref={menuRef}
-                role="menu"
-                aria-orientation="vertical"
                 className="border-border bg-panel animate-in fade-in-50 zoom-in-95 absolute right-0 mt-2 w-60 origin-top-right rounded-[var(--radius-panel)] border p-1.5 shadow-[var(--shadow-overlay)] duration-150 focus:outline-none"
               >
                 {/* Header in dropdown */}
@@ -207,32 +208,32 @@ export default function Header() {
                           ? "accent"
                           : "neutral"
                       }
-                      className="text-[10px] uppercase"
+                      className="text-xs uppercase"
                     >
                       Plano {profile.subscriptionType}
                     </Badge>
                   </div>
                 </div>
 
-                {/* Navigation items */}
+                {/* Navigation items (Q06: links simples com aria-current) */}
                 <div className="py-1">
                   <Link
                     href="/aluno/home"
-                    role="menuitem"
+                    aria-current={isCourseActive ? "page" : undefined}
                     onClick={() => setIsMenuOpen(false)}
                     className="text-text hover:bg-canvas flex w-full items-center gap-2.5 rounded-[var(--radius-control)] px-3 py-2 text-sm transition-colors"
                   >
-                    <MdOutlineSchool className="text-accent size-4" />
+                    <MdOutlineSchool className="text-accent-text size-4" />
                     <span>Meu curso</span>
                   </Link>
 
                   <Link
                     href="/aluno/perfil"
-                    role="menuitem"
+                    aria-current={isProfileActive ? "page" : undefined}
                     onClick={() => setIsMenuOpen(false)}
                     className="text-text hover:bg-canvas flex w-full items-center gap-2.5 rounded-[var(--radius-control)] px-3 py-2 text-sm transition-colors"
                   >
-                    <MdOutlinePerson className="text-accent size-4" />
+                    <MdOutlinePerson className="text-accent-text size-4" />
                     <span>Configurações da conta</span>
                   </Link>
                 </div>
@@ -240,7 +241,6 @@ export default function Header() {
                 <div className="border-border border-t pt-1">
                   <button
                     type="button"
-                    role="menuitem"
                     onClick={handleLogout}
                     className="text-danger hover:bg-danger/10 flex w-full cursor-pointer items-center gap-2.5 rounded-[var(--radius-control)] px-3 py-2 text-left text-sm font-medium transition-colors"
                   >
