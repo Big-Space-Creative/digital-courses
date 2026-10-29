@@ -8,6 +8,7 @@ import {
   MdSecurity,
   MdShield,
 } from "react-icons/md";
+import PullseLogo from "@/components/brand/PullseLogo";
 import PulseWave from "@/components/brand/PulseWave";
 import ThemeProvider from "@/components/marketing/ThemeProvider";
 import ThemeToggle from "@/components/marketing/ThemeToggle";
@@ -48,10 +49,7 @@ export default function AuthLayout({
               className="focus-visible:ring-accent flex min-h-[44px] items-center gap-2.5 rounded-md focus-visible:ring-2 focus-visible:outline-none"
               aria-label="Pullse — Voltar à página inicial"
             >
-              <PulseWave className="h-8 w-8" title="" />
-              <span className="text-text text-lg font-semibold tracking-tight">
-                Pullse
-              </span>
+              <PullseLogo className="text-text h-11 w-auto" title="" />
             </Link>
             <ThemeToggle />
           </header>
@@ -154,8 +152,8 @@ export default function AuthLayout({
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/80 to-black/60" />
               <div className="relative z-10 flex flex-1 flex-col justify-between p-8 text-white md:p-12">
                 <div className="flex items-center gap-2.5">
-                  <span className="flex size-9 items-center justify-center rounded-xl bg-[#FF6B07] font-bold text-[var(--on-accent)]">
-                    P
+                  <span className="flex size-9 items-center justify-center rounded-xl bg-white/10">
+                    <PulseWave className="h-7 w-7" title="" loop={false} />
                   </span>
                   <span className="text-sm font-semibold tracking-wide text-white uppercase">
                     Sua jornada musical

@@ -12,9 +12,9 @@ import ThemeToggle from "@/components/marketing/ThemeToggle";
 import SiteFooter from "@/components/marketing/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Política de Privacidade — AulasViolão",
+  title: "Política de Privacidade",
   description:
-    "Saiba como a AulasViolão coleta, usa e protege seus dados pessoais em conformidade com a LGPD (Lei nº 13.709/2018).",
+    "Saiba como a Pullse coleta, usa e protege seus dados pessoais em conformidade com a LGPD (Lei nº 13.709/2018).",
 };
 
 const lastUpdated = "26 de maio de 2026";
@@ -70,7 +70,7 @@ export default function PrivacyPolicyPage() {
             Última atualização: {lastUpdated}
           </p>
           <p className="text-text-muted mt-5 max-w-[68ch] text-base leading-7 text-pretty">
-            Esta política descreve como a <strong>AulasViolão</strong> trata
+            Esta política descreve como a <strong>Pullse</strong> trata
             seus dados pessoais em conformidade com a{" "}
             <strong>
               Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018)
@@ -104,7 +104,7 @@ export default function PrivacyPolicyPage() {
                     title="1. Quem somos (Controlador de dados)"
                   >
                     <p>
-                      A <strong>AulasViolão</strong> é a plataforma responsável
+                      A <strong>Pullse</strong> é a plataforma responsável
                       pelo tratamento dos seus dados pessoais. Para dúvidas
                       sobre esta política ou sobre o exercício dos seus
                       direitos, entre em contato pelo e-mail da plataforma

@@ -13,7 +13,10 @@ const lexend = Lexend({
 });
 
 export const metadata: Metadata = {
-  title: "🎸 AulasViolão — Aprenda violão do zero ao avançado",
+  title: {
+    default: "Pullse — Aprenda violão do zero ao avançado",
+    template: "%s — Pullse",
+  },
   description:
     "Plataforma de cursos de violão com trilhas progressivas, material de apoio e acompanhamento de progresso. Do iniciante ao avançado.",
 };
