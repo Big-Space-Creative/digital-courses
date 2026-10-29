@@ -2,27 +2,24 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  MdLockOutline,
-  MdMusicNote,
-  MdOutlineEmail,
-  MdStar,
-  MdHelpOutline,
-} from "react-icons/md";
+import { MdHelpOutline, MdLockOutline, MdOutlineEmail } from "react-icons/md";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-//Components
-import { Input } from "@/components/form/Input";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import AuthLayout from "@/components/marketing/AuthLayout";
 import { loginAction } from "@/app/actions/auth";
 import { toast } from "@/components/ui/Toast";
 import { useUser } from "@/context/UserContext";
 
 const loginSchema = z.object({
-  email: z.string().email("Email inválido"),
+  email: z.string().email("E-mail inválido"),
   senha: z.string().min(8, "A senha deve conter pelo menos 8 caracteres"),
 });
+
+type LoginData = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const router = useRouter();
@@ -31,31 +28,27 @@ export default function Login() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm({
+  } = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
   });
-
-  type LoginData = z.infer<typeof loginSchema>;
 
   const handleLogin = async (data: LoginData) => {
     const res = await loginAction(data);
 
     if (res.error) {
-      // E-mail não verificado → informa o usuário e redireciona para tela de verificação
       if ("email_not_verified" in res && res.email_not_verified) {
         toast("Confirme seu e-mail", {
           description:
             "Acesse sua caixa de entrada e clique no link de verificação para ativar sua conta.",
           variant: "info",
         });
-        // Pequeno delay para o usuário conseguir ler o toast antes do redirect
         setTimeout(() => {
           router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
         }, 1500);
         return;
       }
 
-      toast("Não foi possível realizar Login", {
+      toast("Não foi possível realizar o login", {
         description: res.error,
         variant: "error",
       });
@@ -72,96 +65,87 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-dvh justify-between">
-      <div className="flex flex-1 flex-col justify-center gap-10 px-5 md:items-center">
-        <div className="flex items-center md:hidden">
-          <MdMusicNote className="text-primary size-6" />
-          <h1 className="text-xl font-bold">AulasViolão</h1>
-        </div>
-        <div className="flex flex-col gap-5 md:w-md">
-          <h1 className="text-secondary text-3xl font-bold">Bem-Vindo</h1>
-          <p className="text-base font-normal text-gray-500">
-            Insira seus dados para acessar suas aulas.
-          </p>
-          <form
-            onSubmit={handleSubmit(handleLogin)}
-            className="flex flex-col gap-5"
-          >
-            <Input
-              label="Email"
-              type="email"
-              icon={MdOutlineEmail}
-              placeholder="email@exemplo.com"
-              error={errors.email?.message}
-              {...register("email")}
-            />
-            <Input
-              label="Senha"
-              type="password"
-              icon={MdLockOutline}
-              placeholder="******"
-              error={errors.senha?.message}
-              {...register("senha")}
-            />
+    <AuthLayout contextType="login">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-text text-3xl font-semibold tracking-tight">
+          Bem-vindo de volta
+        </h1>
+        <p className="text-text-muted text-sm leading-relaxed">
+          Insira seus dados para acessar sua área de estudos.
+        </p>
+      </div>
+
+      <form
+        onSubmit={handleSubmit(handleLogin)}
+        className="mt-6 flex flex-col gap-4"
+        noValidate
+      >
+        <Input
+          label="E-mail"
+          type="email"
+          autoComplete="email"
+          icon={MdOutlineEmail}
+          placeholder="email@exemplo.com"
+          error={errors.email?.message}
+          {...register("email")}
+        />
+
+        <div>
+          <Input
+            label="Senha"
+            type="password"
+            autoComplete="current-password"
+            icon={MdLockOutline}
+            placeholder="Sua senha secreta"
+            error={errors.senha?.message}
+            {...register("senha")}
+          />
+          <div className="mt-1 flex justify-end">
             <Link
               href="/esqueci-senha"
-              className="text-primary hover:text-primary-dark -mt-2 self-end text-sm"
+              className="text-accent-text hover:text-text focus-visible:ring-accent rounded-sm text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
             >
               Esqueci minha senha
             </Link>
-            <button
-              type="submit"
-              className="bg-primary hover:bg-primary-dark active:bg-primary-dark rounded-lg py-5 text-sm font-semibold text-white transition-colors duration-300"
+          </div>
+        </div>
+
+        <Button
+          type="submit"
+          variant="primary"
+          size="lg"
+          loading={isSubmitting}
+          className="mt-2 w-full font-semibold"
+        >
+          {isSubmitting ? "Entrando..." : "Entrar"}
+        </Button>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border)] pt-4">
+          <p className="text-text-muted text-sm">
+            Não tem uma conta?{" "}
+            <Link
+              href="/register"
+              className="text-accent-text hover:text-text focus-visible:ring-accent font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none"
             >
-              {isSubmitting ? "Entrando..." : "Entrar"}
-            </button>
-            <div className="flex items-center justify-between mt-2">
-              <p className="flex gap-1 text-sm">
-                Não tem conta?
-                <Link
-                  href="/register"
-                  className="text-primary hover:text-primary-dark active:text-primary-dark"
-                >
-                  Crie uma conta!
-                </Link>
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  toast("Precisa de ajuda?", {
-                    description: `Entre em contato conosco: ${process.env.NEXT_PUBLIC_SUPPORT_EMAIL}`,
-                    variant: "info",
-                  });
-                }}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-primary transition-colors"
-                title="Atendimento ao cliente"
-              >
-                <MdHelpOutline size={18} /> Ajuda
-              </button>
-            </div>
-          </form>
+              Cadastre-se
+            </Link>
+          </p>
+
+          <button
+            type="button"
+            onClick={() => {
+              toast("Precisa de ajuda?", {
+                description: `Entre em contato conosco: ${process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "contato@pullse.com.br"}`,
+                variant: "info",
+              });
+            }}
+            className="text-text-muted hover:text-accent-text focus-visible:ring-accent flex min-h-[44px] items-center gap-1.5 rounded-sm text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
+          >
+            <MdHelpOutline size={16} aria-hidden="true" />
+            <span>Ajuda</span>
+          </button>
         </div>
-      </div>
-      <div className="bg-secondary hidden min-h-screen bg-[url(/01.jpg)] bg-cover bg-center bg-blend-overlay md:flex md:flex-1">
-        <div className="flex size-full flex-col justify-between gap-3.5 p-12">
-          <div className="hidden items-center md:flex">
-            <MdMusicNote className="text-primary size-6" />
-            <h1 className="text-xl font-semibold text-white">AulasViolão</h1>
-          </div>
-          <div className="flex flex-col gap-2.5">
-            <span className="text-primary flex gap-1">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <MdStar key={index} />
-              ))}
-            </span>
-            <p className="text-lg text-white">
-              &quot;Melhor curso de violão, sem <br />
-              duvida nenhum recomendo, 10 <br /> estrelas&quot;
-            </p>
-            <p className="text-sm text-white">Bruno lacerda</p>
-          </div>
-        </div>
-      </div>
-    </div>
+      </form>
+    </AuthLayout>
   );
 }

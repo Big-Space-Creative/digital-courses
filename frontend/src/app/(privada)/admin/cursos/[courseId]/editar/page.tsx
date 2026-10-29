@@ -1,6 +1,27 @@
 "use client";
+import Image from "next/image";
+import { Skeleton } from "@/components/ui/Skeleton";
+import {
+  EditorStatus,
+  editorSnapshot,
+  useUnsavedChanges,
+} from "../../../components/EditorStatus";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { Dialog } from "@/components/ui/Dialog";
+import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { Textarea } from "@/components/ui/Textarea";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 
-import { type ChangeEvent, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import {
+  type ChangeEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { useParams, useRouter } from "next/navigation";
 import type { LessonState, MaterialState, ModuleState } from "@/types/course";
 import { toast } from "@/components/ui/Toast";
@@ -78,13 +99,20 @@ function createModule(): ModuleState {
 }
 
 type LessonEditorProps = {
+  submitted: boolean;
   lesson: LessonState;
   lessonIndex: number;
   onUpdate: (updater: (lesson: LessonState) => LessonState) => void;
   onRemove: () => void;
 };
 
-function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorProps) {
+function LessonEditor({
+  submitted,
+  lesson,
+  lessonIndex,
+  onUpdate,
+  onRemove,
+}: LessonEditorProps) {
   const materialInputRef = useRef<HTMLInputElement>(null);
 
   function addMaterial(event: ChangeEvent<HTMLInputElement>) {
@@ -122,78 +150,76 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
   function removeMaterial(materialId: string | number) {
     onUpdate((current) => ({
       ...current,
-      materials: current.materials.filter((material) => material.id !== materialId),
+      materials: current.materials.filter(
+        (material) => material.id !== materialId,
+      ),
     }));
   }
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5">
+    <div className="rounded-bento-sm bg-canvas ring-border p-5 ring-1">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold tracking-[0.12em] text-gray-400 uppercase">
+          <p className="text-text-muted text-sm font-medium">
             Aula {lessonIndex + 1}
           </p>
-          <p className="mt-1 text-sm text-gray-500">
-            Atualize tÃ­tulo, descriÃ§Ã£o, foto, vÃ­deo e materiais sempre que precisar.
+          <p className="text-text-muted mt-1 text-sm">
+            Atualize título, descrição, foto, vídeo e materiais sempre que
+            precisar.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onRemove}
-          className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-        >
+        <Button variant="danger" type="button" onClick={onRemove}>
           <MdDeleteOutline size={18} />
           Remover aula
-        </button>
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <label className="block text-sm font-medium text-gray-700">
-          TÃ­tulo da aula
-          <input
-            value={lesson.title}
-            onChange={(event) =>
-              onUpdate((current) => ({ ...current, title: event.target.value }))
-            }
-            className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-300"
-          />
-        </label>
+        <Input
+          label="Título da aula"
+          error={
+            submitted && !lesson.title.trim()
+              ? "Informe o título da aula."
+              : undefined
+          }
+          value={lesson.title}
+          onChange={(event) =>
+            onUpdate((current) => ({ ...current, title: event.target.value }))
+          }
+        />
 
-        <label className="block text-sm font-medium text-gray-700">
-          DuraÃ§Ã£o em minutos
-          <input
-            type="number"
-            min="1"
-            value={lesson.durationMinutes}
-            onChange={(event) =>
-              onUpdate((current) => ({
-                ...current,
-                durationMinutes: event.target.value,
-              }))
-            }
-            className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-300"
-          />
-        </label>
+        <Input
+          label="Duração em minutos"
+          type="number"
+          min="1"
+          value={lesson.durationMinutes}
+          onChange={(event) =>
+            onUpdate((current) => ({
+              ...current,
+              durationMinutes: event.target.value,
+            }))
+          }
+        />
       </div>
 
-      <label className="mt-4 block text-sm font-medium text-gray-700">
-        DescriÃ§Ã£o da aula
-        <textarea
-          rows={4}
-          value={lesson.description}
-          onChange={(event) =>
-            onUpdate((current) => ({ ...current, description: event.target.value }))
-          }
-          className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-300"
-        />
-      </label>
+      <Textarea
+        label="Descrição da aula"
+        rows={4}
+        value={lesson.description}
+        onChange={(event) =>
+          onUpdate((current) => ({
+            ...current,
+            description: event.target.value,
+          }))
+        }
+      />
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <label className="block text-sm font-medium text-gray-700">
+        <div className="text-text-muted block text-sm font-medium">
           Foto da aula
-          <div className="mt-2 rounded-2xl border border-dashed border-orange-200 bg-white p-4">
-            <div className="mb-3 flex items-center gap-2 text-sm text-gray-500">
+          <div className="rounded-bento-md border-accent/40 mt-2 border border-dashed bg-white p-4">
+            <div className="text-text-muted mb-3 flex items-center gap-2 text-sm">
               <MdOutlineCollections size={18} />
               {lesson.thumbnailFile
                 ? lesson.thumbnailFile.name
@@ -202,13 +228,17 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
                   : "Nenhuma foto cadastrada"}
             </div>
             {lesson.thumbnailUrl && !lesson.thumbnailFile && (
-              <img
+              <Image
+                unoptimized
+                width={320}
+                height={180}
                 src={lesson.thumbnailUrl}
                 alt={lesson.title}
                 className="mb-3 h-32 w-full rounded-xl object-cover"
               />
             )}
-            <input
+            <Input
+              label="Imagem"
               type="file"
               accept="image/*"
               onChange={(event) =>
@@ -217,33 +247,33 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
                   thumbnailFile: event.target.files?.[0] ?? null,
                 }))
               }
-              className="block w-full text-sm text-gray-500 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-100 file:px-4 file:py-2 file:font-medium file:text-orange-700"
             />
           </div>
-        </label>
+        </div>
 
-        <label className="block text-sm font-medium text-gray-700">
-          VÃ­deo da aula
-          <div className="mt-2 rounded-2xl border border-dashed border-orange-200 bg-white p-4">
-            <div className="mb-3 flex items-center gap-2 text-sm text-gray-500">
+        <div className="text-text-muted block text-sm font-medium">
+          Vídeo da aula
+          <div className="rounded-bento-md border-accent/40 mt-2 border border-dashed bg-white p-4">
+            <div className="text-text-muted mb-3 flex items-center gap-2 text-sm">
               <MdOutlineOndemandVideo size={18} />
               {lesson.videoFile
                 ? lesson.videoFile.name
                 : lesson.videoUrl
-                  ? "VÃ­deo atual cadastrado"
-                  : "Nenhum vÃ­deo cadastrado"}
+                  ? "Vídeo atual cadastrado"
+                  : "Nenhum vídeo cadastrado"}
             </div>
             {lesson.videoUrl && !lesson.videoFile && (
               <a
                 href={lesson.videoUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="mb-3 inline-flex text-sm font-medium text-orange-700 underline underline-offset-4"
+                className="text-accent-text mb-3 inline-flex text-sm font-medium underline underline-offset-4"
               >
-                Abrir vÃ­deo atual
+                Abrir vídeo atual
               </a>
             )}
-            <input
+            <Input
+              label="Vídeo da aula"
               type="file"
               accept="video/*,.mp4,.mov,.avi,.mkv,.webm"
               onChange={(event) =>
@@ -252,35 +282,44 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
                   videoFile: event.target.files?.[0] ?? null,
                 }))
               }
-              className="block w-full text-sm text-gray-500 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-100 file:px-4 file:py-2 file:font-medium file:text-orange-700"
+              error={
+                submitted &&
+                !lesson.videoFile &&
+                !lesson.videoUrl &&
+                !lesson.videoPath
+                  ? "Selecione o vídeo da aula."
+                  : undefined
+              }
             />
           </div>
-        </label>
+        </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-dashed border-orange-200 bg-white p-4">
+      <div className="rounded-bento-md border-accent/40 mt-4 border border-dashed bg-white p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-gray-700">Materiais da aula</p>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="text-text-muted text-sm font-medium">
+              Materiais da aula
+            </p>
+            <p className="text-text-muted mt-1 text-sm">
               Adicione PDFs, imagens e arquivos complementares para o aluno.
             </p>
           </div>
-          <button
+          <Button
+            variant="secondary"
             type="button"
             onClick={() => materialInputRef.current?.click()}
-            className="inline-flex items-center gap-2 rounded-xl bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-700 hover:bg-orange-100"
           >
             <MdOutlineUploadFile size={18} />
             Adicionar material
-          </button>
+          </Button>
         </div>
 
-        <input
+        <Input
+          label="Arquivo do material"
           ref={materialInputRef}
           type="file"
           accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.mp4,.mov,.avi,.mkv,.webm"
-          className="hidden"
           onChange={addMaterial}
         />
 
@@ -292,30 +331,36 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
               return (
                 <div
                   key={material.id}
-                  className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
+                  className="border-border bg-canvas rounded-xl border px-4 py-3"
                 >
                   <div className="flex items-start gap-3">
                     <MdOutlineInsertDriveFile
                       size={18}
-                      className="mt-1 shrink-0 text-orange-500"
+                      className="text-accent-text mt-1 shrink-0"
                     />
                     <div className="min-w-0 flex-1">
-                      <input
+                      <Input
+                        label="Título do material"
                         value={material.title}
+                        readOnly={isExisting}
+                        help={
+                          isExisting
+                            ? "O título de um material salvo não pode ser alterado."
+                            : undefined
+                        }
                         onChange={(event) =>
                           updateMaterial(material.id, (current) => ({
                             ...current,
                             title: event.target.value,
                           }))
                         }
-                        className="w-full bg-transparent text-sm font-medium text-gray-800 outline-none"
-                        placeholder="TÃ­tulo do material"
+                        placeholder="Título do material"
                       />
-                      <p className="mt-1 text-xs text-gray-500">
+                      <p className="text-text-muted mt-1 text-xs">
                         {material.file
                           ? `${material.file.name} • ${(material.file.size / 1024 / 1024).toFixed(1)} MB`
                           : isExisting
-                            ? "Material jÃ¡ salvo nesta aula"
+                            ? "Material já salvo nesta aula"
                             : "Material pronto para envio"}
                       </p>
                       {material.path && (
@@ -323,20 +368,20 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
                           href={material.path}
                           target="_blank"
                           rel="noreferrer"
-                          className="mt-2 inline-flex text-xs font-medium text-orange-700 underline underline-offset-4"
+                          className="text-accent-text mt-2 inline-flex text-xs font-medium underline underline-offset-4"
                         >
                           Abrir material atual
                         </a>
                       )}
                     </div>
                     {!isExisting && (
-                      <button
+                      <Button
+                        variant="secondary"
                         type="button"
                         onClick={() => removeMaterial(material.id)}
-                        className="shrink-0 rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
                       >
                         Remover
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -344,28 +389,22 @@ function LessonEditor({ lesson, lessonIndex, onUpdate, onRemove }: LessonEditorP
             })}
           </div>
         ) : (
-          <p className="mt-4 text-sm text-gray-500">Nenhum material cadastrado nesta aula.</p>
+          <p className="text-text-muted mt-4 text-sm">
+            Nenhum material cadastrado nesta aula.
+          </p>
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={() =>
+      <Checkbox
+        label="Prévia gratuita da aula"
+        checked={lesson.isFreePreview}
+        onChange={() =>
           onUpdate((current) => ({
             ...current,
             isFreePreview: !current.isFreePreview,
           }))
         }
-        className={`mt-4 rounded-xl border px-4 py-3 text-sm font-medium ${
-          lesson.isFreePreview
-            ? "border-green-200 bg-green-50 text-green-700"
-            : "border-gray-200 bg-white text-gray-600"
-        }`}
-      >
-        {lesson.isFreePreview
-          ? "Aula liberada como preview"
-          : "Marcar aula como preview gratuito"}
-      </button>
+      />
     </div>
   );
 }
@@ -378,13 +417,83 @@ export default function EditCoursePage() {
   const [courseTitle, setCourseTitle] = useState("");
   const [courseDescription, setCourseDescription] = useState("");
   const [isPublished, setIsPublished] = useState(false);
-  const [courseThumbnailUrl, setCourseThumbnailUrl] = useState<string | null>(null);
-  const [courseThumbnailFile, setCourseThumbnailFile] = useState<File | null>(null);
+  const [courseThumbnailUrl, setCourseThumbnailUrl] = useState<string | null>(
+    null,
+  );
+  const [courseThumbnailFile, setCourseThumbnailFile] = useState<File | null>(
+    null,
+  );
   const [modules, setModules] = useState<ModuleState[]>([]);
   const [removedModuleIds, setRemovedModuleIds] = useState<number[]>([]);
   const [removedLessonIds, setRemovedLessonIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
+  const [submitted, setSubmitted] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [uploadStatus, setUploadStatus] = useState("");
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  const cancelLeaveRef = useRef<HTMLButtonElement>(null);
+  const editorRef = useRef<HTMLFieldSetElement>(null);
+  const submitLock = useRef(false);
+  const [loadError, setLoadError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{
+    moduleId: string | number;
+    lessonId?: string | number;
+    label: string;
+  } | null>(null);
+
+  const { dirty, markSaved } = useUnsavedChanges(
+    editorSnapshot({
+      courseTitle,
+      courseDescription,
+      isPublished,
+      modules,
+      thumbnail: courseThumbnailFile,
+    }),
+    !loading && !loadError,
+  );
+  function requestLeave() {
+    if (dirty) setLeaveOpen(true);
+    else router.push("/admin/cursos/gerenciar");
+  }
+  function validateEditor() {
+    setSubmitted(true);
+    setSaveError("");
+    const messages: string[] = [];
+    if (!courseTitle.trim()) messages.push("Informe o título do curso.");
+    if (!modules.some((item) => item.lessons.length > 0))
+      messages.push("Adicione pelo menos uma aula ao curso.");
+    modules.forEach((moduleItem, index) => {
+      if (!moduleItem.name.trim())
+        messages.push(`Informe o nome do módulo ${index + 1}.`);
+      moduleItem.lessons.forEach((lesson, lessonIndex) => {
+        if (!lesson.title.trim())
+          messages.push(
+            `Informe o título da aula ${lessonIndex + 1} do módulo ${index + 1}.`,
+          );
+        if (!lesson.videoFile && !lesson.videoUrl && !lesson.videoPath)
+          messages.push(
+            `Selecione o vídeo da aula ${lessonIndex + 1} do módulo ${index + 1}.`,
+          );
+        if (
+          lesson.durationMinutes &&
+          (!Number.isFinite(Number(lesson.durationMinutes)) ||
+            Number(lesson.durationMinutes) < 1)
+        )
+          messages.push("A duração deve ser maior que zero.");
+      });
+    });
+    if (messages.length) {
+      setSaveError(messages.join(" "));
+      requestAnimationFrame(() =>
+        editorRef.current
+          ?.querySelector<HTMLElement>('[aria-invalid="true"]')
+          ?.focus(),
+      );
+      return false;
+    }
+    return true;
+  }
 
   useEffect(() => {
     let ignore = false;
@@ -392,6 +501,7 @@ export default function EditCoursePage() {
     async function loadCourse() {
       try {
         setLoading(true);
+        setLoadError("");
         const response = await fetch(`/api/admin/courses/${courseId}`, {
           cache: "no-store",
         });
@@ -426,13 +536,27 @@ export default function EditCoursePage() {
               videoUrl: lesson.video_url ?? null,
               thumbnailFile: null,
               thumbnailUrl: lesson.thumbnail ?? null,
-              materials: [],
+              materials: (lesson.materials ?? []).map((material) => ({
+                id: createId(),
+                dbId: material.id,
+                title: material.title,
+                file: null,
+                path: material.file_path,
+                type: material.type,
+              })),
             })),
           })),
         );
       } catch (error) {
+        if (ignore) return;
+        setLoadError(
+          error instanceof Error
+            ? error.message
+            : "Não foi possível carregar o curso.",
+        );
         toast("Erro ao carregar curso", {
-          description: error instanceof Error ? error.message : "Tente novamente.",
+          description:
+            error instanceof Error ? error.message : "Tente novamente.",
           variant: "error",
         });
       } finally {
@@ -448,7 +572,11 @@ export default function EditCoursePage() {
   }, [courseId]);
 
   const totalLessons = useMemo(
-    () => modules.reduce((count, moduleItem) => count + moduleItem.lessons.length, 0),
+    () =>
+      modules.reduce(
+        (count, moduleItem) => count + moduleItem.lessons.length,
+        0,
+      ),
     [modules],
   );
 
@@ -508,7 +636,9 @@ export default function EditCoursePage() {
 
   function removeLesson(moduleId: string | number, lessonId: string | number) {
     updateModule(moduleId, (moduleItem) => {
-      const targetLesson = moduleItem.lessons.find((item) => item.id === lessonId);
+      const targetLesson = moduleItem.lessons.find(
+        (item) => item.id === lessonId,
+      );
       if (targetLesson?.dbId) {
         setRemovedLessonIds((ids) => [...ids, targetLesson.dbId!]);
       }
@@ -521,6 +651,7 @@ export default function EditCoursePage() {
   }
 
   async function uploadDirectlyToS3(file: File): Promise<string> {
+    setUploadStatus(`Enviando ${file.name}…`);
     const response = await fetch("/api/admin/courses/upload-url", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -550,17 +681,13 @@ export default function EditCoursePage() {
       throw new Error("Informe o título do curso.");
     }
 
-    if (modules.length === 0) {
-      throw new Error("Adicione pelo menos um módulo.");
+    if (!modules.some((item) => item.lessons.length > 0)) {
+      throw new Error("Adicione pelo menos uma aula ao curso.");
     }
 
     for (const moduleItem of modules) {
       if (!moduleItem.name.trim()) {
         throw new Error("Todo módulo precisa ter um título.");
-      }
-
-      if (moduleItem.lessons.length === 0) {
-        throw new Error(`O módulo "${moduleItem.name}" precisa ter ao menos uma aula.`);
       }
 
       for (const lesson of moduleItem.lessons) {
@@ -576,9 +703,19 @@ export default function EditCoursePage() {
   }
 
   function handleSubmit() {
+    if (
+      loading ||
+      loadError ||
+      isPending ||
+      submitLock.current ||
+      !validateEditor()
+    )
+      return;
+    submitLock.current = true;
     startTransition(async () => {
       try {
         validateBeforeSubmit();
+        setUploadStatus("Preparando arquivos…");
         toast("Salvando alterações...", {
           description: "Enviando conteúdo e atualizando a estrutura do curso.",
           variant: "info",
@@ -612,9 +749,20 @@ export default function EditCoursePage() {
             }
 
             if (lesson.thumbnailFile) {
-              formData.append(`lesson_thumbnail_${lesson.id}`, lesson.thumbnailFile);
+              formData.append(
+                `lesson_thumbnail_${lesson.id}`,
+                lesson.thumbnailFile,
+              );
             }
 
+            for (const material of lesson.materials) {
+              if (material.file) {
+                formData.append(
+                  `lesson_material_${lesson.id}_${material.id}`,
+                  material.file,
+                );
+              }
+            }
             lessonsPayload.push({
               id: lesson.id,
               dbId: lesson.dbId,
@@ -622,7 +770,7 @@ export default function EditCoursePage() {
               description: lesson.description,
               durationMinutes: lesson.durationMinutes,
               isFreePreview: lesson.isFreePreview,
-              videoUrl: uploadedVideoPath ? null : lesson.videoUrl ?? null,
+              videoUrl: uploadedVideoPath ? null : (lesson.videoUrl ?? null),
               thumbnailUrl: lesson.thumbnailUrl ?? null,
               materials: lesson.materials || [],
             });
@@ -638,6 +786,7 @@ export default function EditCoursePage() {
 
         formData.append("modules", JSON.stringify(modulesPayload));
 
+        setUploadStatus("Arquivos enviados. Salvando a estrutura do curso…");
         const response = await fetch(`/api/admin/courses/${courseId}`, {
           method: "PUT",
           body: formData,
@@ -655,362 +804,313 @@ export default function EditCoursePage() {
 
         router.push("/admin/cursos/gerenciar");
       } catch (error) {
+        setSaveError(
+          error instanceof Error
+            ? error.message
+            : "Não foi possível salvar o curso.",
+        );
+        setUploadStatus(
+          "O envio não foi concluído. Revise o erro e tente novamente.",
+        );
         toast("Erro ao salvar curso", {
-          description: error instanceof Error ? error.message : "Tente novamente.",
+          description:
+            error instanceof Error ? error.message : "Tente novamente.",
           variant: "error",
         });
+      } finally {
+        submitLock.current = false;
       }
     });
   }
 
+  if (loadError)
+    return (
+      <div className="mx-auto max-w-3xl p-4 sm:p-8">
+        <h1 className="mb-6 text-2xl font-semibold">Editar curso</h1>
+        <ErrorState
+          title="Não foi possível abrir o editor"
+          description={loadError}
+          onRetry={() => window.location.reload()}
+        />
+        <Button
+          variant="secondary"
+          onClick={() => router.push("/admin/cursos/gerenciar")}
+        >
+          Voltar aos cursos
+        </Button>
+      </div>
+    );
+
   if (loading) {
     return (
-      <div className="bg-background min-h-screen p-8">
-        <div className="mx-auto max-w-6xl rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-          <p className="text-sm text-gray-500">Carregando editor do curso...</p>
+      <div className="bg-canvas min-h-screen p-8">
+        <div
+          aria-busy="true"
+          className="rounded-bento-md bg-panel ring-border mx-auto max-w-6xl space-y-4 p-8 ring-1"
+        >
+          <h1 className="text-2xl font-semibold">Editar curso</h1>
+          <p className="text-text-muted text-sm">
+            Carregando editor do curso...
+          </p>
+          <Skeleton className="h-40" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-background min-h-screen">
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 sm:p-6 lg:p-8">
-        <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <button
-                type="button"
-                onClick={() => router.push("/admin/cursos/gerenciar")}
-                className="mb-3 inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700"
-              >
-                <MdArrowBack size={16} />
-                Voltar para gerenciamento
-              </button>
-              <h1 className="text-2xl font-bold text-gray-900">Editar curso</h1>
-              <p className="mt-1 text-sm text-gray-500">
-                Atualize o curso, crie novos módulos e ajuste as aulas quando precisar.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isPending}
-              className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
-            >
-              <MdOutlineSave size={18} />
-              {isPending ? "Salvando..." : "Salvar alterações"}
-            </button>
-          </div>
-        </section>
-
-        <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
-              <MdOutlineInfo size={18} className="text-primary" />
-              <h2 className="text-lg font-semibold text-gray-900">Dados do curso</h2>
-            </div>
-
-            <div className="space-y-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Título do curso
-                <input
-                  value={courseTitle}
-                  onChange={(e) => setCourseTitle(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-300"
-                />
-              </label>
-
-              <label className="block text-sm font-medium text-gray-700">
-                Descrição
-                <textarea
-                  rows={5}
-                  value={courseDescription}
-                  onChange={(e) => setCourseDescription(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-300"
-                />
-              </label>
-
-              <label className="block text-sm font-medium text-gray-700">
-                Capa do curso
-                <div className="mt-2 rounded-2xl border border-dashed border-orange-200 bg-orange-50/50 p-4">
-                  <div className="mb-3 flex items-center gap-2 text-sm text-gray-500">
-                    <MdOutlineImage size={18} />
-                    {courseThumbnailFile
-                      ? courseThumbnailFile.name
-                      : courseThumbnailUrl
-                        ? "Capa atual cadastrada"
-                        : "Nenhuma capa cadastrada"}
-                  </div>
-                  {courseThumbnailUrl && !courseThumbnailFile && (
-                    <img
-                      src={courseThumbnailUrl}
-                      alt="Capa do curso"
-                      className="mb-3 h-40 w-full rounded-xl object-cover"
-                    />
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setCourseThumbnailFile(e.target.files?.[0] ?? null)}
-                    className="block w-full text-sm text-gray-500 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-100 file:px-4 file:py-2 file:font-medium file:text-orange-700"
-                  />
-                </div>
-              </label>
-
-              <button
-                type="button"
-                onClick={() => setIsPublished((current) => !current)}
-                className={`rounded-xl border px-4 py-3 text-left text-sm font-medium ${
-                  isPublished
-                    ? "border-green-200 bg-green-50 text-green-700"
-                    : "border-gray-200 bg-gray-50 text-gray-600"
-                }`}
-              >
-                {isPublished
-                  ? "Curso publicado para alunos"
-                  : "Curso salvo como rascunho"}
-              </button>
-            </div>
-          </article>
-
-          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900">Resumo</h2>
-            <div className="mt-4 space-y-3 text-sm text-gray-600">
-              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                <p className="text-xs font-semibold tracking-[0.12em] text-gray-400 uppercase">
-                  Módulos
-                </p>
-                <p className="mt-1 text-2xl font-bold text-gray-900">{modules.length}</p>
-              </div>
-              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                <p className="text-xs font-semibold tracking-[0.12em] text-gray-400 uppercase">
-                  Aulas
-                </p>
-                <p className="mt-1 text-2xl font-bold text-gray-900">{totalLessons}</p>
-              </div>
-              <button
-                type="button"
-                onClick={addModule}
-                className="text-primary inline-flex items-center gap-2 rounded-xl bg-orange-50 px-4 py-3 font-semibold hover:bg-orange-100"
-              >
-                <MdAddCircleOutline size={18} />
-                Adicionar módulo
-              </button>
-            </div>
-          </article>
-        </section>
-
-        <section className="space-y-6">
-          {modules.map((moduleItem, moduleIndex) => (
-            <article
-              key={moduleItem.id}
-              className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
-            >
-              <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-                <div className="flex-1">
-                  <p className="text-primary mb-2 text-xs font-bold tracking-[0.15em] uppercase">
-                    Módulo {moduleIndex + 1}
-                  </p>
-                  <input
-                    value={moduleItem.name}
-                    onChange={(e) =>
-                      updateModule(moduleItem.id, (current) => ({
-                        ...current,
-                        name: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium outline-none focus:border-orange-300"
-                  />
-                </div>
-
-                <button
+    <div className="bg-canvas min-h-screen">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 sm:p-6 lg:p-8">
+        <fieldset
+          ref={editorRef}
+          disabled={isPending}
+          className="min-w-0 space-y-6 border-0 p-0"
+        >
+          <section className="border-border bg-panel sticky top-[69px] z-20 rounded-2xl border p-4 lg:top-0">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <Button
+                  variant="secondary"
                   type="button"
-                  onClick={() => removeModule(moduleItem.id)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
+                  onClick={requestLeave}
                 >
-                  <MdDeleteOutline size={18} />
-                  Remover módulo
-                </button>
+                  <MdArrowBack size={16} />
+                  Voltar para gerenciamento
+                </Button>
+                <h1 className="text-text text-2xl font-semibold">
+                  Editar curso
+                </h1>
+                <EditorStatus
+                  dirty={dirty}
+                  upload={uploadStatus}
+                  error={saveError}
+                />
+                <p className="text-text-muted mt-1 text-sm">
+                  Atualize o curso, crie novos módulos e ajuste as aulas quando
+                  precisar.
+                </p>
+              </div>
+
+              <Button
+                variant="primary"
+                type="button"
+                onClick={handleSubmit}
+                disabled={isPending}
+              >
+                <MdOutlineSave size={18} />
+                {isPending ? "Salvando..." : "Salvar alterações"}
+              </Button>
+            </div>
+          </section>
+
+          <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <article className="rounded-bento-md bg-panel ring-border p-6 ring-1">
+              <div className="mb-4 flex items-center gap-2">
+                <MdOutlineInfo size={18} className="text-accent-text" />
+                <h2 className="text-text text-lg font-semibold">
+                  Dados do curso
+                </h2>
               </div>
 
               <div className="space-y-4">
-                {moduleItem.lessons.map((lesson, lessonIndex) => (
-                  <div
-                    key={lesson.id}
-                    className="rounded-2xl border border-gray-100 bg-gray-50 p-5"
-                  >
-                    <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-xs font-semibold tracking-[0.12em] text-gray-400 uppercase">
-                          Aula {lessonIndex + 1}
-                        </p>
-                        <p className="mt-1 text-sm text-gray-500">
-                          Atualize título, descrição, foto e vídeo sempre que precisar.
-                        </p>
-                      </div>
+                <Input
+                  label="Título do curso"
+                  error={
+                    submitted && !courseTitle.trim()
+                      ? "Informe o título do curso."
+                      : undefined
+                  }
+                  value={courseTitle}
+                  onChange={(e) => setCourseTitle(e.target.value)}
+                />
 
-                      <button
-                        type="button"
-                        onClick={() => removeLesson(moduleItem.id, lesson.id)}
-                        className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-                      >
-                        <MdDeleteOutline size={18} />
-                        Remover aula
-                      </button>
+                <Textarea
+                  label="Descrição"
+                  rows={5}
+                  value={courseDescription}
+                  onChange={(e) => setCourseDescription(e.target.value)}
+                />
+
+                <div className="text-text-muted block text-sm font-medium">
+                  Capa do curso
+                  <div className="rounded-bento-md border-accent/40 bg-accent/5 mt-2 border border-dashed p-4">
+                    <div className="text-text-muted mb-3 flex items-center gap-2 text-sm">
+                      <MdOutlineImage size={18} />
+                      {courseThumbnailFile
+                        ? courseThumbnailFile.name
+                        : courseThumbnailUrl
+                          ? "Capa atual cadastrada"
+                          : "Nenhuma capa cadastrada"}
                     </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Título da aula
-                        <input
-                          value={lesson.title}
-                          onChange={(e) =>
-                            updateLesson(moduleItem.id, lesson.id, (current) => ({
-                              ...current,
-                              title: e.target.value,
-                            }))
-                          }
-                          className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-300"
-                        />
-                      </label>
-
-                      <label className="block text-sm font-medium text-gray-700">
-                        Duração em minutos
-                        <input
-                          type="number"
-                          min="1"
-                          value={lesson.durationMinutes}
-                          onChange={(e) =>
-                            updateLesson(moduleItem.id, lesson.id, (current) => ({
-                              ...current,
-                              durationMinutes: e.target.value,
-                            }))
-                          }
-                          className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-300"
-                        />
-                      </label>
-                    </div>
-
-                    <label className="mt-4 block text-sm font-medium text-gray-700">
-                      Descrição da aula
-                      <textarea
-                        rows={4}
-                        value={lesson.description}
-                        onChange={(e) =>
-                          updateLesson(moduleItem.id, lesson.id, (current) => ({
-                            ...current,
-                            description: e.target.value,
-                          }))
-                        }
-                        className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-300"
+                    {courseThumbnailUrl && !courseThumbnailFile && (
+                      <Image
+                        unoptimized
+                        width={320}
+                        height={180}
+                        src={courseThumbnailUrl}
+                        alt="Capa do curso"
+                        className="mb-3 h-40 w-full rounded-xl object-cover"
                       />
-                    </label>
+                    )}
+                    <Input
+                      label="Imagem"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) =>
+                        setCourseThumbnailFile(e.target.files?.[0] ?? null)
+                      }
+                    />
+                  </div>
+                </div>
 
-                    <div className="mt-4 grid gap-4 md:grid-cols-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Foto da aula
-                        <div className="mt-2 rounded-2xl border border-dashed border-orange-200 bg-white p-4">
-                          <div className="mb-3 flex items-center gap-2 text-sm text-gray-500">
-                            <MdOutlineCollections size={18} />
-                            {lesson.thumbnailFile
-                              ? lesson.thumbnailFile.name
-                              : lesson.thumbnailUrl
-                                ? "Foto atual cadastrada"
-                                : "Nenhuma foto cadastrada"}
-                          </div>
-                          {lesson.thumbnailUrl && !lesson.thumbnailFile && (
-                            <img
-                              src={lesson.thumbnailUrl}
-                              alt={lesson.title}
-                              className="mb-3 h-32 w-full rounded-xl object-cover"
-                            />
-                          )}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) =>
-                              updateLesson(moduleItem.id, lesson.id, (current) => ({
-                                ...current,
-                                thumbnailFile: e.target.files?.[0] ?? null,
-                              }))
-                            }
-                            className="block w-full text-sm text-gray-500 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-100 file:px-4 file:py-2 file:font-medium file:text-orange-700"
-                          />
-                        </div>
-                      </label>
+                <Checkbox
+                  label="Exibido na área do aluno"
+                  checked={isPublished}
+                  onChange={() => setIsPublished((current) => !current)}
+                />
+              </div>
+            </article>
 
-                      <label className="block text-sm font-medium text-gray-700">
-                        Vídeo da aula
-                        <div className="mt-2 rounded-2xl border border-dashed border-orange-200 bg-white p-4">
-                          <div className="mb-3 flex items-center gap-2 text-sm text-gray-500">
-                            <MdOutlineOndemandVideo size={18} />
-                            {lesson.videoFile
-                              ? lesson.videoFile.name
-                              : lesson.videoUrl
-                                ? "Vídeo atual cadastrado"
-                                : "Nenhum vídeo cadastrado"}
-                          </div>
-                          {lesson.videoUrl && !lesson.videoFile && (
-                            <a
-                              href={lesson.videoUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="mb-3 inline-flex text-sm font-medium text-orange-700 underline underline-offset-4"
-                            >
-                              Abrir vídeo atual
-                            </a>
-                          )}
-                          <input
-                            type="file"
-                            accept="video/*,.mp4,.mov,.avi,.mkv,.webm"
-                            onChange={(e) =>
-                              updateLesson(moduleItem.id, lesson.id, (current) => ({
-                                ...current,
-                                videoFile: e.target.files?.[0] ?? null,
-                              }))
-                            }
-                            className="block w-full text-sm text-gray-500 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-100 file:px-4 file:py-2 file:font-medium file:text-orange-700"
-                          />
-                        </div>
-                      </label>
-                    </div>
+            <article className="rounded-bento-md bg-panel ring-border p-6 ring-1">
+              <h2 className="text-text text-lg font-semibold">Resumo</h2>
+              <div className="text-text-muted mt-4 space-y-3 text-sm">
+                <div className="rounded-bento-sm bg-canvas p-4">
+                  <p className="text-text-muted text-sm font-medium">Módulos</p>
+                  <p className="text-text mt-1 text-2xl font-semibold">
+                    {modules.length}
+                  </p>
+                </div>
+                <div className="rounded-bento-sm bg-canvas p-4">
+                  <p className="text-text-muted text-sm font-medium">Aulas</p>
+                  <p className="text-text mt-1 text-2xl font-semibold">
+                    {totalLessons}
+                  </p>
+                </div>
+                <Button variant="secondary" type="button" onClick={addModule}>
+                  <MdAddCircleOutline size={18} />
+                  Adicionar módulo
+                </Button>
+              </div>
+            </article>
+          </section>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        updateLesson(moduleItem.id, lesson.id, (current) => ({
+          <section className="space-y-6">
+            {modules.map((moduleItem, moduleIndex) => (
+              <article
+                key={moduleItem.id}
+                className="rounded-bento-md bg-panel ring-border p-6 ring-1"
+              >
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <p className="text-accent-text mb-2 text-sm font-semibold">
+                      Módulo {moduleIndex + 1}
+                    </p>
+                    <Input
+                      label="Nome do módulo"
+                      error={
+                        submitted && !moduleItem.name.trim()
+                          ? "Informe o nome do módulo."
+                          : undefined
+                      }
+                      value={moduleItem.name}
+                      onChange={(e) =>
+                        updateModule(moduleItem.id, (current) => ({
                           ...current,
-                          isFreePreview: !current.isFreePreview,
+                          name: e.target.value,
                         }))
                       }
-                      className={`mt-4 rounded-xl border px-4 py-3 text-sm font-medium ${
-                        lesson.isFreePreview
-                          ? "border-green-200 bg-green-50 text-green-700"
-                          : "border-gray-200 bg-white text-gray-600"
-                      }`}
-                    >
-                      {lesson.isFreePreview
-                        ? "Aula liberada como preview"
-                        : "Marcar aula como preview gratuito"}
-                    </button>
+                    />
                   </div>
-                ))}
-              </div>
 
-              <button
-                type="button"
-                onClick={() => addLesson(moduleItem.id)}
-                className="text-primary mt-4 inline-flex items-center gap-2 rounded-xl bg-orange-50 px-4 py-3 text-sm font-semibold hover:bg-orange-100"
-              >
-                <MdAddCircleOutline size={18} />
-                Adicionar aula
-              </button>
-            </article>
-          ))}
-        </section>
-      </main>
+                  <Button
+                    variant="secondary"
+                    type="button"
+                    onClick={() =>
+                      setDeleteTarget({
+                        moduleId: moduleItem.id,
+                        label: `Módulo: ${moduleItem.name}`,
+                      })
+                    }
+                  >
+                    <MdDeleteOutline size={18} />
+                    Remover módulo
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  {moduleItem.lessons.map((lesson, lessonIndex) => (
+                    <LessonEditor
+                      key={lesson.id}
+                      submitted={submitted}
+                      lesson={lesson}
+                      lessonIndex={lessonIndex}
+                      onUpdate={(updater) =>
+                        updateLesson(moduleItem.id, lesson.id, updater)
+                      }
+                      onRemove={() =>
+                        setDeleteTarget({
+                          moduleId: moduleItem.id,
+                          lessonId: lesson.id,
+                          label: `Aula: ${lesson.title || `Aula ${lessonIndex + 1}`}`,
+                        })
+                      }
+                    />
+                  ))}
+                </div>
+
+                <Button
+                  variant="secondary"
+                  type="button"
+                  onClick={() => addLesson(moduleItem.id)}
+                >
+                  <MdAddCircleOutline size={18} />
+                  Adicionar aula
+                </Button>
+              </article>
+            ))}
+          </section>
+        </fieldset>
+      </div>
+      <DeleteConfirmModal
+        open={!!deleteTarget}
+        label={deleteTarget?.label ?? ""}
+        title="Remover da estrutura"
+        description="O item será removido da estrutura. Salve o curso para aplicar a alteração."
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          if (deleteTarget.lessonId !== undefined)
+            removeLesson(deleteTarget.moduleId, deleteTarget.lessonId);
+          else removeModule(deleteTarget.moduleId);
+          setDeleteTarget(null);
+        }}
+      />
+      <Dialog
+        open={leaveOpen}
+        onClose={() => setLeaveOpen(false)}
+        title="Descartar alterações?"
+        description="As alterações que ainda não foram salvas serão perdidas."
+        initialFocusRef={cancelLeaveRef}
+      >
+        <div className="mt-5 flex flex-wrap justify-end gap-2">
+          <Button
+            ref={cancelLeaveRef}
+            variant="secondary"
+            onClick={() => setLeaveOpen(false)}
+          >
+            Continuar editando
+          </Button>
+          <Button
+            variant="danger"
+            onClick={() => {
+              markSaved();
+              router.push("/admin/cursos/gerenciar");
+            }}
+          >
+            Descartar alterações
+          </Button>
+        </div>
+      </Dialog>
     </div>
   );
 }

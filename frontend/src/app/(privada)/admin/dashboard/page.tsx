@@ -1,556 +1,470 @@
 "use client";
-
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
-import DeleteConfirmModal from "../components/DeleteConfirmModal";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { DataList } from "@/components/ui/DataList";
+import { Tabs } from "@/components/ui/Tabs";
+import { Badge } from "@/components/ui/Badge";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { toast } from "@/components/ui/Toast";
-import {
-  deleteAdminCommentAction,
-  listAdminCommentsAction,
-  type LessonComment,
-} from "@/app/actions/comments";
+import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import {
   deleteCourseAction,
   getDashboardStatsAction,
   listCoursesAction,
   type ApiCourse,
-  type CoursesPaginated,
   type DashboardStats,
 } from "@/app/actions/courses";
 import {
-  MdAddCircleOutline,
-  MdDeleteOutline,
-  MdEdit,
-  MdOutlineChat,
-  MdOutlineForum,
-  MdOutlinePeopleAlt,
-  MdOutlineReply,
-  MdOutlineSchool,
-  MdPeople,
-  MdPlayCircle,
-  MdSearch,
-} from "react-icons/md";
-
-function safeParam(value: string | null | undefined, fallback: string) {
-  return encodeURIComponent((value ?? fallback).toString());
-}
-
+  deleteAdminCommentAction,
+  listAdminCommentsAction,
+  type LessonComment,
+} from "@/app/actions/comments";
 export default function Dashboard() {
   const router = useRouter();
   const { user } = useUser();
-  const [activeTab, setActiveTab] = useState<"overview" | "comments">("overview");
-  const [selectedCourse, setSelectedCourse] = useState<ApiCourse | null>(null);
-
-  // ── Stats ─────────────────────────────────────────────────────────────────
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [statsLoading, startStatsLoading] = useTransition();
-
-  // ── Courses table ─────────────────────────────────────────────────────────
-  const [courses, setCourses] = useState<ApiCourse[]>([]);
-  const [coursesLoading, startCoursesLoading] = useTransition();
-  const [courseDeleting, startCourseDeleting] = useTransition();
-
-  // ── Comments ──────────────────────────────────────────────────────────────
-  const [commentSearch, setCommentSearch] = useState("");
-  const [debouncedCommentSearch, setDebouncedCommentSearch] = useState("");
-  const [commentPage, setCommentPage] = useState(1);
-  const [comments, setComments] = useState<LessonComment[]>([]);
-  const [commentMeta, setCommentMeta] = useState({
-    total: 0,
-    last_page: 1,
-    from: 0,
-    to: 0,
-    current_page: 1,
-    per_page: 15,
-  });
-  const [commentLoading, startCommentLoading] = useTransition();
-  const [commentDeleting, startCommentDeleting] = useTransition();
-  const [deleteTargetComment, setDeleteTargetComment] = useState<LessonComment | null>(null);
-
   const isAdmin = user?.role === "admin";
-  const displayName = user?.name ?? "Usuário";
-
-  // ── Load Stats ────────────────────────────────────────────────────────────
-  useEffect(() => {
-    startStatsLoading(async () => {
-      const result = await getDashboardStatsAction();
-      if (result.success) setStats(result.data);
-    });
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [statsError, setStatsError] = useState("");
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [courses, setCourses] = useState<ApiCourse[]>([]);
+  const [courseError, setCourseError] = useState("");
+  const [coursesLoading, setCoursesLoading] = useState(true);
+  const [comments, setComments] = useState<LessonComment[]>([]);
+  const [commentError, setCommentError] = useState("");
+  const [commentLoading, setCommentLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState({ total: 0, last_page: 1, from: 0, to: 0 });
+  const [commentTotal, setCommentTotal] = useState<number | null>(null);
+  const [courseTarget, setCourseTarget] = useState<ApiCourse | null>(null);
+  const [commentTarget, setCommentTarget] = useState<LessonComment | null>(
+    null,
+  );
+  const [deleting, setDeleting] = useState(false);
+  const deleteLock = useRef(false);
+  const commentRequest = useRef(0);
+  const loadStats = useCallback(async () => {
+    setStatsLoading(true);
+    const result = await getDashboardStatsAction();
+    if (result.success) {
+      setStats(result.data);
+      setStatsError("");
+    } else
+      setStatsError(
+        result.error || "Não foi possível carregar os indicadores.",
+      );
+    setStatsLoading(false);
   }, []);
-
-  // ── Load Courses ──────────────────────────────────────────────────────────
-  const fetchCourses = useCallback(() => {
-    startCoursesLoading(async () => {
-      const result = await listCoursesAction({ perPage: 5, page: 1 });
-      if (result.success) setCourses(result.data.data);
-    });
+  const loadCourses = useCallback(async () => {
+    setCoursesLoading(true);
+    const result = await listCoursesAction({ perPage: 5, page: 1 });
+    if (result.success) {
+      setCourses(result.data.data);
+      setCourseError("");
+    } else setCourseError(result.error);
+    setCoursesLoading(false);
   }, []);
-
+  const loadComments = useCallback(async () => {
+    const request = ++commentRequest.current;
+    setCommentLoading(true);
+    const result = await listAdminCommentsAction({
+      search: query || undefined,
+      page,
+      perPage: 15,
+    });
+    if (request !== commentRequest.current) return;
+    if (result.success) {
+      setComments(result.data.data);
+      setMeta(result.data);
+      if (!query) setCommentTotal(result.data.total);
+      setCommentError("");
+    } else setCommentError(result.error);
+    setCommentLoading(false);
+  }, [query, page]);
   useEffect(() => {
-    fetchCourses();
-  }, [fetchCourses]);
-
-  // ── Delete course (dashboard) ─────────────────────────────────────────────
-  function handleDeleteCourse() {
-    if (!selectedCourse) return;
-    const target = selectedCourse;
-    setSelectedCourse(null);
-
-    startCourseDeleting(async () => {
-      const result = await deleteCourseAction(target.id);
+    void loadStats();
+    void loadCourses();
+  }, [loadStats, loadCourses]);
+  useEffect(() => {
+    void loadComments();
+  }, [loadComments]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setQuery(search.trim());
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [search]);
+  async function removeCourse() {
+    if (!courseTarget || deleteLock.current) return;
+    deleteLock.current = true;
+    setDeleting(true);
+    try {
+      const result = await deleteCourseAction(courseTarget.id);
       if (!result.success) {
         toast("Erro ao excluir curso", {
-          description: result.error ?? "Tente novamente.",
-          variant: "error",
-        });
-        return;
-      }
-
-      toast("Curso excluído", {
-        description: `"${target.title}" foi removido com sucesso.`,
-        variant: "success",
-      });
-
-      setCourses((prev) => prev.filter((c) => c.id !== target.id));
-    });
-  }
-
-  // ── Comments debounce ─────────────────────────────────────────────────────
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setDebouncedCommentSearch(commentSearch);
-      setCommentPage(1);
-    }, 350);
-    return () => clearTimeout(timeout);
-  }, [commentSearch]);
-
-  const fetchComments = useCallback(() => {
-    startCommentLoading(async () => {
-      const result = await listAdminCommentsAction({
-        search: debouncedCommentSearch || undefined,
-        page: commentPage,
-        perPage: 15,
-      });
-
-      if (!result.success) {
-        toast("Erro ao carregar comentarios", {
           description: result.error,
           variant: "error",
         });
         return;
       }
-
-      const { data, total, last_page, from, to, current_page, per_page } = result.data;
-      setComments(data);
-      setCommentMeta({ total, last_page, from, to, current_page, per_page });
-    });
-  }, [commentPage, debouncedCommentSearch]);
-
-  useEffect(() => {
-    if (activeTab === "comments") {
-      fetchComments();
+      setCourseTarget(null);
+      void loadCourses();
+      void loadStats();
+      toast("Curso excluído", { variant: "success" });
+    } finally {
+      deleteLock.current = false;
+      setDeleting(false);
     }
-  }, [activeTab, fetchComments]);
-
-  const commentStats = useMemo(
-    () => ({
-      total: commentMeta.total,
-      loaded: comments.length,
-    }),
-    [commentMeta.total, comments.length],
-  );
-
-  function handleGoToUser(comment: LessonComment) {
-    if (!comment.user?.id) {
-      toast("Comentario sem usuario vinculado", {
-        description: "Nao foi possivel abrir gestao do perfil para este comentario.",
-        variant: "info",
-      });
-      return;
-    }
-
-    const role = safeParam(comment.user.role, "student");
-    const plan = safeParam(comment.user.subscription_type, "free");
-
-    router.push(`/admin/alunos?manageFromComment=${comment.user.id}&targetRole=${role}&targetPlan=${plan}`);
   }
-
-  function handleDeleteComment() {
-    if (!deleteTargetComment) return;
-
-    startCommentDeleting(async () => {
-      const res = await deleteAdminCommentAction(deleteTargetComment.id);
-
-      if (!res.success) {
-        toast("Nao foi possivel apagar comentario", {
-          description: res.error ?? "Tente novamente.",
+  async function removeComment() {
+    if (!commentTarget || deleteLock.current) return;
+    deleteLock.current = true;
+    setDeleting(true);
+    try {
+      const result = await deleteAdminCommentAction(commentTarget.id);
+      if (!result.success) {
+        toast("Erro ao excluir comentário", {
+          description: result.error,
           variant: "error",
         });
         return;
       }
-
-      toast("Comentario removido", {
-        description: "O comentario foi apagado com sucesso.",
-        variant: "success",
-      });
-
-      setDeleteTargetComment(null);
-      fetchComments();
-    });
+      setCommentTarget(null);
+      setCommentTotal((total) =>
+        total === null ? null : Math.max(0, total - 1),
+      );
+      if (comments.length === 1 && page > 1) setPage(page - 1);
+      else void loadComments();
+      toast("Comentário excluído", { variant: "success" });
+    } finally {
+      deleteLock.current = false;
+      setDeleting(false);
+    }
   }
-
+  const overview = (
+    <section className="border-border bg-panel rounded-2xl border p-4 sm:p-5">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">Cursos recentes</h2>
+        <Link
+          className="text-accent-text min-h-11 content-center rounded-xl text-sm font-medium underline underline-offset-4 focus-visible:outline-2"
+          href="/admin/cursos/gerenciar"
+        >
+          Ver todos
+        </Link>
+      </div>
+      {courseError && (
+        <ErrorState
+          title={
+            courses.length
+              ? "A lista pode estar desatualizada"
+              : "Não foi possível carregar os cursos"
+          }
+          description={courseError}
+          onRetry={() => void loadCourses()}
+          loading={coursesLoading}
+        />
+      )}
+      {coursesLoading && !courses.length ? (
+        <div aria-busy="true">
+          <span className="sr-only">Carregando cursos</span>
+          <Skeleton className="h-32" />
+        </div>
+      ) : (
+        <DataList
+          items={courses}
+          label="Cursos recentes"
+          getKey={(item) => item.id}
+          getItemLabel={(item) => item.title}
+          columns={[
+            {
+              key: "title",
+              label: "Curso",
+              render: (item) => (
+                <span className="font-medium">{item.title}</span>
+              ),
+            },
+            {
+              key: "status",
+              label: "Status",
+              render: (item) => (
+                <Badge variant={item.is_published ? "success" : "neutral"}>
+                  {item.is_published ? "Publicado" : "Rascunho"}
+                </Badge>
+              ),
+            },
+            {
+              key: "date",
+              label: "Criado em",
+              render: (item) =>
+                new Date(item.created_at).toLocaleDateString("pt-BR"),
+            },
+          ]}
+          actions={
+            isAdmin
+              ? [
+                  {
+                    label: "Editar curso",
+                    onClick: (item) =>
+                      router.push(`/admin/cursos/${item.id}/editar`),
+                  },
+                  {
+                    label: "Excluir curso",
+                    danger: true,
+                    onClick: setCourseTarget,
+                  },
+                ]
+              : undefined
+          }
+          empty={
+            courseError ? null : (
+              <EmptyState
+                title="Seu catálogo começa aqui"
+                description="Os cursos cadastrados aparecerão nesta lista."
+              />
+            )
+          }
+        />
+      )}
+    </section>
+  );
+  const discussion = (
+    <section className="border-border bg-panel rounded-2xl border p-4 sm:p-5">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold">Comentários das aulas</h2>
+          <p className="text-text-muted mt-1 text-sm">
+            Consulte o perfil do aluno e modere as conversas.
+          </p>
+        </div>
+        <div className="w-full sm:w-80">
+          <Input
+            label="Buscar comentários"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Aula, aluno ou texto"
+            type="search"
+          />
+        </div>
+      </div>
+      {commentError && (
+        <ErrorState
+          title={
+            comments.length
+              ? "Comentários possivelmente desatualizados"
+              : "Não foi possível carregar os comentários"
+          }
+          description={commentError}
+          onRetry={() => void loadComments()}
+          loading={commentLoading}
+        />
+      )}
+      {commentLoading && !comments.length ? (
+        <div aria-busy="true">
+          <span className="sr-only">Carregando comentários</span>
+          <Skeleton className="h-40" />
+        </div>
+      ) : (
+        <DataList
+          items={comments}
+          label="Comentários das aulas"
+          getKey={(item) => item.id}
+          getItemLabel={(item) =>
+            `${item.user?.name ?? "Aluno"}: ${item.content.slice(0, 60)}`
+          }
+          columns={[
+            {
+              key: "lesson",
+              label: "Aula",
+              render: (item) => (
+                <>
+                  <span className="font-medium">
+                    {item.lesson?.title ?? "Aula não identificada"}
+                  </span>
+                  <span className="text-text-muted mt-1 block text-xs">
+                    {item.lesson?.module?.course?.title ??
+                      "Curso não informado"}
+                  </span>
+                </>
+              ),
+            },
+            {
+              key: "content",
+              label: "Comentário",
+              render: (item) => (
+                <span className="block max-w-prose break-words">
+                  {item.content}
+                </span>
+              ),
+            },
+            {
+              key: "user",
+              label: "Aluno",
+              render: (item) => (
+                <>
+                  <span>{item.user?.name ?? "Usuário"}</span>
+                  <span className="text-text-muted mt-1 block text-xs">
+                    {item.user?.role === "admin"
+                      ? "Administrador"
+                      : item.user?.role === "instructor"
+                        ? "Instrutor"
+                        : "Aluno"}
+                  </span>
+                </>
+              ),
+            },
+            {
+              key: "date",
+              label: "Data",
+              render: (item) =>
+                item.created_at
+                  ? new Date(item.created_at).toLocaleString("pt-BR")
+                  : "Sem data",
+            },
+          ]}
+          actions={[
+            {
+              label: "Perfil do aluno",
+              disabled: (item) => !item.user?.id,
+              onClick: (item) =>
+                router.push(
+                  `/admin/alunos?manageFromComment=${item.user!.id}&targetRole=${encodeURIComponent(item.user!.role ?? "student")}&targetPlan=${encodeURIComponent(item.user!.subscription_type ?? "free")}`,
+                ),
+            },
+            {
+              label: "Responder (em breve)",
+              disabled: () => true,
+              onClick: () => {},
+            },
+            {
+              label: "Excluir comentário",
+              danger: true,
+              onClick: setCommentTarget,
+            },
+          ]}
+          empty={
+            commentError ? null : (
+              <EmptyState
+                title={
+                  query
+                    ? "Nenhum comentário corresponde à busca"
+                    : "Nenhum comentário por enquanto"
+                }
+                description={
+                  query
+                    ? "Tente outro termo ou limpe a busca."
+                    : "As conversas das aulas aparecerão aqui."
+                }
+              />
+            )
+          }
+        />
+      )}
+      <footer className="border-border text-text-muted mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4 text-sm">
+        <span>
+          {commentLoading
+            ? "Atualizando…"
+            : `Exibindo ${meta.from ?? 0}–${meta.to ?? 0} de ${meta.total} comentários`}
+        </span>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            disabled={page === 1 || commentLoading}
+            onClick={() => setPage(page - 1)}
+            aria-label="Página anterior de comentários"
+          >
+            Anterior
+          </Button>
+          <span aria-current="page">{page}</span>
+          <Button
+            variant="secondary"
+            disabled={page >= meta.last_page || commentLoading}
+            onClick={() => setPage(page + 1)}
+            aria-label="Próxima página de comentários"
+          >
+            Próxima
+          </Button>
+        </div>
+      </footer>
+    </section>
+  );
   return (
-    <div className="bg-background flex min-h-screen flex-col font-sans">
-      <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6 lg:p-8">
-        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="text-secondary text-2xl font-bold">
-              Bem-vindo ao seu painel, {displayName}!
-            </h2>
-            <p className="mt-1 text-gray-500">
-              {user?.role === "instructor"
-                ? "Aqui você acompanha os cursos e comentários dos alunos."
-                : "Aqui você acompanha cursos e comentários dos alunos em um único lugar."}
-            </p>
-          </div>
-          {/* Botão de criar curso só para admin */}
-          {isAdmin && (
-            <Link
-              href="/admin/cursos/criar"
-              className="bg-primary hover:bg-primary-dark inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors sm:w-auto"
-            >
-              <MdAddCircleOutline size={20} />
-              Adicionar Novo Curso
-            </Link>
-          )}
-        </div>
-
-        {/* Stats cards */}
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-start justify-between">
-              <div className="text-primary rounded-lg bg-orange-50 p-2">
-                <MdPeople size={20} />
-              </div>
-            </div>
-            <p className="text-sm font-medium text-gray-500">Total de Alunos</p>
-            <p className="text-secondary mt-1 text-2xl font-bold">
-              {statsLoading ? "—" : (stats?.users?.students ?? "—")}
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-start justify-between">
-              <div className="rounded-lg bg-blue-50 p-2 text-blue-500">
-                <MdPlayCircle size={20} />
-              </div>
-            </div>
-            <p className="text-sm font-medium text-gray-500">Aulas Ativas</p>
-            <p className="text-secondary mt-1 text-2xl font-bold">
-              {statsLoading ? "—" : (stats?.lessons?.active ?? "—")}
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-start justify-between">
-              <div className="rounded-lg bg-violet-50 p-2 text-violet-500">
-                <MdOutlineForum size={20} />
-              </div>
-            </div>
-            <p className="text-sm font-medium text-gray-500">Comentarios na plataforma</p>
-            <p className="text-secondary mt-1 text-2xl font-bold">{commentStats.total}</p>
-          </div>
-
-          <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-start justify-between">
-              <div className="rounded-lg bg-emerald-50 p-2 text-emerald-500">
-                <MdOutlineSchool size={20} />
-              </div>
-            </div>
-            <p className="text-sm font-medium text-gray-500">Cursos Publicados</p>
-            <p className="text-secondary mt-1 text-2xl font-bold">
-              {statsLoading ? "—" : (stats?.courses?.published ?? "—")}
-            </p>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="mb-4 flex gap-2 border-b border-gray-200">
-          <button
-            type="button"
-            onClick={() => setActiveTab("overview")}
-            className={`rounded-t-lg px-4 py-2 text-sm font-semibold transition-colors ${
-              activeTab === "overview"
-                ? "border border-b-0 border-gray-200 bg-white text-secondary"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            Visao geral
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("comments")}
-            className={`inline-flex items-center gap-2 rounded-t-lg px-4 py-2 text-sm font-semibold transition-colors ${
-              activeTab === "comments"
-                ? "border border-b-0 border-gray-200 bg-white text-secondary"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            <MdOutlineChat size={16} />
-            Comentarios (admin)
-          </button>
-        </div>
-
-        {activeTab === "overview" ? (
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 p-4 sm:p-5">
-              <h3 className="font-semibold text-gray-800">Cursos Cadastrados</h3>
-              <Link
-                href="/admin/cursos/gerenciar"
-                className="text-sm font-semibold text-orange-600 hover:underline"
-              >
-                Ver todos →
-              </Link>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] border-collapse text-left">
-                <thead>
-                  <tr className="bg-gray-100 text-xs font-semibold tracking-[0.12em] text-gray-500 uppercase">
-                    <th className="px-6 py-4">Nome do Curso</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4">Criado em</th>
-                    {isAdmin && <th className="px-6 py-4 text-center">Acoes</th>}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 text-sm">
-                  {coursesLoading &&
-                    Array.from({ length: 3 }).map((_, i) => (
-                      <tr key={i} className="animate-pulse">
-                        <td className="px-6 py-4"><div className="h-3 w-48 rounded bg-gray-200" /></td>
-                        <td className="px-6 py-4"><div className="h-5 w-20 rounded-full bg-gray-200" /></td>
-                        <td className="px-6 py-4"><div className="h-3 w-24 rounded bg-gray-200" /></td>
-                        {isAdmin && <td className="px-6 py-4"><div className="mx-auto h-7 w-20 rounded bg-gray-200" /></td>}
-                      </tr>
-                    ))}
-
-                  {!coursesLoading && courses.length === 0 && (
-                    <tr>
-                      <td colSpan={isAdmin ? 4 : 3} className="px-6 py-10 text-center text-gray-500">
-                        Nenhum curso cadastrado ainda.
-                      </td>
-                    </tr>
-                  )}
-
-                  {!coursesLoading &&
-                    courses.map((course) => (
-                      <tr key={course.id} className="hover:bg-gray-50/70">
-                        <td className="px-6 py-4">
-                          <span className="font-semibold text-gray-800">{course.title}</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-bold ${
-                              course.is_published
-                                ? "bg-green-100 text-green-700"
-                                : "bg-slate-100 text-slate-500"
-                            }`}
-                          >
-                            {course.is_published ? "Publicado" : "Rascunho"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-gray-600">
-                          {new Date(course.created_at).toLocaleDateString("pt-BR")}
-                        </td>
-                        {isAdmin && (
-                          <td className="px-6 py-4">
-                            <div className="flex items-center justify-center gap-4 text-gray-400">
-                              <Link
-                                href={`/admin/cursos/${course.id}/editar`}
-                                className="hover:text-blue-500"
-                                aria-label={`Editar curso ${course.title}`}
-                              >
-                                <MdEdit size={18} />
-                              </Link>
-                              <button
-                                type="button"
-                                onClick={() => setSelectedCourse(course)}
-                                className="hover:text-red-500"
-                                aria-label={`Excluir curso ${course.title}`}
-                              >
-                                <MdDeleteOutline size={18} />
-                              </button>
-                            </div>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 p-4 sm:p-5">
-              <div>
-                <h3 className="font-semibold text-gray-800">Comentarios das aulas</h3>
-                <p className="text-xs text-gray-500">
-                  Esta aba foi criada para moderacao e exclusao de comentarios.
-                </p>
-              </div>
-
-              <div className="relative w-full sm:w-80">
-                <MdSearch
-                  size={18}
-                  className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
-                />
-                <input
-                  type="text"
-                  value={commentSearch}
-                  onChange={(event) => setCommentSearch(event.target.value)}
-                  placeholder="Buscar por aula, aluno ou texto..."
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pr-4 pl-10 text-sm text-gray-700 outline-none focus:border-orange-300"
-                />
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[980px] border-collapse text-left">
-                <thead>
-                  <tr className="bg-gray-100 text-xs font-semibold tracking-[0.12em] text-gray-500 uppercase">
-                    <th className="px-6 py-4">Aula</th>
-                    <th className="px-6 py-4">Comentario</th>
-                    <th className="px-6 py-4">Aluno</th>
-                    <th className="px-6 py-4">Data</th>
-                    <th className="px-6 py-4 text-center">Acoes</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 text-sm">
-                  {commentLoading &&
-                    Array.from({ length: 5 }).map((_, index) => (
-                      <tr key={index} className="animate-pulse">
-                        <td className="px-6 py-4"><div className="h-3 w-36 rounded bg-gray-200" /></td>
-                        <td className="px-6 py-4"><div className="h-3 w-64 rounded bg-gray-200" /></td>
-                        <td className="px-6 py-4"><div className="h-3 w-28 rounded bg-gray-200" /></td>
-                        <td className="px-6 py-4"><div className="h-3 w-32 rounded bg-gray-200" /></td>
-                        <td className="px-6 py-4"><div className="mx-auto h-7 w-36 rounded bg-gray-200" /></td>
-                      </tr>
-                    ))}
-
-                  {!commentLoading && comments.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
-                        Nenhum comentario encontrado para os filtros atuais.
-                      </td>
-                    </tr>
-                  )}
-
-                  {!commentLoading &&
-                    comments.map((comment) => (
-                      <tr key={comment.id} className="hover:bg-gray-50/70">
-                        <td className="px-6 py-4">
-                          <p className="font-semibold text-gray-800">
-                            {comment.lesson?.title ?? "Aula nao identificada"}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {comment.lesson?.module?.course?.title ?? "Curso nao informado"}
-                          </p>
-                        </td>
-                        <td className="max-w-[360px] px-6 py-4 text-gray-700">
-                          <p className="line-clamp-3">{comment.content}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="font-semibold text-gray-800">{comment.user?.name ?? "Usuario"}</p>
-                          <p className="text-xs text-gray-500">{comment.user?.role ?? "student"}</p>
-                        </td>
-                        <td className="px-6 py-4 text-gray-600">
-                          {comment.created_at
-                            ? new Date(comment.created_at).toLocaleString("pt-BR")
-                            : "Sem data"}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleGoToUser(comment)}
-                              className="rounded-md border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-                            >
-                              Perfil do aluno
-                            </button>
-                            <button
-                              type="button"
-                              disabled
-                              className="inline-flex cursor-not-allowed items-center gap-1 rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-700/70"
-                              title="Responder comentario sera implementado em proxima etapa"
-                            >
-                              <MdOutlineReply size={14} />
-                              Responder (em breve)
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setDeleteTargetComment(comment)}
-                              className="rounded-md border border-red-200 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
-                            >
-                              Deletar
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-
-            <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 p-4 text-sm text-gray-500">
-              <span>
-                Exibindo {commentMeta.from ?? 0} - {commentMeta.to ?? 0} de {commentMeta.total} comentarios
-              </span>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setCommentPage((p) => Math.max(1, p - 1))}
-                  disabled={commentPage === 1 || commentLoading}
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  &lt;
-                </button>
-                <button className="rounded-lg bg-orange-500 px-3 py-1.5 font-semibold text-white">
-                  {commentMeta.current_page}
-                </button>
-                <button
-                  onClick={() =>
-                    setCommentPage((p) => Math.min(commentMeta.last_page, p + 1))
-                  }
-                  disabled={commentPage >= commentMeta.last_page || commentLoading}
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  &gt;
-                </button>
-              </div>
-            </footer>
-          </div>
-        )}
-      </main>
-
-      <DeleteConfirmModal
-        open={Boolean(selectedCourse)}
-        label={selectedCourse?.title ?? ""}
-        title="Excluir curso"
-        description="Deseja mesmo excluir este curso? Esta ação é irreversível."
-        confirmLabel={courseDeleting ? "Excluindo..." : "Sim, excluir"}
-        onCancel={() => setSelectedCourse(null)}
-        onConfirm={handleDeleteCourse}
+    <div className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
+      <PageHeader
+        title="Visão geral"
+        description={`Olá, ${user?.name ?? "Usuário"}. Acompanhe seus cursos e as conversas dos alunos.`}
+        actions={
+          isAdmin ? (
+            <Button onClick={() => router.push("/admin/cursos/criar")}>
+              Novo curso
+            </Button>
+          ) : undefined
+        }
       />
-
+      {statsError && (
+        <ErrorState
+          title={
+            stats
+              ? "Indicadores possivelmente desatualizados"
+              : "Indicadores indisponíveis"
+          }
+          description={statsError}
+          onRetry={() => void loadStats()}
+          loading={statsLoading}
+        />
+      )}
+      <dl
+        className="border-border bg-panel grid grid-cols-2 gap-x-6 gap-y-4 rounded-2xl border p-4 sm:grid-cols-4 sm:p-5"
+        aria-busy={statsLoading}
+      >
+        {[
+          { label: "Alunos", value: stats?.users?.students },
+          { label: "Aulas ativas", value: stats?.lessons?.active },
+          { label: "Cursos publicados", value: stats?.courses?.published },
+          { label: "Comentários", value: commentTotal },
+        ].map((item) => (
+          <div key={item.label}>
+            <dt className="text-text-muted text-xs sm:text-sm">{item.label}</dt>
+            <dd className="mt-1 text-2xl font-semibold tabular-nums">
+              {item.value ?? "—"}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <Tabs
+        label="Seções do painel"
+        items={[
+          { value: "overview", label: "Visão geral", content: overview },
+          { value: "comments", label: "Comentários", content: discussion },
+        ]}
+      />
       <DeleteConfirmModal
-        open={Boolean(deleteTargetComment)}
-        label={deleteTargetComment?.content.slice(0, 60) ?? ""}
-        title="Deletar comentario"
-        description="Deseja mesmo apagar este comentario da aula?"
-        confirmLabel={commentDeleting ? "Deletando..." : "Sim, deletar"}
-        onCancel={() => setDeleteTargetComment(null)}
-        onConfirm={handleDeleteComment}
+        open={!!courseTarget}
+        label={courseTarget?.title ?? ""}
+        title="Excluir curso"
+        pending={deleting}
+        onCancel={() => setCourseTarget(null)}
+        onConfirm={() => void removeCourse()}
+      />
+      <DeleteConfirmModal
+        open={!!commentTarget}
+        label={
+          commentTarget
+            ? `${commentTarget.user?.name ?? "Aluno"}: ${commentTarget.content}`
+            : ""
+        }
+        title="Excluir comentário"
+        pending={deleting}
+        onCancel={() => setCommentTarget(null)}
+        onConfirm={() => void removeComment()}
       />
     </div>
   );

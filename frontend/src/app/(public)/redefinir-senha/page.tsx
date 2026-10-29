@@ -6,10 +6,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MdLockOutline, MdMusicNote } from "react-icons/md";
+import { MdArrowBack, MdLockOutline } from "react-icons/md";
 
-//Components
-import { Input } from "@/components/form/Input";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import AuthLayout from "@/components/marketing/AuthLayout";
 import { resetPasswordAction } from "@/app/actions/auth";
 import { toast } from "@/components/ui/Toast";
 
@@ -57,8 +58,8 @@ function ResetPasswordForm() {
       return;
     }
 
-    toast("Senha redefinida", {
-      description: "Faça login com a sua nova senha.",
+    toast("Senha redefinida com sucesso", {
+      description: "Agora você pode fazer login com sua nova senha.",
       variant: "success",
     });
 
@@ -66,72 +67,93 @@ function ResetPasswordForm() {
   };
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-5">
-      <div className="flex w-full flex-col gap-5 md:w-md">
-        <div className="flex items-center">
-          <MdMusicNote className="text-primary size-6" />
-          <h1 className="text-xl font-bold">AulasViolão</h1>
-        </div>
-        <h1 className="text-secondary text-3xl font-bold">Criar nova senha</h1>
-
-        {!isLinkValid ? (
-          <>
-            <p className="text-base font-normal text-gray-500">
-              Este link de redefinição é inválido ou está incompleto. Solicite um
-              novo link para continuar.
-            </p>
-            <Link
-              href="/esqueci-senha"
-              className="bg-primary hover:bg-primary-dark rounded-lg py-5 text-center text-sm font-semibold text-white transition-colors duration-300"
-            >
-              Solicitar novo link
-            </Link>
-          </>
+    <AuthLayout contextType="recovery">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-text text-3xl font-semibold tracking-tight">
+          Criar nova senha
+        </h1>
+        {isLinkValid ? (
+          <p className="text-text-muted text-sm leading-relaxed">
+            Defina uma nova senha de acesso para{" "}
+            <strong className="text-text font-semibold break-all">
+              {email}
+            </strong>
+            .
+          </p>
         ) : (
-          <>
-            <p className="text-base font-normal text-gray-500">
-              Defina uma nova senha para <strong>{email}</strong>.
-            </p>
-            <form
-              onSubmit={handleSubmit(handleReset)}
-              className="flex flex-col gap-5"
-            >
-              <Input
-                label="Nova senha"
-                type="password"
-                icon={MdLockOutline}
-                placeholder="******"
-                error={errors.password?.message}
-                {...register("password")}
-              />
-              <Input
-                label="Confirmar nova senha"
-                type="password"
-                icon={MdLockOutline}
-                placeholder="******"
-                error={errors.password_confirmation?.message}
-                {...register("password_confirmation")}
-              />
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-primary hover:bg-primary-dark active:bg-primary-dark rounded-lg py-5 text-sm font-semibold text-white transition-colors duration-300 disabled:opacity-60"
-              >
-                {isSubmitting ? "Salvando..." : "Redefinir senha"}
-              </button>
-              <p className="mt-2 text-sm">
-                <Link
-                  href="/login"
-                  className="text-primary hover:text-primary-dark active:text-primary-dark"
-                >
-                  Voltar para o login
-                </Link>
-              </p>
-            </form>
-          </>
+          <p className="text-text-muted text-sm leading-relaxed">
+            Este link de redefinição expirou ou é inválido. Solicite um novo
+            link para prosseguir com segurança.
+          </p>
         )}
       </div>
-    </div>
+
+      {!isLinkValid ? (
+        <div className="mt-6 flex flex-col gap-4">
+          <Link
+            href="/esqueci-senha"
+            className="focus-visible:ring-accent flex min-h-[44px] w-full items-center justify-center rounded-full bg-[#FF6B07] px-6 py-3 text-sm font-semibold text-[var(--on-accent)] shadow-sm transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+          >
+            Solicitar novo link
+          </Link>
+          <div className="border-t border-[var(--border)] pt-4">
+            <Link
+              href="/login"
+              className="text-text-muted hover:text-text focus-visible:ring-accent flex min-h-[44px] items-center gap-1.5 rounded-sm text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            >
+              <MdArrowBack size={18} aria-hidden="true" />
+              <span>Voltar para o login</span>
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <form
+          onSubmit={handleSubmit(handleReset)}
+          className="mt-6 flex flex-col gap-4"
+          noValidate
+        >
+          <Input
+            label="Nova senha"
+            type="password"
+            autoComplete="new-password"
+            icon={MdLockOutline}
+            placeholder="No mínimo 8 caracteres"
+            error={errors.password?.message}
+            {...register("password")}
+          />
+
+          <Input
+            label="Confirmar nova senha"
+            type="password"
+            autoComplete="new-password"
+            icon={MdLockOutline}
+            placeholder="Repita a nova senha"
+            error={errors.password_confirmation?.message}
+            {...register("password_confirmation")}
+          />
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            loading={isSubmitting}
+            className="mt-2 w-full font-semibold"
+          >
+            {isSubmitting ? "Salvando..." : "Redefinir senha"}
+          </Button>
+
+          <div className="mt-4 flex items-center justify-between border-t border-[var(--border)] pt-4">
+            <Link
+              href="/login"
+              className="text-text-muted hover:text-text focus-visible:ring-accent flex min-h-[44px] items-center gap-1.5 rounded-sm text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            >
+              <MdArrowBack size={18} aria-hidden="true" />
+              <span>Voltar para o login</span>
+            </Link>
+          </div>
+        </form>
+      )}
+    </AuthLayout>
   );
 }
 

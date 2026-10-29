@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useTransition, useCallback } from "react";
+import { useRef, useState, useEffect, useTransition, useCallback } from "react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
 import {
@@ -8,51 +9,24 @@ import {
   updateUserRoleAction,
   updateUserSubscriptionAction,
   updateUserDetailsAction,
+  getUserDetailAction,
   deleteUserAction,
   type ApiUser,
   type UserRole,
   type SubscriptionType,
   type UsersPaginated,
 } from "@/app/actions/users";
-import {
-  MdCheckCircle,
-  MdDoNotDisturbOn,
-  MdOutlinePeopleAlt,
-  MdSearch,
-  MdOutlineEdit,
-  MdClose,
-  MdRefresh,
-  MdDeleteOutline,
-  MdOutlinePerson,
-  MdEmail,
-} from "react-icons/md";
-
-// ─── Helpers visuais ──────────────────────────────────────────────────────────
-
-const gradients = [
-  "from-amber-300 to-orange-500",
-  "from-cyan-300 to-blue-500",
-  "from-pink-300 to-rose-500",
-  "from-green-300 to-emerald-500",
-  "from-violet-300 to-purple-500",
-  "from-yellow-300 to-amber-500",
-  "from-teal-300 to-cyan-500",
-  "from-red-300 to-rose-500",
-];
-
-function avatarGradient(id: number) {
-  return gradients[id % gradients.length];
-}
-
-function initials(name?: string | null) {
-  if (!name) return "";
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
-}
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { Dialog } from "@/components/ui/Dialog";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { DataList } from "@/components/ui/DataList";
+import { Badge } from "@/components/ui/Badge";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { Skeleton } from "@/components/ui/Skeleton";
+import DeleteConfirmModal from "../components/DeleteConfirmModal";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("pt-BR", {
@@ -68,30 +42,36 @@ const roleLabel: Record<UserRole, string> = {
   admin: "Admin",
 };
 
-const roleBadge: Record<UserRole, string> = {
-  student: "bg-blue-100 text-blue-600",
-  instructor: "bg-violet-100 text-violet-600",
-  admin: "bg-red-100 text-red-600",
-};
-
-// ─── Modal de Edição ──────────────────────────────────────────────────────────
-
 type EditModalProps = {
   user: ApiUser;
   onClose: () => void;
   onSaved: (updated: ApiUser) => void;
+  initialRole?: UserRole;
+  initialSubscription?: SubscriptionType;
 };
 
-function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
+function EditUserModal({
+  user,
+  onClose,
+  onSaved,
+  initialRole,
+  initialSubscription,
+}: EditModalProps) {
   const [isPending, startTransition] = useTransition();
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
-  const [role, setRole] = useState<UserRole>(user.role);
+  const [role, setRole] = useState<UserRole>(initialRole ?? user.role);
   const [subscription, setSubscription] = useState<SubscriptionType>(
-    user.subscription_type ?? "free",
+    initialSubscription ?? user.subscription_type ?? "free",
   );
 
+  const [error, setError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
   function handleSave() {
+    setSubmitted(true);
+    if (!name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+      return;
+    setError("");
     startTransition(async () => {
       // 1) Atualizar nome e e-mail se mudaram
       const nameChanged = name.trim() !== user.name;
@@ -102,6 +82,7 @@ function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
           ...(emailChanged && { email: email.trim() }),
         });
         if (!detailsRes.success) {
+          setError(detailsRes.error ?? "Não foi possível salvar os dados.");
           toast("Erro ao atualizar dados", {
             description: detailsRes.error ?? "Tente novamente",
             variant: "error",
@@ -114,6 +95,10 @@ function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
       if (role !== user.role) {
         const res = await updateUserRoleAction(user.id, role);
         if (!res.success) {
+          setError(
+            res.error ??
+              "Não foi possível salvar todas as alterações. Revise os dados e tente novamente.",
+          );
           toast("Erro ao atualizar tipo", {
             description: res.error ?? "Tente novamente",
             variant: "error",
@@ -129,6 +114,10 @@ function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
       ) {
         const res = await updateUserSubscriptionAction(user.id, subscription);
         if (!res.success) {
+          setError(
+            res.error ??
+              "Não foi possível salvar todas as alterações. Revise os dados e tente novamente.",
+          );
           toast("Erro ao atualizar plano", {
             description: res.error ?? "Tente novamente",
             variant: "error",
@@ -154,150 +143,101 @@ function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div
-              className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white ${avatarGradient(user.id)}`}
-            >
-              {initials(user.name)}
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900">{user.name}</p>
-              <p className="text-xs text-gray-500">{user.email}</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
+    <Dialog
+      open
+      dismissible={!isPending}
+      onClose={() => {
+        if (!isPending) onClose();
+      }}
+      title="Editar usuário"
+      description={`${user.name} · ${user.email}`}
+    >
+      <form
+        className="mt-5 space-y-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          handleSave();
+        }}
+        noValidate
+      >
+        <Input
+          label="Nome completo"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          disabled={isPending}
+          error={submitted && !name.trim() ? "Informe o nome." : undefined}
+        />
+        <Input
+          label="E-mail"
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          disabled={isPending}
+          error={
+            submitted && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+              ? "Informe um e-mail válido."
+              : undefined
+          }
+        />
+        <Select
+          label="Permissão"
+          value={role}
+          onChange={(event) => setRole(event.target.value as UserRole)}
+          disabled={isPending}
+        >
+          {(["student", "instructor", "admin"] as UserRole[]).map((value) => (
+            <option key={value} value={value}>
+              {roleLabel[value]}
+            </option>
+          ))}
+        </Select>
+        {role === "student" && (
+          <Select
+            label="Plano do aluno"
+            value={subscription}
+            onChange={(event) =>
+              setSubscription(event.target.value as SubscriptionType)
+            }
             disabled={isPending}
-            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-            aria-label="Fechar modal"
           >
-            <MdClose size={18} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="space-y-5 px-6 py-5">
-          {/* Nome */}
-          <div>
-            <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">Nome</p>
-            <div className="mt-2 flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
-              <MdOutlinePerson size={16} className="text-gray-400" />
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full bg-transparent text-sm text-gray-700 outline-none"
-                placeholder="Nome do usuário"
-              />
-            </div>
-          </div>
-
-          {/* E-mail */}
-          <div>
-            <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">E-mail</p>
-            <div className="mt-2 flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
-              <MdEmail size={16} className="text-gray-400" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-transparent text-sm text-gray-700 outline-none"
-                placeholder="email@exemplo.com"
-              />
-            </div>
-          </div>
-
-          {/* Role */}
-          <div>
-            <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-              Tipo de usuário (Role)
-            </p>
-            <div className="mt-2 grid grid-cols-3 gap-2">
-              {(["student", "instructor", "admin"] as UserRole[]).map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setRole(r)}
-                  className={`rounded-lg border py-2 text-sm font-semibold transition ${
-                    role === r
-                      ? "border-orange-400 bg-orange-50 text-orange-700"
-                      : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
-                  }`}
-                >
-                  {roleLabel[r]}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Subscription — só para student */}
-          {role === "student" && (
-            <div>
-              <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-                Plano do aluno
-              </p>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {(["free", "premium"] as SubscriptionType[]).map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setSubscription(s)}
-                    className={`rounded-lg border py-2 text-sm font-semibold capitalize transition ${
-                      subscription === s
-                        ? "border-orange-400 bg-orange-50 text-orange-700"
-                        : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="flex justify-end gap-2 border-t border-gray-100 px-6 py-4">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isPending}
-            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-          >
+            <option value="free">Gratuito</option>
+            <option value="premium">Premium</option>
+          </Select>
+        )}
+        {error && (
+          <p role="alert" className="text-danger text-sm">
+            {error}
+          </p>
+        )}
+        <div className="flex flex-wrap justify-end gap-2 pt-3">
+          <Button variant="secondary" onClick={onClose} disabled={isPending}>
             Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isPending}
-            className="bg-primary rounded-lg px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            {isPending ? "Salvando…" : "Salvar alterações"}
-          </button>
+          </Button>
+          <Button type="submit" loading={isPending}>
+            Salvar alterações
+          </Button>
         </div>
-      </div>
-    </div>
+      </form>
+    </Dialog>
   );
 }
-
-// ─── Página principal ─────────────────────────────────────────────────────────
 
 export default function StudentsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [users, setUsers] = useState<ApiUser[]>([]);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [loading, startLoading] = useTransition();
-  const [isAutoManaging, startAutoManaging] = useTransition();
+  const [error, setError] = useState("");
+  const [suggestedRole, setSuggestedRole] = useState<UserRole>();
+  const [suggestedPlan, setSuggestedPlan] = useState<SubscriptionType>();
   const [hasProcessedManageFromComment, setHasProcessedManageFromComment] =
     useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | "">("");
   const [page, setPage] = useState(1);
+  const requestSequence = useRef(0);
   const [meta, setMeta] = useState<Omit<UsersPaginated, "data">>({
     total: 0,
     last_page: 1,
@@ -307,7 +247,9 @@ export default function StudentsPage() {
     current_page: 1,
   });
   const [editingUser, setEditingUser] = useState<ApiUser | null>(null);
-  const [deleteTargetUser, setDeleteTargetUser] = useState<ApiUser | null>(null);
+  const [deleteTargetUser, setDeleteTargetUser] = useState<ApiUser | null>(
+    null,
+  );
   const [isDeleting, startDeleting] = useTransition();
 
   // Debounce busca
@@ -321,6 +263,7 @@ export default function StudentsPage() {
 
   // Busca via Server Action
   const fetchUsers = useCallback(() => {
+    const request = ++requestSequence.current;
     startLoading(async () => {
       const result = await listUsersAction({
         search: debouncedSearch || undefined,
@@ -329,7 +272,10 @@ export default function StudentsPage() {
         perPage: 15,
       });
 
+      if (request !== requestSequence.current) return;
+
       if (!result.success) {
+        setError(result.error);
         toast("Erro ao carregar usuários", {
           description: result.error,
           variant: "error",
@@ -338,7 +284,9 @@ export default function StudentsPage() {
       }
 
       const { data, ...pageMeta } = result.data;
+      setError("");
       setUsers(data);
+      setHasLoaded(true);
       setMeta(pageMeta);
     });
   }, [debouncedSearch, roleFilter, page]);
@@ -348,72 +296,51 @@ export default function StudentsPage() {
   }, [fetchUsers]);
 
   useEffect(() => {
-    if (hasProcessedManageFromComment || loading || users.length === 0) return;
-
-    const userIdParam = searchParams.get("manageFromComment");
-    if (!userIdParam) return;
-
-    const userId = Number(userIdParam);
-    if (!Number.isFinite(userId)) return;
-
-    const target = users.find((user) => user.id === userId);
-    if (!target) return;
-
-    const targetRole = (searchParams.get("targetRole") as UserRole | null) ?? target.role;
-    const targetPlan =
-      (searchParams.get("targetPlan") as SubscriptionType | null) ??
-      target.subscription_type ??
-      "free";
-
-    setHasProcessedManageFromComment(true);
-
-    startAutoManaging(async () => {
-      const roleRes = await updateUserRoleAction(target.id, targetRole);
-
-      if (!roleRes.success) {
-        toast("Falha ao sincronizar role", {
-          description: roleRes.error ?? "Nao foi possivel aplicar role do perfil comentador.",
-          variant: "error",
-        });
-        router.replace("/admin/alunos");
-        return;
-      }
-
-      if (targetRole === "student") {
-        const subRes = await updateUserSubscriptionAction(target.id, targetPlan);
-        if (!subRes.success) {
-          toast("Falha ao sincronizar plano", {
-            description: subRes.error ?? "Nao foi possivel aplicar plano do perfil comentador.",
+    if (hasProcessedManageFromComment) return;
+    const parameter = searchParams.get("manageFromComment");
+    if (!parameter) return;
+    let cancelled = false;
+    async function resolveAuthor() {
+      const userId = Number(parameter);
+      if (
+        !/^\d+$/.test(parameter!) ||
+        !Number.isSafeInteger(userId) ||
+        userId < 1
+      ) {
+        toast("Autor inválido", { variant: "error" });
+      } else {
+        const result = await getUserDetailAction(userId);
+        if (cancelled) return;
+        if (result.success) {
+          const target = result.data;
+          const role = searchParams.get("targetRole") as UserRole;
+          const plan = searchParams.get("targetPlan") as SubscriptionType;
+          setSuggestedRole(
+            ["student", "instructor", "admin"].includes(role)
+              ? role
+              : target.role,
+          );
+          setSuggestedPlan(
+            ["free", "premium"].includes(plan)
+              ? plan
+              : (target.subscription_type ?? "free"),
+          );
+          setEditingUser(target);
+        } else
+          toast("Não foi possível abrir o autor", {
+            description: result.error,
             variant: "error",
           });
-          router.replace("/admin/alunos");
-          return;
-        }
       }
-
-      toast("Perfil do comentario carregado", {
-        description:
-          "Tipo de usuario e plano foram atualizados para este aluno. Voce pode revisar no modal.",
-        variant: "success",
-      });
-
-      setEditingUser({
-        ...target,
-        role: targetRole,
-        subscription_type: targetRole === "student" ? targetPlan : target.subscription_type,
-      });
-
-      fetchUsers();
+      if (cancelled) return;
+      setHasProcessedManageFromComment(true);
       router.replace("/admin/alunos");
-    });
-  }, [
-    fetchUsers,
-    hasProcessedManageFromComment,
-    loading,
-    router,
-    searchParams,
-    users,
-  ]);
+    }
+    void resolveAuthor();
+    return () => {
+      cancelled = true;
+    };
+  }, [hasProcessedManageFromComment, router, searchParams]);
 
   function handleUserSaved(updated: ApiUser) {
     setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
@@ -423,7 +350,6 @@ export default function StudentsPage() {
   function handleConfirmDelete() {
     if (!deleteTargetUser) return;
     const target = deleteTargetUser;
-    setDeleteTargetUser(null);
 
     startDeleting(async () => {
       const res = await deleteUserAction(target.id);
@@ -438,7 +364,9 @@ export default function StudentsPage() {
         description: `${target.name} foi removido da plataforma.`,
         variant: "success",
       });
-      setUsers((prev) => prev.filter((u) => u.id !== target.id));
+      setDeleteTargetUser(null);
+      if (users.length === 1 && page > 1) setPage(page - 1);
+      else fetchUsers();
     });
   }
 
@@ -450,340 +378,248 @@ export default function StudentsPage() {
   ).length;
 
   return (
-    <div className="bg-background min-h-screen">
-      <main className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">
-        {/* Cabeçalho */}
-        <section className="mb-7 flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-secondary text-2xl font-bold">
-              Gestão de Usuários
-            </h1>
-            <p className="mt-1 text-gray-500">
-              Gerencie roles e planos de todos os usuários da plataforma.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={fetchUsers}
-            disabled={loading || isAutoManaging}
-            className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-          >
-            <MdRefresh
-              size={16}
-              className={loading || isAutoManaging ? "animate-spin" : ""}
-            />
+    <div className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
+      <PageHeader
+        title="Gestão de usuários"
+        description="Gerencie os dados, as permissões e os planos dos usuários."
+        actions={
+          <Button variant="secondary" loading={loading} onClick={fetchUsers}>
             Atualizar
-          </button>
-        </section>
-
-        {/* Cards de stats */}
-        <section className="mb-7 grid grid-cols-1 gap-5 sm:grid-cols-3">
-          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-4 w-fit rounded-lg bg-blue-100 p-2 text-blue-600">
-              <MdOutlinePeopleAlt size={22} />
-            </div>
-            <p className="text-sm font-semibold text-gray-500">
-              Total de Usuários
-            </p>
-            <p className="text-secondary mt-1 text-2xl font-bold">
-              {loading ? "—" : meta.total.toLocaleString("pt-BR")}
-            </p>
-          </article>
-
-          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-4 w-fit rounded-lg bg-orange-100 p-2 text-orange-600">
-              <MdCheckCircle size={22} />
-            </div>
-            <p className="text-sm font-semibold text-gray-500">Plano Premium</p>
-            <p className="text-secondary mt-1 text-2xl font-bold">
-              {loading ? "—" : premiumCount}
-              {!loading && (
-                <span className="ml-1 text-xs font-normal text-gray-400">
-                  nesta página
-                </span>
-              )}
-            </p>
-          </article>
-
-          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-4 w-fit rounded-lg bg-slate-100 p-2 text-slate-500">
-              <MdDoNotDisturbOn size={22} />
-            </div>
-            <p className="text-sm font-semibold text-gray-500">Plano Free</p>
-            <p className="text-secondary mt-1 text-2xl font-bold">
-              {loading ? "—" : freeCount}
-              {!loading && (
-                <span className="ml-1 text-xs font-normal text-gray-400">
-                  nesta página
-                </span>
-              )}
-            </p>
-          </article>
-        </section>
-
-        {/* Tabela */}
-        <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-          {/* Filtros */}
-          <header className="flex flex-wrap items-center gap-3 border-b border-gray-100 p-4">
-            <label className="relative min-w-[200px] flex-1">
-              <MdSearch
-                size={18}
-                className="absolute top-1/2 left-3 -translate-y-1/2 text-orange-500"
-              />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por nome ou e-mail..."
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pr-4 pl-10 text-sm text-gray-700 outline-none focus:border-orange-300"
-              />
-            </label>
-
-            <select
-              value={roleFilter}
-              onChange={(e) => {
-                setRoleFilter(e.target.value as UserRole | "");
-                setPage(1);
-              }}
-              className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-orange-300"
-            >
-              <option value="">Todos os tipos</option>
-              <option value="student">Aluno</option>
-              <option value="instructor">Instrutor</option>
-              <option value="admin">Admin</option>
-            </select>
-          </header>
-
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] border-collapse text-left">
-              <thead>
-                <tr className="bg-gray-100 text-xs font-semibold tracking-[0.12em] text-gray-500 uppercase">
-                  <th className="px-6 py-4">Usuário</th>
-                  <th className="px-6 py-4">E-mail</th>
-                  <th className="px-6 py-4">Tipo</th>
-                  <th className="px-6 py-4">Plano</th>
-                  <th className="px-6 py-4">Cadastrado em</th>
-                  <th className="px-6 py-4 text-center">Ações</th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-gray-100 text-sm">
-                {/* Skeleton */}
-                {loading &&
-                  Array.from({ length: 6 }).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-gray-200" />
-                          <div className="h-3 w-28 rounded bg-gray-200" />
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="h-3 w-36 rounded bg-gray-200" />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="h-5 w-16 rounded-full bg-gray-200" />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="h-5 w-16 rounded-full bg-gray-200" />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="h-3 w-24 rounded bg-gray-200" />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="mx-auto h-7 w-7 rounded-lg bg-gray-200" />
-                      </td>
-                    </tr>
-                  ))}
-
-                {/* Empty */}
-                {!loading && users.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-6 py-10 text-center text-gray-500"
-                    >
-                      Nenhum usuário encontrado.
-                    </td>
-                  </tr>
-                )}
-
-                {/* Rows */}
-                {!loading &&
-                  users.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50/70">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          {user.avatar_url ? (
-                            <img
-                              src={user.avatar_url}
-                              alt={user.name}
-                              className="h-8 w-8 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div
-                              className={`flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white ${avatarGradient(user.id)}`}
-                            >
-                              {initials(user.name)}
-                            </div>
-                          )}
-                          <span className="font-semibold text-gray-800">
-                            {user.name}
-                          </span>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4 text-gray-600">{user.email}</td>
-
-                      <td className="px-6 py-4">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${roleBadge[user.role]}`}
-                        >
-                          {roleLabel[user.role]}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        {user.role === "student" ? (
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-bold ${
-                              user.subscription_type === "premium"
-                                ? "bg-orange-100 text-orange-600"
-                                : "bg-slate-100 text-slate-600"
-                            }`}
-                          >
-                            {user.subscription_type === "premium"
-                              ? "Premium"
-                              : "Free"}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </td>
-
-                      <td className="px-6 py-4 text-gray-500">
-                        {formatDate(user.created_at)}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setEditingUser(user)}
-                            className="rounded-md p-1.5 text-gray-400 hover:bg-orange-50 hover:text-orange-600"
-                            aria-label={`Editar usuário ${user.name}`}
-                            title="Editar usuário"
-                          >
-                            <MdOutlineEdit size={17} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeleteTargetUser(user)}
-                            className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
-                            aria-label={`Excluir usuário ${user.name}`}
-                            title="Excluir usuário"
-                          >
-                            <MdDeleteOutline size={17} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+          </Button>
+        }
+      />
+      <section className="border-border bg-panel rounded-2xl border p-4 sm:p-5">
+        <div className="grid gap-4 sm:grid-cols-[1fr_220px]">
+          <Input
+            label="Buscar usuários"
+            type="search"
+            value={search}
+            placeholder="Nome ou e-mail"
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <Select
+            label="Filtrar por permissão"
+            value={roleFilter}
+            onChange={(event) => {
+              setRoleFilter(event.target.value as UserRole | "");
+              setPage(1);
+            }}
+          >
+            <option value="">Todas as permissões</option>
+            <option value="student">Aluno</option>
+            <option value="instructor">Instrutor</option>
+            <option value="admin">Administrador</option>
+          </Select>
+        </div>
+        <dl className="border-border mt-5 grid grid-cols-3 gap-3 border-t pt-4">
+          <div>
+            <dt className="text-text-muted text-xs">
+              {debouncedSearch || roleFilter ? "Resultados" : "Usuários"}
+            </dt>
+            <dd className="mt-1 text-xl font-semibold tabular-nums">
+              {loading || !hasLoaded ? "—" : meta.total}
+            </dd>
           </div>
-
-          {/* Paginação */}
-          <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 p-4 text-sm text-gray-500">
-            <span>
-              {loading
-                ? "Carregando…"
-                : `Exibindo ${meta.from ?? 0}–${meta.to ?? 0} de ${meta.total.toLocaleString("pt-BR")} usuários`}
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1 || loading}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                &lt;
-              </button>
-
-              {Array.from(
-                { length: Math.min(5, meta.last_page) },
-                (_, i) => i + 1,
-              ).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
+          <div>
+            <dt className="text-text-muted text-xs">Premium nesta página</dt>
+            <dd className="mt-1 text-xl font-semibold tabular-nums">
+              {loading || !hasLoaded ? "—" : premiumCount}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-text-muted text-xs">Gratuitos nesta página</dt>
+            <dd className="mt-1 text-xl font-semibold tabular-nums">
+              {loading || !hasLoaded ? "—" : freeCount}
+            </dd>
+          </div>
+        </dl>
+      </section>
+      <section className="border-border bg-panel rounded-2xl border p-4 sm:p-5">
+        <h2 className="mb-4 text-lg font-semibold">Usuários</h2>
+        {error && (
+          <ErrorState
+            title={
+              users.length
+                ? "Lista possivelmente desatualizada"
+                : "Não foi possível carregar os usuários"
+            }
+            description={error}
+            onRetry={fetchUsers}
+            loading={loading}
+          />
+        )}
+        {loading && !users.length ? (
+          <div aria-busy="true">
+            <span className="sr-only">Carregando usuários</span>
+            <Skeleton className="h-40" />
+          </div>
+        ) : (
+          <DataList
+            items={users}
+            label="Usuários cadastrados"
+            getKey={(item) => item.id}
+            getItemLabel={(item) => `${item.name}, ${item.email}`}
+            columns={[
+              {
+                key: "name",
+                label: "Usuário",
+                render: (item) => (
+                  <>
+                    <span className="flex items-center gap-3">
+                      <span
+                        className="bg-canvas flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-semibold"
+                        aria-hidden="true"
+                      >
+                        {item.avatar_url ? (
+                          <Image
+                            unoptimized
+                            src={item.avatar_url}
+                            width={36}
+                            height={36}
+                            alt=""
+                            className="size-9 object-cover"
+                          />
+                        ) : (
+                          item.name
+                            .split(" ")
+                            .filter(Boolean)
+                            .slice(0, 2)
+                            .map((part) => part[0])
+                            .join("")
+                            .toUpperCase()
+                        )}
+                      </span>
+                      <span className="font-medium">{item.name}</span>
+                    </span>
+                    <span className="text-text-muted mt-1 block text-xs break-all">
+                      {item.email}
+                    </span>
+                  </>
+                ),
+              },
+              {
+                key: "role",
+                label: "Permissão",
+                render: (item) => <Badge>{roleLabel[item.role]}</Badge>,
+              },
+              {
+                key: "plan",
+                label: "Plano",
+                render: (item) =>
+                  item.role === "student" ? (
+                    <Badge
+                      variant={
+                        item.subscription_type === "premium"
+                          ? "success"
+                          : "neutral"
+                      }
+                    >
+                      {item.subscription_type === "premium"
+                        ? "Premium"
+                        : "Gratuito"}
+                    </Badge>
+                  ) : (
+                    "Não se aplica"
+                  ),
+              },
+              {
+                key: "date",
+                label: "Cadastro",
+                render: (item) => formatDate(item.created_at),
+              },
+            ]}
+            actions={[
+              {
+                label: "Editar usuário",
+                onClick: (item) => {
+                  setSuggestedRole(undefined);
+                  setSuggestedPlan(undefined);
+                  setEditingUser(item);
+                },
+              },
+              {
+                label: "Excluir usuário",
+                danger: true,
+                onClick: setDeleteTargetUser,
+                disabled: () => isDeleting,
+              },
+            ]}
+            empty={
+              error ? null : (
+                <EmptyState
+                  title={
+                    debouncedSearch || roleFilter
+                      ? "Nenhum usuário corresponde aos filtros"
+                      : "Nenhum usuário cadastrado"
+                  }
+                  description="Os usuários cadastrados aparecerão aqui. Ajuste os filtros para ampliar a busca."
+                />
+              )
+            }
+          />
+        )}
+        <footer className="border-border text-text-muted mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4 text-sm">
+          <span role="status">
+            {loading
+              ? "Atualizando…"
+              : `Exibindo ${meta.from ?? 0}–${meta.to ?? 0} de ${meta.total} usuários`}
+          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="secondary"
+              disabled={page <= 1 || loading}
+              onClick={() => setPage(page - 1)}
+            >
+              Anterior
+            </Button>
+            {Array.from({ length: Math.min(5, meta.last_page) }, (_, index) => {
+              const first = Math.max(1, Math.min(page - 2, meta.last_page - 4));
+              const targetPage = first + index;
+              return (
+                <Button
+                  key={targetPage}
+                  variant={targetPage === page ? "primary" : "secondary"}
+                  aria-current={targetPage === page ? "page" : undefined}
+                  aria-label={`Ir para a página ${targetPage}`}
                   disabled={loading}
-                  className={`rounded-lg px-3 py-1.5 ${
-                    p === page
-                      ? "bg-orange-500 font-semibold text-white"
-                      : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-                  }`}
+                  onClick={() => setPage(targetPage)}
                 >
-                  {p}
-                </button>
-              ))}
-
-              {meta.last_page > 5 && (
-                <span className="px-1 text-gray-400">…</span>
-              )}
-
-              <button
-                onClick={() =>
-                  setPage((p) => Math.min(meta.last_page, p + 1))
-                }
-                disabled={page === meta.last_page || loading}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                &gt;
-              </button>
-            </div>
-          </footer>
-        </section>
-      </main>
-
-      {/* Modal de edição */}
+                  {targetPage}
+                </Button>
+              );
+            })}
+            <Button
+              variant="secondary"
+              disabled={page >= meta.last_page || loading}
+              onClick={() => setPage(page + 1)}
+            >
+              Próxima
+            </Button>
+          </div>
+        </footer>
+      </section>
       {editingUser && (
         <EditUserModal
+          key={editingUser.id}
           user={editingUser}
+          initialRole={suggestedRole}
+          initialSubscription={suggestedPlan}
           onClose={() => setEditingUser(null)}
           onSaved={handleUserSaved}
         />
       )}
-
-      {/* Modal de exclusão */}
-      {deleteTargetUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-gray-900">Excluir usuário?</h3>
-            <p className="mt-2 text-sm text-gray-600">
-              Você está prestes a excluir{" "}
-              <strong>{deleteTargetUser.name}</strong>. Esta ação não poderá ser desfeita.
-            </p>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setDeleteTargetUser(null)}
-                disabled={isDeleting}
-                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmDelete}
-                disabled={isDeleting}
-                className="rounded-lg bg-red-500 px-5 py-2 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-60"
-              >
-                {isDeleting ? "Excluindo..." : "Sim, excluir"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteConfirmModal
+        open={!!deleteTargetUser}
+        title="Excluir usuário"
+        label={
+          deleteTargetUser
+            ? `${deleteTargetUser.name} · ${deleteTargetUser.email}`
+            : ""
+        }
+        pending={isDeleting}
+        onCancel={() => setDeleteTargetUser(null)}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

@@ -1,11 +1,17 @@
 import Link from "next/link";
 import VideoPlayer from "@/components/ui/VideoPlayer";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { ErrorState } from "@/components/ui/ErrorState";
 import LessonTabs from "./LessonTabs";
 import {
   MdAccessTime,
-  MdArrowDownward,
-  MdCheckCircle,
-  MdCheckCircleOutline,
+  MdArrowBack,
+  MdArrowForward,
+  MdMenuBook,
+  MdOutlinePlayCircleFilled,
+  MdPlayArrow,
 } from "react-icons/md";
 import { getLessonDetailAction } from "@/app/actions/courses";
 
@@ -29,33 +35,41 @@ export default async function Lesson({
 
   if (!result.success) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="w-full max-w-2xl rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
-          <h1 className="text-secondary text-2xl font-bold">
-            Aula indisponível
-          </h1>
-          <p className="mt-2 text-sm text-gray-500">{result.error}</p>
-          <Link
-            href="/aluno/home"
-            className="bg-primary mt-6 inline-flex rounded-lg px-5 py-3 text-sm font-semibold text-white"
-          >
-            Voltar para a trilha
-          </Link>
-        </div>
+      <div className="flex min-h-[60vh] items-center justify-center p-4">
+        <ErrorState
+          title="Aula indisponível"
+          description={result.error}
+          action={
+            /* Q04: ButtonLink sem <a><button> */
+            <ButtonLink href="/aluno/home" variant="primary">
+              Voltar para a trilha
+            </ButtonLink>
+          }
+          className="border-border bg-panel w-full max-w-lg rounded-[var(--radius-panel)] border p-8 text-center"
+        />
       </div>
     );
   }
 
   const lesson = result.data;
   const course = lesson.module.course;
-  const currentModuleId = lesson.module.id;
+
+  // Flatten all lessons in order to calculate Anterior / Próxima (M01)
+  const allLessons = course.modules.flatMap((m) => m.lessons);
+  const currentIndex = allLessons.findIndex((l) => l.id === lesson.id);
+  const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
+  const nextLesson =
+    currentIndex >= 0 && currentIndex < allLessons.length - 1
+      ? allLessons[currentIndex + 1]
+      : null;
+
   const resumo =
     lesson.description ||
     "Esta aula ainda não possui uma descrição detalhada cadastrada.";
   const dicas =
     lesson.module.description ||
     course.description ||
-    "Siga a ordem das aulas e use os materiais complementares para fixar o conteúdo.";
+    "Siga a ordem das aulas e pratique no seu próprio ritmo.";
 
   const materials = lesson.materials.map((material) => ({
     id: material.id,
@@ -75,115 +89,214 @@ export default async function Lesson({
   }));
 
   return (
-    <div className="flex w-full flex-col gap-10">
-      <div className="relative overflow-hidden rounded-lg">
-        <div className="bg-secondary w-2/3 p-6">
-          <VideoPlayer lessonVideoUrl={lesson.video_url ?? ""} />
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+      {/* Breadcrumb / Top Bar */}
+      <nav
+        aria-label="Localização na trilha"
+        className="text-text-muted flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm"
+      >
+        <div className="flex items-center gap-2">
+          {/* Q11: text-accent-text */}
+          <Link
+            href="/aluno/home"
+            className="hover:text-accent-text inline-flex items-center gap-1.5 font-medium transition-colors"
+          >
+            <MdArrowBack className="size-4" />
+            <span>Voltar aos módulos</span>
+          </Link>
+          <span aria-hidden="true">/</span>
+          <span className="text-text max-w-[200px] truncate font-medium sm:max-w-xs">
+            {course.title}
+          </span>
         </div>
-        <div className="bg-secondary absolute inset-y-0 right-0 flex min-h-0 w-1/3 flex-col overflow-hidden">
-          <div className="bg-[#141B2D] px-6 py-4">
-            <h1 className="font-bold text-white">Conteúdo do curso</h1>
-            <p className="text-white/80">{course.title}</p>
+
+        {/* Anterior / Próxima navigation (Q04: ButtonLink com aria-label persistente) */}
+        <div className="flex items-center gap-2">
+          {prevLesson ? (
+            <ButtonLink
+              href={`/aluno/aula/${prevLesson.id}`}
+              variant="secondary"
+              size="sm"
+              className="gap-1.5 text-xs"
+              aria-label={`Aula anterior: ${prevLesson.title}`}
+            >
+              <MdArrowBack className="size-3.5" aria-hidden="true" />
+              <span className="hidden sm:inline">Anterior</span>
+            </ButtonLink>
+          ) : (
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled
+              className="gap-1.5 text-xs opacity-50"
+              aria-label="Não há aula anterior"
+            >
+              <MdArrowBack className="size-3.5" aria-hidden="true" />
+              <span className="hidden sm:inline">Anterior</span>
+            </Button>
+          )}
+
+          {nextLesson ? (
+            <ButtonLink
+              href={`/aluno/aula/${nextLesson.id}`}
+              variant="primary"
+              size="sm"
+              className="gap-1.5 text-xs font-semibold"
+              aria-label={`Próxima aula: ${nextLesson.title}`}
+            >
+              <span className="hidden sm:inline">Próxima</span>
+              <MdArrowForward className="size-3.5" aria-hidden="true" />
+            </ButtonLink>
+          ) : (
+            <Button
+              variant="primary"
+              size="sm"
+              disabled
+              className="gap-1.5 text-xs opacity-50"
+              aria-label="Não há próxima aula"
+            >
+              <span className="hidden sm:inline">Próxima</span>
+              <MdArrowForward className="size-3.5" aria-hidden="true" />
+            </Button>
+          )}
+        </div>
+      </nav>
+
+      {/* Main Content: Video + Tabs vs Curriculum Sidebar */}
+      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_336px]">
+        {/* Left: Video Player + Tabs */}
+        <main className="flex min-w-0 flex-col gap-6">
+          {/* Video Container (C05: player sempre bg-media) */}
+          <section
+            aria-label="Reprodução da videoaula"
+            className="w-full overflow-hidden"
+          >
+            <VideoPlayer
+              lessonVideoUrl={lesson.video_url ?? ""}
+              title={lesson.title}
+            />
+          </section>
+
+          {/* Lesson Header Information */}
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="accent">{lesson.module.title}</Badge>
+              {lesson.duration_in_minutes ? (
+                <span className="text-text-muted inline-flex items-center gap-1 text-xs">
+                  <MdAccessTime className="size-3.5" aria-hidden="true" />
+                  {lesson.duration_in_minutes} min de aula
+                </span>
+              ) : null}
+            </div>
+
+            <h1 className="text-text text-xl font-bold tracking-tight sm:text-2xl md:text-3xl">
+              {lesson.title}
+            </h1>
           </div>
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 py-4 [scrollbar-color:#3b82f6_#1e293b] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-blue-500/80 [&::-webkit-scrollbar-thumb]:transition-colors [&::-webkit-scrollbar-thumb]:duration-200 hover:[&::-webkit-scrollbar-thumb]:bg-blue-400 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-800/70">
+
+          {/* Lesson Tabs Container */}
+          <section
+            aria-label="Detalhes e comunidade da aula"
+            className="border-border bg-panel overflow-hidden rounded-[var(--radius-panel)] border shadow-[var(--shadow-panel)]"
+          >
+            <LessonTabs
+              lessonId={lesson.id}
+              resumo={resumo}
+              dicas={dicas}
+              materials={materials}
+              comments={comments}
+            />
+          </section>
+        </main>
+
+        {/* Right / Sidebar: Course Curriculum Navigation (Desktop 336px sticky, mobile full-width below) */}
+        <aside
+          aria-label="Currículo do curso"
+          className="border-border bg-panel flex flex-col overflow-hidden rounded-[var(--radius-panel)] border shadow-[var(--shadow-panel)] lg:sticky lg:top-24"
+        >
+          {/* Curriculum Header */}
+          <div className="border-border border-b p-4">
+            <div className="flex items-center gap-2">
+              {/* Q11: text-accent-text */}
+              <MdMenuBook className="text-accent-text size-5" />
+              <h2 className="text-text truncate text-sm font-bold">
+                Conteúdo do curso
+              </h2>
+            </div>
+            <p className="text-text-muted mt-1 truncate text-xs">
+              {course.title}
+            </p>
+          </div>
+
+          {/* Curriculum List (Q08: ícone neutro para aulas disponíveis, sem checks fictícios) */}
+          <div className="divide-border/60 max-h-[600px] divide-y overflow-y-auto">
             {course.modules.map((moduleItem) => (
-              <div key={moduleItem.id} className="mb-3">
-                <div className="px-4 py-2 text-xs font-bold tracking-[0.12em] text-white/40 uppercase">
+              <div key={moduleItem.id} className="py-2">
+                {/* Q11: text-xs em vez de text-[11px] (mínimo 12px) */}
+                <div className="text-text-muted px-4 py-1.5 text-xs font-bold tracking-wider uppercase">
                   {moduleItem.title}
                 </div>
 
-                {moduleItem.lessons.map((courseLesson) => {
-                  const isCurrent = courseLesson.id === lesson.id;
+                <div className="flex flex-col gap-0.5 px-2">
+                  {moduleItem.lessons.map((courseLesson) => {
+                    const isCurrent = courseLesson.id === lesson.id;
 
-                  return (
-                    <Link
-                      href={`/aluno/aula/${courseLesson.id}`}
-                      key={courseLesson.id}
-                      className={`group flex cursor-pointer gap-4 rounded-lg p-4 transition-all ${
-                        isCurrent ? "bg-blue-950" : "hover:bg-blue-950"
-                      }`}
-                    >
-                      <div
-                        className={`flex size-16 items-center justify-center rounded-lg transition-all duration-500 group-hover:scale-110 ${
+                    return (
+                      <Link
+                        key={courseLesson.id}
+                        href={`/aluno/aula/${courseLesson.id}`}
+                        aria-current={isCurrent ? "page" : undefined}
+                        className={`group focus-visible:ring-accent flex items-start gap-3 rounded-[var(--radius-control)] p-2.5 text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none ${
                           isCurrent
-                            ? "bg-orange-200 text-orange-700"
-                            : "bg-green-200 text-green-700"
+                            ? "bg-accent/15 text-text border-accent border-l-2 font-semibold"
+                            : "hover:bg-canvas text-text-muted hover:text-text"
                         }`}
                       >
-                        <MdCheckCircle />
-                      </div>
-                      <div>
-                        <h1
-                          className={`text-xs font-bold transition-all duration-500 ${
-                            isCurrent
-                              ? "text-orange-500"
-                              : "text-green-700 group-hover:text-green-500"
-                          }`}
-                        >
-                          {isCurrent
-                            ? "Atual"
-                            : moduleItem.id === currentModuleId
-                              ? "Disponível"
-                              : "Próxima"}
-                        </h1>
-                        <p className="text-sm text-white">{courseLesson.title}</p>
-                        <span className="text-xs text-white/50">
-                          {courseLesson.duration_in_minutes
-                            ? `${courseLesson.duration_in_minutes} min`
-                            : "Vídeo"}
-                        </span>
-                      </div>
-                    </Link>
-                  );
-                })}
+                        <div className="mt-0.5 shrink-0">
+                          {isCurrent ? (
+                            <MdOutlinePlayCircleFilled
+                              className="text-accent-text size-4"
+                              aria-hidden="true"
+                            />
+                          ) : (
+                            <MdPlayArrow
+                              className="text-text-muted size-4"
+                              aria-hidden="true"
+                            />
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <p className="line-clamp-2 leading-tight">
+                            {courseLesson.title}
+                          </p>
+                          {/* Q11: text-xs em vez de text-[10px] (mínimo 12px) */}
+                          <span className="text-text-muted mt-1 block text-xs">
+                            {courseLesson.duration_in_minutes
+                              ? `${courseLesson.duration_in_minutes} min`
+                              : "Vídeo"}
+                          </span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
             ))}
           </div>
-          <div className="bg-[#141B2D] px-6 py-4">
-            <Link
-              href="/aluno/home"
-              className="flex w-full items-center justify-center gap-4 rounded-lg bg-gray-700 py-4 font-bold text-white"
-            >
-              <MdArrowDownward className="size-5 rotate-90" /> Voltar para os
-              módulos
-            </Link>
-          </div>
-        </div>
-      </div>
 
-      <div className="flex flex-col gap-6">
-        <div className="border-secondary/20 flex items-start justify-between border-b pb-6">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <p className="bg-primary/20 text-primary rounded-sm p-2 text-xs font-bold uppercase">
-                {lesson.module.title}
-              </p>
-              <div className="text-secondary/80 flex items-end gap-1">
-                <MdAccessTime className="size-4" />
-                <p className="text-xs">
-                  {lesson.duration_in_minutes
-                    ? `${lesson.duration_in_minutes} min`
-                    : "Sem duração informada"}
-                </p>
-              </div>
-            </div>
-            <h1 className="text-secondary text-3xl font-bold">{lesson.title}</h1>
-            <p className="text-secondary/80 text-base">{resumo}</p>
+          {/* Bottom Link to Modules (Q04: ButtonLink) */}
+          <div className="border-border bg-canvas/40 border-t p-3">
+            <ButtonLink
+              href="/aluno/home"
+              variant="secondary"
+              size="sm"
+              className="w-full text-xs"
+            >
+              Ver todos os módulos
+            </ButtonLink>
           </div>
-          <button className="flex cursor-default items-center gap-2 rounded-lg bg-gray-500 p-4 font-bold text-white">
-            <MdCheckCircleOutline className="size-6" />
-            <p>Marcar como concluída</p>
-          </button>
-        </div>
-        <div>
-          <LessonTabs
-            lessonId={lesson.id}
-            resumo={resumo}
-            dicas={dicas}
-            materials={materials}
-            comments={comments}
-          />
-        </div>
+        </aside>
       </div>
     </div>
   );

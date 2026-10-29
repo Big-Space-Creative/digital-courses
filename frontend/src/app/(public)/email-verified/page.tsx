@@ -3,10 +3,16 @@
 // definidos server-side, e o usuário é redirecionado para /aluno/home.
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { MdCheckCircle, MdError, MdInfo, MdMusicNote } from "react-icons/md";
+import { MdCheckCircle, MdError, MdInfo } from "react-icons/md";
+import AuthLayout from "@/components/marketing/AuthLayout";
+import { buttonClassName } from "@/components/ui/Button";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 
 const API_BASE = process.env.API_BASE_URL ?? "http://backend:8000/api/v1/";
+const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() ?? "";
+const SUPPORT_HREF = SUPPORT_EMAIL.startsWith("mailto:")
+  ? SUPPORT_EMAIL
+  : `mailto:${SUPPORT_EMAIL}`;
 
 // ── Server Action: troca o one-time token por JWT e define os cookies ────────
 async function exchangeTokenAndLogin(oneTimeToken: string) {
@@ -15,7 +21,10 @@ async function exchangeTokenAndLogin(oneTimeToken: string) {
   try {
     const res = await fetch(`${API_BASE}email/token-exchange`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
       body: JSON.stringify({ token: oneTimeToken }),
       cache: "no-store",
     });
@@ -31,7 +40,7 @@ async function exchangeTokenAndLogin(oneTimeToken: string) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60,       // 1 hora
+      maxAge: 60 * 60, // 1 hora
       path: "/",
     });
 
@@ -57,7 +66,7 @@ export default async function EmailVerifiedPage({
 }) {
   const params = await searchParams;
   const status = params.status ?? "invalid";
-  const token  = params.token ?? "";
+  const token = params.token ?? "";
 
   // Auto-login: se o backend enviou um token de uso único, tenta fazer login
   if (status === "success" && token) {
@@ -75,71 +84,72 @@ export default async function EmailVerifiedPage({
     title: string;
     description: string;
     cta: { label: string; href: string };
-    ring: string;
-    bg: string;
+    tile: string;
+    showSupport?: boolean;
   };
 
   const configs: Record<string, UIConfig> = {
     success: {
-      // token ausente ou expirado (mais de 5min após verificar o e-mail)
-      icon: <MdCheckCircle className="text-4xl text-green-500" />,
-      title: "E-mail verificado!",
+      // token ausente, inválido ou expirado no login automático
+      icon: <MdCheckCircle className="text-3xl" aria-hidden="true" />,
+      title: "E-mail confirmado!",
       description:
-        "Seu e-mail foi confirmado. O login automático não foi possível (link expirado). Faça login normalmente.",
+        "Seu e-mail foi confirmado. Não foi possível entrar automaticamente desta vez. Faça login normalmente para acessar suas aulas.",
       cta: { label: "Ir para o login", href: "/login" },
-      ring: "ring-green-200",
-      bg: "bg-green-50",
+      tile: "bg-accent/10 text-accent",
     },
     "already-verified": {
-      icon: <MdInfo className="text-4xl text-blue-500" />,
-      title: "Já verificado",
+      icon: <MdInfo className="text-3xl" aria-hidden="true" />,
+      title: "Seu e-mail já estava confirmado",
       description:
-        "Este e-mail já havia sido confirmado anteriormente. Faça login normalmente.",
+        "Nada mais a fazer por aqui. Faça login para continuar de onde parou.",
       cta: { label: "Ir para o login", href: "/login" },
-      ring: "ring-blue-200",
-      bg: "bg-blue-50",
+      tile: "bg-ink/8 text-text",
     },
     invalid: {
-      icon: <MdError className="text-4xl text-red-500" />,
-      title: "Link inválido ou expirado",
+      icon: <MdError className="text-3xl" aria-hidden="true" />,
+      title: "Este link não funciona mais",
       description:
-        "O link de confirmação é inválido ou expirou (validade de 24h). Solicite um novo e-mail de verificação.",
+        "O link de confirmação é inválido ou expirou (validade de 24 horas). Solicite um novo e-mail de verificação.",
       cta: { label: "Solicitar novo link", href: "/verify-email" },
-      ring: "ring-red-200",
-      bg: "bg-red-50",
+      tile: "bg-red-500/10 text-red-600",
+      showSupport: true,
     },
   };
 
   const cfg = configs[status] ?? configs.invalid;
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-gray-50 px-4">
-      <div
-        className={`w-full max-w-md rounded-2xl border border-gray-100 bg-white p-10 text-center shadow-lg ring-4 ${cfg.ring}`}
-      >
-        {/* Ícone */}
-        <div className="mb-6 flex justify-center">
-          <div className={`rounded-full p-5 ${cfg.bg}`}>{cfg.icon}</div>
-        </div>
-
-        <h1 className="mb-3 text-2xl font-bold text-gray-900">{cfg.title}</h1>
-        <p className="mb-8 text-sm leading-relaxed text-gray-500">
-          {cfg.description}
-        </p>
-
-        <Link
-          href={cfg.cta.href}
-          className="bg-primary hover:bg-primary/90 active:bg-primary/80 inline-block w-full rounded-lg py-3 text-sm font-semibold text-white transition-colors"
+    <AuthLayout contextType="verification">
+      <div className="flex flex-col gap-4">
+        <span
+          className={`flex h-14 w-14 items-center justify-center rounded-full ${cfg.tile}`}
         >
-          {cfg.cta.label}
-        </Link>
+          {cfg.icon}
+        </span>
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-text text-3xl font-semibold tracking-[-0.01em]">
+            {cfg.title}
+          </h1>
+          <p className="text-text-muted text-sm leading-relaxed">
+            {cfg.description}
+          </p>
+        </div>
       </div>
 
-      {/* Brand */}
-      <div className="mt-8 flex items-center gap-1.5 text-gray-400">
-        <MdMusicNote className="text-primary size-4" />
-        <span className="text-sm font-medium">Digital Courses</span>
+      <div className="flex flex-col items-start gap-4">
+        <ButtonLink href={cfg.cta.href} size="lg" className="w-full">
+          {cfg.cta.label}
+        </ButtonLink>
+        {cfg.showSupport && SUPPORT_EMAIL && (
+          <a
+            href={SUPPORT_HREF}
+            className={buttonClassName({ variant: "ghost", size: "sm" })}
+          >
+            Algo não funcionou? Fale com o suporte
+          </a>
+        )}
       </div>
-    </div>
+    </AuthLayout>
   );
 }

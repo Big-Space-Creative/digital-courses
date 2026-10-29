@@ -1,7 +1,16 @@
 "use client";
+import Image from "next/image";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { DataList } from "@/components/ui/DataList";
+import { Badge } from "@/components/ui/Badge";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { Skeleton } from "@/components/ui/Skeleton";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import Link from "next/link";
+import { useRef, useCallback, useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
 import { toast } from "@/components/ui/Toast";
 import DeleteConfirmModal from "../../components/DeleteConfirmModal";
@@ -13,17 +22,6 @@ import {
   type ApiCourse,
   type CoursesPaginated,
 } from "@/app/actions/courses";
-import {
-  MdAddCircleOutline,
-  MdOutlineBookmarks,
-  MdOutlineDelete,
-  MdOutlineEdit,
-  MdOutlineSchool,
-  MdOutlineVisibility,
-  MdOutlineVisibilityOff,
-  MdRefresh,
-  MdSearch,
-} from "react-icons/md";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("pt-BR", {
@@ -33,20 +31,12 @@ function formatDate(iso: string) {
   });
 }
 
-const thumbGradients = [
-  "from-orange-300 to-amber-600",
-  "from-cyan-300 to-blue-500",
-  "from-violet-300 to-purple-600",
-  "from-green-300 to-emerald-600",
-  "from-pink-300 to-rose-600",
-];
-
-function thumbGradient(id: number) {
-  return thumbGradients[id % thumbGradients.length];
-}
-
 export default function ManageCoursesPage() {
+  const router = useRouter();
   const { user } = useUser();
+  const [error, setError] = useState("");
+  const [featuredError, setFeaturedError] = useState("");
+  const [featuredCourse, setFeaturedCourse] = useState<ApiCourse | null>(null);
   const isAdmin = user?.role === "admin";
   const [courses, setCourses] = useState<ApiCourse[]>([]);
   const [featuredCourseId, setFeaturedCourseId] = useState<number | null>(null);
@@ -63,6 +53,7 @@ export default function ManageCoursesPage() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
+  const requestSequence = useRef(0);
   const [deleteTarget, setDeleteTarget] = useState<ApiCourse | null>(null);
 
   useEffect(() => {
@@ -74,6 +65,7 @@ export default function ManageCoursesPage() {
   }, [search]);
 
   const fetchCourses = useCallback(() => {
+    const request = ++requestSequence.current;
     startLoading(async () => {
       const [coursesResult, featuredResult] = await Promise.all([
         listCoursesAction({
@@ -84,7 +76,21 @@ export default function ManageCoursesPage() {
         getFeaturedCourseAction(),
       ]);
 
+      if (request !== requestSequence.current) return;
+
+      if (featuredResult.success) {
+        setFeaturedCourse(featuredResult.data);
+        setFeaturedError("");
+        setFeaturedCourseId(featuredResult.data.id);
+      } else if (
+        featuredResult.error === "Nenhum curso publicado disponivel ainda."
+      ) {
+        setFeaturedCourse(null);
+        setFeaturedCourseId(null);
+        setFeaturedError("");
+      } else setFeaturedError(featuredResult.error);
       if (!coursesResult.success) {
+        setError(coursesResult.error);
         toast("Erro ao carregar cursos", {
           description: coursesResult.error,
           variant: "error",
@@ -93,9 +99,9 @@ export default function ManageCoursesPage() {
       }
 
       const { data, ...pageMeta } = coursesResult.data;
+      setError("");
       setCourses(data);
       setMeta(pageMeta);
-      setFeaturedCourseId(featuredResult.success ? featuredResult.data.id : null);
     });
   }, [debouncedSearch, page]);
 
@@ -103,15 +109,9 @@ export default function ManageCoursesPage() {
     fetchCourses();
   }, [fetchCourses]);
 
-  const featuredCourse = useMemo(
-    () => courses.find((course) => course.id === featuredCourseId) ?? null,
-    [courses, featuredCourseId],
-  );
-
   function handleConfirmDelete() {
     if (!deleteTarget) return;
     const target = deleteTarget;
-    setDeleteTarget(null);
 
     startAction(async () => {
       const result = await deleteCourseAction(target.id);
@@ -128,7 +128,9 @@ export default function ManageCoursesPage() {
         variant: "success",
       });
 
-      setCourses((prev) => prev.filter((c) => c.id !== target.id));
+      setDeleteTarget(null);
+      if (courses.length === 1 && page > 1) setPage(page - 1);
+      else fetchCourses();
 
       if (featuredCourseId === target.id) {
         setFeaturedCourseId(null);
@@ -151,7 +153,7 @@ export default function ManageCoursesPage() {
 
       toast(newState ? "Curso publicado" : "Curso despublicado", {
         description: newState
-          ? `"${course.title}" agora aparece como curso principal em /aluno/home.`
+          ? `"${course.title}" está publicado na área do aluno.`
           : `"${course.title}" foi ocultado da experiência do aluno.`,
         variant: "success",
       });
@@ -166,317 +168,259 @@ export default function ManageCoursesPage() {
   }
 
   return (
-    <div className="bg-background min-h-screen">
-      <main className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">
-        <section className="mb-6 rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-5 shadow-sm">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h2 className="text-secondary text-2xl font-bold">
-                Gerenciar Cursos
-              </h2>
-              <p className="mt-1 max-w-2xl text-sm text-gray-600">
-                O curso publicado aqui é o mesmo que aparece para o aluno em
-                <span className="font-semibold text-gray-800"> /aluno/home</span>.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={fetchCourses}
-                disabled={loading}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-              >
-                <MdRefresh size={17} className={loading ? "animate-spin" : ""} />
-              </button>
-              {isAdmin && (
-                <Link
-                  href="/admin/cursos/criar"
-                  className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors"
-                >
-                  <MdAddCircleOutline size={20} />
-                  Novo Curso
-                </Link>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-xl border border-orange-200 bg-white/80 p-4">
-            {featuredCourse ? (
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-bold tracking-[0.12em] text-orange-600 uppercase">
-                    Curso em destaque
-                  </p>
-                  <p className="mt-1 font-semibold text-gray-800">
-                    {featuredCourse.title}
-                  </p>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Esse é o curso atualmente exibido para os alunos.
-                  </p>
-                </div>
-                <span className="rounded-lg border border-dashed border-gray-200 bg-white px-4 py-2 text-sm text-gray-500">
-                  Edição detalhada em consolidação
-                </span>
-              </div>
-            ) : (
-              <p className="text-sm text-gray-600">
-                Nenhum curso publicado no momento. Crie ou publique um curso para
-                atualizar /aluno/home.
-              </p>
+    <div className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
+      <PageHeader
+        title="Gerenciar cursos"
+        description="Organize o catálogo e controle o que aparece na área do aluno."
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
+              loading={loading}
+              onClick={fetchCourses}
+            >
+              Atualizar
+            </Button>
+            {isAdmin && (
+              <Button onClick={() => router.push("/admin/cursos/criar")}>
+                Novo curso
+              </Button>
             )}
           </div>
-        </section>
-
-        <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 p-4 sm:p-5">
-            <h3 className="font-semibold text-gray-800">
-              {loading
-                ? "Carregando cursos..."
-                : `${meta.total} curso${meta.total !== 1 ? "s" : ""} cadastrado${meta.total !== 1 ? "s" : ""}`}
-            </h3>
-            <label className="relative block">
-              <MdSearch
-                size={18}
-                className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
-              />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar curso..."
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pr-4 pl-10 text-sm text-gray-700 outline-none focus:border-orange-300 sm:w-72"
-              />
-            </label>
+        }
+      />
+      <section
+        className="border-border bg-panel rounded-2xl border p-4 sm:p-5"
+        aria-label="Curso em destaque"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-text-muted text-sm font-medium">
+              Curso em destaque
+            </h2>
+            {featuredCourse ? (
+              <>
+                <p className="mt-2 text-lg font-semibold">
+                  {featuredCourse.title}
+                </p>
+                <p className="text-text-muted mt-1 text-sm">
+                  Exibido na área do aluno.
+                </p>
+              </>
+            ) : !featuredError ? (
+              <p className="text-text-muted mt-2 text-sm">
+                Nenhum curso em destaque no momento.
+              </p>
+            ) : null}
           </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] border-collapse text-left">
-              <thead>
-                <tr className="bg-gray-100 text-xs font-semibold tracking-[0.12em] text-gray-500 uppercase">
-                  <th className="px-6 py-4">Curso</th>
-                  <th className="px-6 py-4">Módulos</th>
-                  <th className="px-6 py-4">Aulas</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Criado em</th>
-                  <th className="px-6 py-4 text-center">Ações</th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-gray-100 text-sm">
-                {loading &&
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-lg bg-gray-200" />
-                          <div>
-                            <div className="h-3 w-40 rounded bg-gray-200" />
-                            <div className="mt-1.5 h-2.5 w-28 rounded bg-gray-100" />
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4"><div className="h-3 w-8 rounded bg-gray-200" /></td>
-                      <td className="px-6 py-4"><div className="h-3 w-8 rounded bg-gray-200" /></td>
-                      <td className="px-6 py-4"><div className="h-5 w-20 rounded-full bg-gray-200" /></td>
-                      <td className="px-6 py-4"><div className="h-3 w-24 rounded bg-gray-200" /></td>
-                      <td className="px-6 py-4"><div className="mx-auto h-7 w-20 rounded-lg bg-gray-200" /></td>
-                    </tr>
-                  ))}
-
-                {!loading && courses.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                      Nenhum curso cadastrado ainda.{" "}
-                      <Link
-                        href="/admin/cursos/criar"
-                        className="text-primary font-semibold underline"
-                      >
-                        Criar primeiro curso
-                      </Link>
-                    </td>
-                  </tr>
-                )}
-
-                {!loading &&
-                  courses.map((course) => {
-                    const isFeatured = course.id === featuredCourseId;
-
-                    return (
-                      <tr
-                        key={course.id}
-                        className={`hover:bg-gray-50/70 ${actionPending ? "opacity-60" : ""}`}
-                      >
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            {course.thumbnail ? (
-                              <img
-                                src={course.thumbnail}
-                                alt={course.title}
-                                className="h-10 w-10 rounded-lg object-cover"
-                              />
-                            ) : (
-                              <div
-                                className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br text-white ${thumbGradient(course.id)}`}
-                              >
-                                <MdOutlineBookmarks size={18} />
-                              </div>
-                            )}
-                            <div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <p className="font-semibold text-gray-800">
-                                  {course.title}
-                                </p>
-                                {isFeatured && (
-                                  <span className="rounded-full bg-orange-100 px-2.5 py-1 text-[11px] font-bold text-orange-700">
-                                    Exibido em /aluno/home
-                                  </span>
-                                )}
-                              </div>
-                              {course.description && (
-                                <p className="max-w-xs truncate text-xs text-gray-400">
-                                  {course.description}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-1.5 text-gray-600">
-                            <MdOutlineBookmarks size={14} className="text-gray-400" />
-                            {course.modules?.length ?? "—"}
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-1.5 text-gray-600">
-                            <MdOutlineSchool size={14} className="text-gray-400" />
-                            {course.lessons_count ?? "—"}
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-bold ${
-                              course.is_published
-                                ? "bg-green-100 text-green-700"
-                                : "bg-slate-100 text-slate-500"
-                            }`}
-                          >
-                            {course.is_published ? "Publicado" : "Rascunho"}
-                          </span>
-                        </td>
-
-                        <td className="px-6 py-4 text-gray-500">
-                          {formatDate(course.created_at)}
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-center gap-3 text-gray-400">
-                            <button
-                              type="button"
-                              onClick={() => handleTogglePublish(course)}
-                              disabled={actionPending}
-                              className={`rounded-md p-1.5 transition hover:bg-gray-100 ${
-                                course.is_published
-                                  ? "hover:text-amber-500"
-                                  : "hover:text-green-600"
-                              }`}
-                              aria-label={
-                                course.is_published
-                                  ? `Despublicar ${course.title}`
-                                  : `Publicar ${course.title}`
-                              }
-                              title={
-                                course.is_published
-                                  ? "Despublicar curso"
-                                  : "Publicar para alunos"
-                              }
-                            >
-                              {course.is_published ? (
-                                <MdOutlineVisibilityOff size={18} />
-                              ) : (
-                                <MdOutlineVisibility size={18} />
-                              )}
-                            </button>
-
-                            <Link
-                              href={`/admin/cursos/${course.id}/editar`}
-                              className="rounded-md p-1.5 transition hover:bg-gray-100 hover:text-orange-600"
-                              aria-label={`Editar ${course.title}`}
-                              title="Editar curso"
-                            >
-                              <MdOutlineEdit size={18} />
-                            </Link>
-
-                            <button
-                              type="button"
-                              onClick={() => setDeleteTarget(course)}
-                              disabled={actionPending}
-                              className="rounded-md p-1.5 transition hover:bg-red-50 hover:text-red-500"
-                              aria-label={`Excluir ${course.title}`}
-                              title="Excluir curso"
-                            >
-                              <MdOutlineDelete size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
-          </div>
-
-          <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 p-4 text-sm text-gray-500">
-            <span>
-              {loading
-                ? "Carregando..."
-                : `Exibindo ${meta.from ?? 0}–${meta.to ?? 0} de ${meta.total} cursos`}
+          {featuredCourse && (
+            <Badge variant="success">Exibido na área do aluno</Badge>
+          )}
+        </div>
+        {featuredError && (
+          <ErrorState
+            title="Não foi possível atualizar o destaque"
+            description={featuredError}
+            onRetry={fetchCourses}
+            loading={loading}
+          />
+        )}
+      </section>
+      <section className="border-border bg-panel rounded-2xl border p-4 sm:p-5">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+          <h2 className="text-lg font-semibold">
+            Catálogo{" "}
+            <span className="text-text-muted text-sm font-normal">
+              ({meta.total}
+              {debouncedSearch ? " resultados" : " cursos"})
             </span>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1 || loading}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                &lt;
-              </button>
-              {Array.from({ length: Math.min(5, meta.last_page) }, (_, i) => i + 1).map(
-                (p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    disabled={loading}
-                    className={`rounded-lg px-3 py-1.5 ${
-                      p === page
-                        ? "bg-orange-500 font-semibold text-white"
-                        : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    {p}
-                  </button>
+          </h2>
+          <div className="w-full sm:w-80">
+            <Input
+              label="Buscar cursos"
+              type="search"
+              placeholder="Título do curso"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </div>
+        </div>
+        {error && (
+          <ErrorState
+            title={
+              courses.length
+                ? "Lista possivelmente desatualizada"
+                : "Não foi possível carregar os cursos"
+            }
+            description={error}
+            onRetry={fetchCourses}
+            loading={loading}
+          />
+        )}
+        {loading && !courses.length ? (
+          <div aria-busy="true">
+            <span className="sr-only">Carregando cursos</span>
+            <Skeleton className="h-40" />
+          </div>
+        ) : (
+          <DataList
+            items={courses}
+            label="Catálogo de cursos"
+            getKey={(course) => course.id}
+            getItemLabel={(course) => course.title}
+            columns={[
+              {
+                key: "title",
+                label: "Curso",
+                render: (course) => (
+                  <div className="flex min-w-0 items-center gap-3">
+                    {course.thumbnail && (
+                      <Image
+                        unoptimized
+                        width={320}
+                        height={180}
+                        src={course.thumbnail}
+                        alt=""
+                        className="size-11 shrink-0 rounded-xl object-cover"
+                      />
+                    )}
+                    <span className="min-w-0">
+                      <span className="block font-medium">{course.title}</span>
+                      {course.description && (
+                        <span className="text-text-muted mt-1 block max-w-prose text-xs">
+                          {course.description}
+                        </span>
+                      )}
+                      {course.id === featuredCourseId && (
+                        <span className="text-accent-text mt-1 block text-xs">
+                          Exibido na área do aluno
+                        </span>
+                      )}
+                    </span>
+                  </div>
                 ),
-              )}
-              <button
-                onClick={() => setPage((p) => Math.min(meta.last_page, p + 1))}
-                disabled={page === meta.last_page || loading}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                &gt;
-              </button>
-            </div>
-          </footer>
-        </section>
-      </main>
-
+              },
+              {
+                key: "modules",
+                label: "Módulos",
+                render: (course) => course.modules?.length ?? "—",
+              },
+              {
+                key: "lessons",
+                label: "Aulas",
+                render: (course) => course.lessons_count ?? "—",
+              },
+              {
+                key: "status",
+                label: "Status",
+                render: (course) => (
+                  <Badge variant={course.is_published ? "success" : "neutral"}>
+                    {course.is_published ? "Publicado" : "Rascunho"}
+                  </Badge>
+                ),
+              },
+              {
+                key: "date",
+                label: "Criado em",
+                render: (course) => formatDate(course.created_at),
+              },
+            ]}
+            actions={[
+              {
+                label: "Editar curso",
+                onClick: (course) =>
+                  router.push(`/admin/cursos/${course.id}/editar`),
+                disabled: () => actionPending,
+              },
+              {
+                label: "Alterar publicação",
+                onClick: handleTogglePublish,
+                disabled: () => actionPending,
+              },
+              {
+                label: "Excluir curso",
+                danger: true,
+                onClick: setDeleteTarget,
+                disabled: () => actionPending,
+              },
+            ]}
+            empty={
+              error ? null : (
+                <EmptyState
+                  title={
+                    debouncedSearch
+                      ? "Nenhum curso corresponde à busca"
+                      : "Seu catálogo ainda está vazio"
+                  }
+                  description={
+                    debouncedSearch
+                      ? "Experimente outro termo ou limpe a busca."
+                      : "Crie seu primeiro curso para organizar módulos e aulas."
+                  }
+                  action={
+                    debouncedSearch ? (
+                      <Button variant="secondary" onClick={() => setSearch("")}>
+                        Limpar busca
+                      </Button>
+                    ) : isAdmin ? (
+                      <Button
+                        onClick={() => router.push("/admin/cursos/criar")}
+                      >
+                        Criar curso
+                      </Button>
+                    ) : undefined
+                  }
+                />
+              )
+            }
+          />
+        )}
+        <footer className="border-border text-text-muted mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4 text-sm">
+          <span role="status">
+            {loading
+              ? "Atualizando…"
+              : `Exibindo ${meta.from ?? 0}–${meta.to ?? 0} de ${meta.total} cursos`}
+          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="secondary"
+              disabled={page <= 1 || loading}
+              onClick={() => setPage(page - 1)}
+            >
+              Anterior
+            </Button>
+            {Array.from({ length: Math.min(5, meta.last_page) }, (_, index) => {
+              const first = Math.max(1, Math.min(page - 2, meta.last_page - 4));
+              const targetPage = first + index;
+              return (
+                <Button
+                  key={targetPage}
+                  variant={targetPage === page ? "primary" : "secondary"}
+                  aria-current={targetPage === page ? "page" : undefined}
+                  aria-label={`Ir para a página ${targetPage}`}
+                  disabled={loading}
+                  onClick={() => setPage(targetPage)}
+                >
+                  {targetPage}
+                </Button>
+              );
+            })}
+            <Button
+              variant="secondary"
+              disabled={page >= meta.last_page || loading}
+              onClick={() => setPage(page + 1)}
+            >
+              Próxima
+            </Button>
+          </div>
+        </footer>
+      </section>
       <DeleteConfirmModal
-        open={Boolean(deleteTarget)}
+        open={!!deleteTarget}
         label={deleteTarget?.title ?? ""}
         title="Excluir curso"
-        description="Essa ação é irreversível. Todos os módulos e aulas associados também serão removidos."
-        confirmLabel="Sim, excluir"
+        description="Os módulos e as aulas associados também serão removidos."
+        pending={actionPending}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
       />

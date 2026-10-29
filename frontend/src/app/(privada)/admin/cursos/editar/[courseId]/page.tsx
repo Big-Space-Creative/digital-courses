@@ -1,6 +1,25 @@
 "use client";
+import { Skeleton } from "@/components/ui/Skeleton";
+import {
+  EditorStatus,
+  editorSnapshot,
+  useUnsavedChanges,
+} from "../../../components/EditorStatus";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { Dialog } from "@/components/ui/Dialog";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { Textarea } from "@/components/ui/Textarea";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 
-import { type ChangeEvent, type FormEvent, useEffect, useRef, useState, useTransition } from "react";
+import {
+  type ChangeEvent,
+  type FormEvent,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { useParams, useRouter } from "next/navigation";
 import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
 import ModuleNameModal from "../../../components/ModuleNameModal";
@@ -13,8 +32,6 @@ import {
   MdKeyboardArrowRight,
   MdKeyboardArrowUp,
   MdOutlineAdd,
-  MdOutlineCheckBox,
-  MdOutlineCheckBoxOutlineBlank,
   MdOutlineDelete,
   MdOutlineDragIndicator,
   MdOutlineImage,
@@ -50,6 +67,7 @@ function createLesson(): LessonState {
 }
 
 type LessonCardProps = {
+  submitted: boolean;
   lesson: LessonState;
   lessonNumber: number;
   canMoveUp: boolean;
@@ -62,6 +80,7 @@ type LessonCardProps = {
 };
 
 function LessonCard({
+  submitted,
   lesson,
   lessonNumber,
   canMoveUp,
@@ -112,121 +131,108 @@ function LessonCard({
   }
 
   return (
-    <article className="rounded-xl border border-gray-200 bg-white p-5">
+    <article className="rounded-bento-sm ring-border bg-white p-5 ring-1">
       <header className="mb-4 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-          <MdOutlineInfo className="text-primary" size={16} />
+        <div className="text-text-muted flex items-center gap-2 text-sm font-semibold">
+          <MdOutlineInfo className="text-accent-text" size={16} />
           Aula {String(lessonNumber).padStart(2, "0")}
         </div>
 
-        <div className="flex items-center gap-1 text-gray-500">
-          <button
+        <div className="text-text-muted flex items-center gap-1">
+          <Button
+            variant="secondary"
             type="button"
             onClick={onMoveUp}
             disabled={!canMoveUp}
-            className="rounded-md p-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
             aria-label={`Mover aula ${lessonNumber} para cima`}
           >
             <MdKeyboardArrowUp size={18} />
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="secondary"
             type="button"
             onClick={onMoveDown}
             disabled={!canMoveDown}
-            className="rounded-md p-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
             aria-label={`Mover aula ${lessonNumber} para baixo`}
           >
             <MdKeyboardArrowDown size={18} />
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="danger"
             type="button"
             onClick={onDelete}
-            className="rounded-md p-1 hover:bg-red-50 hover:text-red-600"
             aria-label={`Apagar aula ${lessonNumber}`}
           >
             <MdOutlineDelete size={17} />
-          </button>
+          </Button>
         </div>
       </header>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <label className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-          Título da aula *
-          <input
-            value={lesson.title}
-            onChange={(e) => onChange({ ...lesson, title: e.target.value })}
-            placeholder="Ex: Conhecendo as partes da guitarra"
-            required
-            className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-normal text-gray-700 outline-none focus:border-orange-300"
-          />
-        </label>
+        <Input
+          label="Título da aula"
+          error={
+            submitted && !lesson.title.trim()
+              ? "Informe o título da aula."
+              : undefined
+          }
+          value={lesson.title}
+          onChange={(e) => onChange({ ...lesson, title: e.target.value })}
+          placeholder="Ex: Conhecendo as partes da guitarra"
+          required
+        />
 
-        <label className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-          Duração (minutos)
-          <input
-            type="number"
-            min="1"
-            value={lesson.durationMinutes}
-            onChange={(e) =>
-              onChange({ ...lesson, durationMinutes: e.target.value })
-            }
-            placeholder="Ex: 15"
-            className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-normal text-gray-700 outline-none focus:border-orange-300"
-          />
-        </label>
+        <Input
+          label="Duração (minutos)"
+          type="number"
+          min="1"
+          value={lesson.durationMinutes}
+          onChange={(e) =>
+            onChange({ ...lesson, durationMinutes: e.target.value })
+          }
+          placeholder="Ex: 15"
+        />
       </div>
 
-      <label className="mt-4 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
-        Resumo da aula
-        <textarea
-          rows={3}
-          value={lesson.description}
-          onChange={(e) => onChange({ ...lesson, description: e.target.value })}
-          placeholder="Descreva o que o aluno aprenderá nesta aula..."
-          className="mt-2 w-full resize-none rounded-lg border border-gray-200 px-3 py-3 text-sm font-normal text-gray-700 outline-none focus:border-orange-300"
-        />
-      </label>
+      <Textarea
+        label="Resumo da aula"
+        rows={3}
+        value={lesson.description}
+        onChange={(e) => onChange({ ...lesson, description: e.target.value })}
+        placeholder="Descreva o que o aluno aprenderá nesta aula..."
+      />
 
-      <button
-        type="button"
-        onClick={() =>
+      <Checkbox
+        label="Prévia gratuita da aula"
+        checked={lesson.isFreePreview}
+        onChange={() =>
           onChange({ ...lesson, isFreePreview: !lesson.isFreePreview })
         }
-        className="mt-3 flex items-center gap-2 text-xs font-semibold text-gray-500 hover:text-gray-700"
-      >
-        {lesson.isFreePreview ? (
-          <MdOutlineCheckBox size={18} className="text-primary" />
-        ) : (
-          <MdOutlineCheckBoxOutlineBlank size={18} />
-        )}
-        Aula gratuita (free preview)
-      </button>
+      />
 
       <div className="mt-4">
-        <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-          Vídeo da aula *
-        </p>
+        <p className="text-text-muted text-sm font-medium">Vídeo da aula *</p>
 
         {lesson.videoFile ? (
           <div className="mt-2 flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
             <MdOutlineVideocam size={18} className="shrink-0 text-green-600" />
-            <span className="flex-1 truncate text-sm text-green-700">
+            <span className="text-success flex-1 truncate text-sm">
               {lesson.videoFile.name}
             </span>
-            <span className="shrink-0 text-xs text-green-500">
+            <span className="text-success shrink-0 text-xs">
               ({(lesson.videoFile.size / 1024 / 1024).toFixed(1)} MB)
             </span>
-            <button
+            <Button
+              variant="secondary"
               type="button"
               onClick={() => {
                 onChange({ ...lesson, videoFile: null });
                 if (videoInputRef.current) videoInputRef.current.value = "";
               }}
-              className="shrink-0 text-gray-400 hover:text-red-500"
               aria-label="Remover vídeo"
             >
               <MdClose size={16} />
-            </button>
+            </Button>
           </div>
         ) : lesson.videoPath ? (
           <div className="mt-2 flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
@@ -234,44 +240,55 @@ function LessonCard({
             <span className="flex-1 truncate text-sm text-blue-700">
               Vídeo Atual (Salvo)
             </span>
-            <button
+            <Button
+              variant="secondary"
               type="button"
               onClick={() => {
                 onChange({ ...lesson, videoPath: undefined }); // Removes the existing video reference
               }}
-              className="shrink-0 text-gray-400 hover:text-red-500"
               aria-label="Substituir vídeo"
             >
               <MdClose size={16} />
-            </button>
+            </Button>
           </div>
         ) : (
-          <button
+          <Button
+            variant="secondary"
             type="button"
             onClick={() => videoInputRef.current?.click()}
-            className="mt-2 w-full rounded-lg border border-dashed border-orange-200 bg-orange-50/40 p-5 text-center hover:bg-orange-50"
           >
-            <MdOutlineUploadFile className="mx-auto text-gray-400" size={22} />
-            <p className="mt-2 text-xs font-medium text-gray-500 normal-case">
+            <MdOutlineUploadFile
+              className="text-text-muted mx-auto"
+              size={22}
+            />
+            <p className="text-text-muted mt-2 text-xs font-medium normal-case">
               Clique para selecionar o arquivo de vídeo
             </p>
-            <p className="mt-1 text-xs text-gray-400 normal-case">
+            <p className="text-text-muted mt-1 text-xs normal-case">
               MP4, MOV, AVI, MKV, WebM
             </p>
-          </button>
+          </Button>
         )}
 
-        <input
+        <Input
+          label="Vídeo da aula"
           ref={videoInputRef}
           type="file"
           accept="video/*,.mp4,.mov,.avi,.mkv,.webm"
-          className="hidden"
           onChange={handleVideoChange}
+          error={
+            submitted &&
+            !lesson.videoFile &&
+            !lesson.videoUrl &&
+            !lesson.videoPath
+              ? "Selecione o vídeo da aula."
+              : undefined
+          }
         />
       </div>
 
       <div className="mt-4">
-        <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+        <p className="text-text-muted text-sm font-medium">
           Materiais de referência
         </p>
 
@@ -280,48 +297,50 @@ function LessonCard({
             {lesson.materials.map((mat) => (
               <div
                 key={mat.id}
-                className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2"
+                className="border-border bg-canvas flex items-center gap-2 rounded-lg border px-3 py-2"
               >
                 <MdOutlineInsertDriveFile
                   size={16}
-                  className="shrink-0 text-orange-400"
+                  className="text-accent-text shrink-0"
                 />
-                <input
+                <Input
+                  label="Título do material"
                   value={mat.title}
                   onChange={(e) => handleMatTitleChange(mat.id, e.target.value)}
-                  className="flex-1 bg-transparent text-sm text-gray-700 outline-none"
                   placeholder="Título do material"
                 />
-                <span className="shrink-0 text-xs text-gray-400">
-                  {mat.file ? `(${(mat.file.size / 1024).toFixed(0)} KB)` : '(Salvo)'}
+                <span className="text-text-muted shrink-0 text-xs">
+                  {mat.file
+                    ? `(${(mat.file.size / 1024).toFixed(0)} KB)`
+                    : "(Salvo)"}
                 </span>
-                <button
+                <Button
+                  variant="secondary"
                   type="button"
                   onClick={() => handleRemoveMaterial(mat.id)}
-                  className="shrink-0 text-gray-400 hover:text-red-500"
                   aria-label="Remover material"
                 >
                   <MdClose size={15} />
-                </button>
+                </Button>
               </div>
             ))}
           </div>
         )}
 
-        <button
+        <Button
+          variant="secondary"
           type="button"
           onClick={() => matInputRef.current?.click()}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-orange-200 bg-orange-50/40 p-3 text-xs font-medium text-gray-500 hover:bg-orange-50 normal-case"
         >
-          <MdOutlineAdd size={16} className="text-primary" />
+          <MdOutlineAdd size={16} className="text-accent-text" />
           Adicionar material (PDF, imagem, MP3)
-        </button>
+        </Button>
 
-        <input
+        <Input
+          label="Arquivo do material"
           ref={matInputRef}
           type="file"
           accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.mp3,.wav,.ogg"
-          className="hidden"
           onChange={handleAddMaterial}
         />
       </div>
@@ -331,18 +350,33 @@ function LessonCard({
 
 type DeleteTarget =
   | { type: "module"; moduleId: string | number; label: string }
-  | { type: "lesson"; moduleId: string | number; lessonId: string | number; label: string };
+  | {
+      type: "lesson";
+      moduleId: string | number;
+      lessonId: string | number;
+      label: string;
+    };
 
 export default function EditCoursePage() {
   const router = useRouter();
   const params = useParams<{ courseId: string }>();
   const [isPending, startTransition] = useTransition();
+  const [submitted, setSubmitted] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [uploadStatus, setUploadStatus] = useState("");
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  const cancelLeaveRef = useRef<HTMLButtonElement>(null);
+  const editorRef = useRef<HTMLFieldSetElement>(null);
+  const submitLock = useRef(false);
+  const [loadError, setLoadError] = useState("");
 
   const [isLoading, setIsLoading] = useState(true);
   const [courseTitle, setCourseTitle] = useState("");
   const [courseDescription, setCourseDescription] = useState("");
   const [courseThumbnail, setCourseThumbnail] = useState<File | null>(null);
-  const [existingThumbnailUrl, setExistingThumbnailUrl] = useState<string | null>(null);
+  const [existingThumbnailUrl, setExistingThumbnailUrl] = useState<
+    string | null
+  >(null);
   const [isPublished, setIsPublished] = useState(true);
   const [modules, setModules] = useState<ModuleState[]>([]);
 
@@ -355,11 +389,72 @@ export default function EditCoursePage() {
   const [newModuleName, setNewModuleName] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
 
+  const { dirty, markSaved } = useUnsavedChanges(
+    editorSnapshot({
+      courseTitle,
+      courseDescription,
+      isPublished,
+      modules,
+      thumbnail: courseThumbnail,
+    }),
+    !isLoading && !loadError,
+  );
+  function requestLeave() {
+    if (dirty) setLeaveOpen(true);
+    else router.push("/admin/cursos/gerenciar");
+  }
+  function validateEditor() {
+    setSubmitted(true);
+    setSaveError("");
+    const messages: string[] = [];
+    if (!courseTitle.trim()) messages.push("Informe o título do curso.");
+    modules.forEach((moduleItem, index) => {
+      if (!moduleItem.name.trim())
+        messages.push(`Informe o nome do módulo ${index + 1}.`);
+      moduleItem.lessons.forEach((lesson, lessonIndex) => {
+        if (!lesson.title.trim())
+          messages.push(
+            `Informe o título da aula ${lessonIndex + 1} do módulo ${index + 1}.`,
+          );
+        if (!lesson.videoFile && !lesson.videoUrl && !lesson.videoPath)
+          messages.push(
+            `Selecione o vídeo da aula ${lessonIndex + 1} do módulo ${index + 1}.`,
+          );
+        if (
+          lesson.durationMinutes &&
+          (!Number.isFinite(Number(lesson.durationMinutes)) ||
+            Number(lesson.durationMinutes) < 1)
+        )
+          messages.push("A duração deve ser maior que zero.");
+      });
+    });
+    if (messages.length) {
+      setSaveError(messages.join(" "));
+      requestAnimationFrame(() =>
+        editorRef.current
+          ?.querySelector<HTMLElement>('[aria-invalid="true"]')
+          ?.focus(),
+      );
+      return false;
+    }
+    return true;
+  }
+
   useEffect(() => {
     async function loadCourse() {
-      if (!params?.courseId) return;
+      setIsLoading(true);
+      setLoadError("");
+      if (!params?.courseId) {
+        setLoadError("Curso inválido.");
+        setIsLoading(false);
+        return;
+      }
       const courseId = parseInt(params.courseId, 10);
-      if (isNaN(courseId)) return;
+      if (isNaN(courseId)) {
+        setLoadError("Curso inválido.");
+        setIsLoading(false);
+        return;
+      }
 
       const res = await getCourseDetailAction(courseId);
       if (res.success && res.data) {
@@ -368,29 +463,47 @@ export default function EditCoursePage() {
         setIsPublished(res.data.is_published);
         setExistingThumbnailUrl(res.data.thumbnail);
 
-        const loadedModules: ModuleState[] = (res.data.modules || []).map((m) => ({
-          id: m.id,
-          name: m.title,
-          lessons: (m.lessons || []).map((l: any) => ({
-            id: l.id,
-            title: l.title,
-            description: l.description || "",
-            durationMinutes: l.duration_in_minutes ? String(l.duration_in_minutes) : "",
-            isFreePreview: l.is_free_preview,
-            videoPath: l.video_url,
-            videoFile: null,
-            materials: (l.materials || []).map((mat: any) => ({
-              id: mat.id,
-              title: mat.title,
-              path: mat.file_path,
-              file: null,
+        const loadedModules: ModuleState[] = (res.data.modules || []).map(
+          (m) => ({
+            id: m.id,
+            name: m.title,
+            lessons: (m.lessons || []).map((l) => ({
+              id: l.id,
+              title: l.title,
+              description: l.description || "",
+              durationMinutes: l.duration_in_minutes
+                ? String(l.duration_in_minutes)
+                : "",
+              isFreePreview: l.is_free_preview,
+              videoPath: l.video_url,
+              videoFile: null,
+              materials: (
+                (
+                  l as {
+                    materials?: {
+                      id: string | number;
+                      title: string;
+                      file_path: string;
+                    }[];
+                  }
+                ).materials || []
+              ).map((mat) => ({
+                id: mat.id,
+                title: mat.title,
+                path: mat.file_path,
+                file: null,
+              })),
             })),
-          })),
-        }));
+          }),
+        );
 
         setModules(loadedModules);
       } else if (!res.success) {
-        toast("Erro ao carregar curso", { description: res.error, variant: "error" });
+        setLoadError(res.error);
+        toast("Erro ao carregar curso", {
+          description: res.error,
+          variant: "error",
+        });
       }
       setIsLoading(false);
     }
@@ -406,7 +519,10 @@ export default function EditCoursePage() {
     setIsModuleModalOpen(false);
   }
 
-  function handleMoveModule(moduleId: string | number, direction: "up" | "down") {
+  function handleMoveModule(
+    moduleId: string | number,
+    direction: "up" | "down",
+  ) {
     setModules((current) => {
       const idx = current.findIndex((m) => m.id === moduleId);
       if (idx === -1) return current;
@@ -415,13 +531,19 @@ export default function EditCoursePage() {
   }
 
   function requestDeleteModule(moduleId: string | number, moduleName: string) {
-    setDeleteTarget({ type: "module", moduleId, label: `o módulo "${moduleName}"` });
+    setDeleteTarget({
+      type: "module",
+      moduleId,
+      label: `o módulo "${moduleName}"`,
+    });
   }
 
   function handleAddLesson(moduleId: string | number) {
     setModules((current) =>
       current.map((m) =>
-        m.id !== moduleId ? m : { ...m, lessons: [...m.lessons, createLesson()] },
+        m.id !== moduleId
+          ? m
+          : { ...m, lessons: [...m.lessons, createLesson()] },
       ),
     );
   }
@@ -433,7 +555,9 @@ export default function EditCoursePage() {
           ? m
           : {
               ...m,
-              lessons: m.lessons.map((l) => (l.id === updated.id ? updated : l)),
+              lessons: m.lessons.map((l) =>
+                l.id === updated.id ? updated : l,
+              ),
             },
       ),
     );
@@ -451,7 +575,11 @@ export default function EditCoursePage() {
         if (idx === -1) return m;
         return {
           ...m,
-          lessons: moveItem(m.lessons, idx, direction === "up" ? idx - 1 : idx + 1),
+          lessons: moveItem(
+            m.lessons,
+            idx,
+            direction === "up" ? idx - 1 : idx + 1,
+          ),
         };
       }),
     );
@@ -504,6 +632,14 @@ export default function EditCoursePage() {
   }
 
   function handleSubmitCourse() {
+    if (
+      isPending ||
+      submitLock.current ||
+      isLoading ||
+      loadError ||
+      !validateEditor()
+    )
+      return;
     if (!courseTitle.trim()) {
       toast("Campo obrigatório", {
         description: "Informe o título do curso para continuar.",
@@ -531,8 +667,10 @@ export default function EditCoursePage() {
       return;
     }
 
+    submitLock.current = true;
     startTransition(async () => {
       try {
+        setUploadStatus("Preparando arquivos…");
         toast("Atualizando curso...", {
           description: "Aguarde enquanto salvamos as informações.",
           variant: "info",
@@ -558,27 +696,32 @@ export default function EditCoursePage() {
             isFreePreview: l.isFreePreview,
           })),
         }));
-        
+
         fd.append("modules", JSON.stringify(moduleMeta));
         fd.append("deletedModules", JSON.stringify(deletedModules));
         fd.append("deletedLessons", JSON.stringify(deletedLessons));
         fd.append("deletedMaterials", JSON.stringify(deletedMaterials));
 
         async function uploadDirectlyToS3(file: File): Promise<string> {
+          setUploadStatus(`Enviando ${file.name}…`);
           const res = await fetch("/api/admin/courses/upload-url", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ filename: file.name, content_type: file.type }),
+            body: JSON.stringify({
+              filename: file.name,
+              content_type: file.type,
+            }),
           });
           const data = await res.json();
-          if(!data.success) throw new Error(data.error || "Erro ao pegar URL");
-          
+          if (!data.success) throw new Error(data.error || "Erro ao pegar URL");
+
           const putRes = await fetch(data.upload_url, {
             method: "PUT",
             headers: { "Content-Type": file.type },
             body: file,
           });
-          if(!putRes.ok) throw new Error(`Falha no upload: ${putRes.statusText}`);
+          if (!putRes.ok)
+            throw new Error(`Falha no upload: ${putRes.statusText}`);
           return data.path;
         }
 
@@ -587,20 +730,27 @@ export default function EditCoursePage() {
         for (const mod of modules) {
           for (const lesson of mod.lessons) {
             if (lesson.videoFile) {
-              toast(`Enviando vídeo (Aula ${lesson.title.substring(0,10)}...)`, { variant: "info" });
+              toast(
+                `Enviando vídeo (Aula ${lesson.title.substring(0, 10)}...)`,
+                { variant: "info" },
+              );
               const s3Path = await uploadDirectlyToS3(lesson.videoFile);
               fd.append(`video_path_${lesson.id}`, s3Path);
             } else if (lesson.videoPath) {
               fd.append(`video_path_${lesson.id}`, lesson.videoPath);
             }
-            
+
             for (const mat of lesson.materials) {
               if (mat.file) {
-                toast(`Enviando material (${mat.title.substring(0,10)}...)`, { variant: "info" });
-                // We don't upload materials to S3 directly here because `uploadDirectlyToS3` returns S3 path but the Material API needs `file` multipart currently for lessons edit.
-                // Wait, if it's a new material on a new lesson, the backend route handles it! Let's just upload directly to S3 and pass path.
-                const matPath = await uploadDirectlyToS3(mat.file);
-                fd.append(`mat_path_${lesson.id}_${mat.id}`, matPath);
+                toast(`Enviando material (${mat.title.substring(0, 10)}...)`, {
+                  variant: "info",
+                });
+                if (typeof lesson.id === "number") {
+                  fd.append(`mat_file_${lesson.id}_${mat.id}`, mat.file);
+                } else {
+                  const matPath = await uploadDirectlyToS3(mat.file);
+                  fd.append(`mat_path_${lesson.id}_${mat.id}`, matPath);
+                }
               } else if (mat.path) {
                 fd.append(`mat_path_${lesson.id}_${mat.id}`, mat.path);
               }
@@ -609,13 +759,21 @@ export default function EditCoursePage() {
           }
         }
 
-        const response = await fetch(`/api/admin/courses/update/${params.courseId}`, {
-          method: "POST",
-          body: fd,
-        });
+        setUploadStatus("Arquivos enviados. Salvando a estrutura do curso…");
+        const response = await fetch(
+          `/api/admin/courses/update/${params.courseId}`,
+          {
+            method: "POST",
+            body: fd,
+          },
+        );
         const result = await response.json();
 
-        if (!result.success) {
+        if (!response.ok || !result.success) {
+          setSaveError(result.error || "Não foi possível salvar o curso.");
+          setUploadStatus(
+            "O envio não foi concluído. Revise o erro e tente novamente.",
+          );
           toast("Erro ao atualizar curso", {
             description: `${result.error} (${result.step})`,
             variant: "error",
@@ -629,230 +787,288 @@ export default function EditCoursePage() {
 
         router.push("/admin/cursos/gerenciar");
       } catch (error) {
+        setSaveError(
+          error instanceof Error
+            ? error.message
+            : "Não foi possível salvar o curso.",
+        );
+        setUploadStatus(
+          "O envio não foi concluído. Revise o erro e tente novamente.",
+        );
         toast("Erro inesperado ao enviar curso", {
-          description: error instanceof Error ? error.message : "Falha inesperada no frontend.",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Falha inesperada no frontend.",
           variant: "error",
         });
+      } finally {
+        submitLock.current = false;
       }
     });
   }
 
+  if (loadError)
+    return (
+      <div className="mx-auto max-w-3xl p-4 sm:p-8">
+        <h1 className="mb-6 text-2xl font-semibold">Editar curso</h1>
+        <ErrorState
+          title="Não foi possível abrir o editor"
+          description={loadError}
+          onRetry={() => window.location.reload()}
+        />
+        <Button
+          variant="secondary"
+          onClick={() => router.push("/admin/cursos/gerenciar")}
+        >
+          Voltar aos cursos
+        </Button>
+      </div>
+    );
+
   if (isLoading) {
     return (
-      <div className="bg-background min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Carregando dados do curso...</p>
+      <div aria-busy="true" className="mx-auto max-w-6xl space-y-4 p-4 sm:p-8">
+        <h1 className="text-2xl font-semibold">Editar curso</h1>
+        <p className="text-text-muted">Carregando dados do curso...</p>
+        <Skeleton className="h-40" />
       </div>
     );
   }
 
   return (
-    <div className="bg-background min-h-screen">
-      <main className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8">
-        <nav className="mb-3 flex items-center gap-1 text-sm text-gray-500">
-          <span>Gerenciar Cursos</span>
-          <MdKeyboardArrowRight size={16} />
-          <span className="font-medium text-gray-700">Editar Curso</span>
-        </nav>
+    <div className="bg-canvas min-h-screen">
+      <div className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8">
+        <fieldset
+          ref={editorRef}
+          disabled={isPending}
+          className="min-w-0 space-y-6 border-0 p-0"
+        >
+          <nav className="text-text-muted mb-3 flex items-center gap-1 text-sm">
+            <span>Gerenciar Cursos</span>
+            <MdKeyboardArrowRight size={16} />
+            <span className="text-text-muted font-medium">Editar Curso</span>
+          </nav>
 
-        <section className="mb-6 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="text-secondary text-2xl font-bold sm:text-3xl">
-              Editar Curso
-            </h2>
-          </div>
+          <section className="border-border bg-panel sticky top-[69px] z-20 mb-6 flex flex-wrap items-start justify-between gap-4 rounded-2xl border p-4 lg:top-0">
+            <div>
+              <h1 className="text-text text-2xl font-semibold sm:text-3xl">
+                Editar curso
+              </h1>
+              <EditorStatus
+                dirty={dirty}
+                upload={uploadStatus}
+                error={saveError}
+              />
+            </div>
 
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              disabled={isPending}
-              className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 disabled:opacity-50"
-            >
-              Descartar
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmitCourse}
-              disabled={isPending}
-              className="bg-primary hover:bg-primary-dark rounded-lg px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition disabled:opacity-60"
-            >
-              {isPending ? "Salvando..." : "Salvar Alterações"}
-            </button>
-          </div>
-        </section>
+            <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:items-center sm:gap-3">
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={requestLeave}
+                disabled={isPending}
+              >
+                Descartar
+              </Button>
+              <Button
+                variant="primary"
+                type="button"
+                onClick={handleSubmitCourse}
+                disabled={isPending}
+              >
+                {isPending ? "Salvando..." : "Salvar Alterações"}
+              </Button>
+            </div>
+          </section>
 
-        <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
-            <MdOutlineInfo className="text-primary" size={18} />
-            Informações Gerais
-          </h3>
+          <section className="rounded-bento-md bg-panel ring-border p-6 ring-1">
+            <h3 className="text-text mb-4 flex items-center gap-2 text-lg font-semibold">
+              <MdOutlineInfo className="text-accent-text" size={18} />
+              Informações Gerais
+            </h3>
 
-          <div className="flex flex-col gap-4">
-            <label className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-              Título do curso *
-              <input
+            <div className="flex flex-col gap-4">
+              <Input
+                label="Título do curso"
+                error={
+                  submitted && !courseTitle.trim()
+                    ? "Informe o título do curso."
+                    : undefined
+                }
                 value={courseTitle}
                 onChange={(e) => setCourseTitle(e.target.value)}
                 placeholder="Ex: Guitarra do zero ao avançado"
                 required
-                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-normal text-gray-700 outline-none focus:border-orange-300"
               />
-            </label>
 
-            <label className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-              Foto do card do curso
-              <div className="mt-2 rounded-lg border border-dashed border-orange-200 bg-orange-50/40 p-4 text-center">
-                <MdOutlineImage className="mx-auto text-gray-400" size={20} />
-                <p className="mt-2 text-xs font-normal text-gray-500 normal-case">
-                  Clique para selecionar ou arraste a imagem da capa do curso
-                </p>
-                {courseThumbnail ? (
-                  <p className="mt-2 text-xs font-medium text-green-700 normal-case">
-                    {courseThumbnail.name}
+              <div className="text-text-muted text-sm font-medium">
+                Foto do card do curso
+                <div className="border-accent/40 bg-accent/5 mt-2 rounded-lg border border-dashed p-4 text-center">
+                  <MdOutlineImage
+                    className="text-text-muted mx-auto"
+                    size={20}
+                  />
+                  <p className="text-text-muted mt-2 text-xs font-normal normal-case">
+                    Selecione uma imagem para a capa do curso
                   </p>
-                ) : existingThumbnailUrl ? (
-                  <p className="mt-2 text-xs font-medium text-blue-700 normal-case">
-                    Imagem Atual Salva
-                  </p>
-                ) : null}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setCourseThumbnail(e.target.files?.[0] ?? null)}
-                  className="mt-3 block w-full text-xs font-normal text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-orange-100 file:px-3 file:py-2 file:font-medium file:text-orange-700 hover:file:bg-orange-200"
-                />
+                  {courseThumbnail ? (
+                    <p className="text-success mt-2 text-xs font-medium normal-case">
+                      {courseThumbnail.name}
+                    </p>
+                  ) : existingThumbnailUrl ? (
+                    <p className="mt-2 text-xs font-medium text-blue-700 normal-case">
+                      Imagem Atual Salva
+                    </p>
+                  ) : null}
+                  <Input
+                    label="Imagem"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) =>
+                      setCourseThumbnail(e.target.files?.[0] ?? null)
+                    }
+                  />
+                </div>
               </div>
-            </label>
 
-            <label className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-              Descrição do curso
-              <textarea
+              <Textarea
+                label="Descrição do curso"
                 rows={4}
                 value={courseDescription}
                 onChange={(e) => setCourseDescription(e.target.value)}
                 placeholder="Descreva o que o aluno aprenderá neste curso..."
-                className="mt-2 w-full resize-none rounded-lg border border-gray-200 px-3 py-3 text-sm font-normal text-gray-700 outline-none focus:border-orange-300"
               />
-            </label>
 
-            <button
-              type="button"
-              onClick={() => setIsPublished((current) => !current)}
-              className="flex items-center gap-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase"
-            >
-              {isPublished ? (
-                <MdOutlineCheckBox size={18} className="text-primary" />
-              ) : (
-                <MdOutlineCheckBoxOutlineBlank size={18} />
-              )}
-              Publicar este curso e exibi-lo em /aluno/home
-            </button>
-          </div>
-        </section>
+              <Checkbox
+                label="Exibido na área do aluno"
+                checked={isPublished}
+                onChange={() => setIsPublished((current) => !current)}
+              />
+            </div>
+          </section>
 
-        <section className="mt-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-gray-800">
-              Estrutura de Módulos
-            </h3>
-            <button
-              type="button"
-              onClick={() => setIsModuleModalOpen(true)}
-              className="text-primary rounded-lg bg-orange-100 px-3 py-2 text-sm font-semibold hover:bg-orange-200"
-            >
-              + Novo Módulo
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            {modules.length === 0 && (
-              <article className="rounded-xl border border-dashed border-orange-300 bg-orange-50/40 p-6 text-center text-sm text-gray-500">
-                Nenhum módulo criado. Clique em + Novo Módulo para começar.
-              </article>
-            )}
-
-            {modules.map((module, moduleIndex) => (
-              <article
-                key={module.id}
-                className="rounded-xl border border-gray-200 bg-gray-50 p-4"
+          <section className="mt-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-text text-xl font-semibold">
+                Estrutura de Módulos
+              </h3>
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={() => setIsModuleModalOpen(true)}
               >
-                <header className="mb-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3">
-                  <div>
-                    <p className="text-primary text-xs font-bold tracking-wider uppercase">
-                      Módulo {String(moduleIndex + 1).padStart(2, "0")}
-                    </p>
-                    <h4 className="font-semibold text-gray-900">{module.name}</h4>
-                  </div>
+                + Novo Módulo
+              </Button>
+            </div>
 
-                  <div className="flex items-center gap-1 text-gray-500">
-                    <button
-                      type="button"
-                      onClick={() => handleMoveModule(module.id, "up")}
-                      disabled={moduleIndex === 0}
-                      className="rounded-md p-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
-                      aria-label={`Mover módulo ${moduleIndex + 1} para cima`}
-                    >
-                      <MdKeyboardArrowUp size={19} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleMoveModule(module.id, "down")}
-                      disabled={moduleIndex === modules.length - 1}
-                      className="rounded-md p-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
-                      aria-label={`Mover módulo ${moduleIndex + 1} para baixo`}
-                    >
-                      <MdKeyboardArrowDown size={19} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => requestDeleteModule(module.id, module.name)}
-                      className="rounded-md p-1 hover:bg-red-50 hover:text-red-600"
-                      aria-label={`Apagar módulo ${moduleIndex + 1}`}
-                    >
-                      <MdOutlineDelete size={17} />
-                    </button>
-                    <MdOutlineDragIndicator size={18} className="text-gray-400" />
-                  </div>
-                </header>
+            <div className="space-y-4">
+              {modules.length === 0 && (
+                <article className="border-accent/50 bg-accent/5 text-text-muted rounded-xl border border-dashed p-6 text-center text-sm">
+                  Nenhum módulo criado. Clique em + Novo Módulo para começar.
+                </article>
+              )}
 
-                {module.lessons.length === 0 && (
-                  <div className="mb-4 rounded-lg border border-dashed border-gray-300 bg-white px-4 py-6 text-center text-sm text-gray-500">
-                    Módulo vazio. Clique em Adicionar Aula para inserir a primeira aula.
-                  </div>
-                )}
-
-                <div className="space-y-4">
-                  {module.lessons.map((lesson, lessonIndex) => (
-                    <LessonCard
-                      key={lesson.id}
-                      lesson={lesson}
-                      lessonNumber={lessonIndex + 1}
-                      canMoveUp={lessonIndex > 0}
-                      canMoveDown={lessonIndex < module.lessons.length - 1}
-                      onMoveUp={() => handleMoveLesson(module.id, lesson.id, "up")}
-                      onMoveDown={() => handleMoveLesson(module.id, lesson.id, "down")}
-                      onDelete={() =>
-                        requestDeleteLesson(module.id, lesson.id, lessonIndex + 1)
-                      }
-                      onChange={(updated) => handleUpdateLesson(module.id, updated)}
-                      onDeleteMaterial={handleDeleteMaterial}
-                    />
-                  ))}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => handleAddLesson(module.id)}
-                  className="text-primary mt-4 flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-orange-300 py-2.5 text-sm font-semibold hover:bg-orange-50"
+              {modules.map((module, moduleIndex) => (
+                <article
+                  key={module.id}
+                  className="rounded-bento-sm bg-canvas ring-border p-4 ring-1"
                 >
-                  <MdOutlineAdd size={16} />
-                  Adicionar Aula
-                </button>
-              </article>
-            ))}
-          </div>
-        </section>
-      </main>
+                  <header className="border-border mb-4 flex items-center justify-between rounded-full border bg-white px-4 py-3">
+                    <div>
+                      <p className="text-accent-text text-sm font-semibold">
+                        Módulo {String(moduleIndex + 1).padStart(2, "0")}
+                      </p>
+                      <h4 className="text-text font-semibold">{module.name}</h4>
+                    </div>
+
+                    <div className="text-text-muted flex items-center gap-1">
+                      <Button
+                        variant="secondary"
+                        type="button"
+                        onClick={() => handleMoveModule(module.id, "up")}
+                        disabled={moduleIndex === 0}
+                        aria-label={`Mover módulo ${moduleIndex + 1} para cima`}
+                      >
+                        <MdKeyboardArrowUp size={19} />
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        type="button"
+                        onClick={() => handleMoveModule(module.id, "down")}
+                        disabled={moduleIndex === modules.length - 1}
+                        aria-label={`Mover módulo ${moduleIndex + 1} para baixo`}
+                      >
+                        <MdKeyboardArrowDown size={19} />
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        type="button"
+                        onClick={() =>
+                          requestDeleteModule(module.id, module.name)
+                        }
+                        aria-label={`Apagar módulo ${moduleIndex + 1}`}
+                      >
+                        <MdOutlineDelete size={17} />
+                      </Button>
+                      <MdOutlineDragIndicator
+                        size={18}
+                        className="text-text-muted"
+                      />
+                    </div>
+                  </header>
+
+                  {module.lessons.length === 0 && (
+                    <div className="border-border text-text-muted mb-4 rounded-lg border border-dashed bg-white px-4 py-6 text-center text-sm">
+                      Módulo vazio. Clique em Adicionar Aula para inserir a
+                      primeira aula.
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                    {module.lessons.map((lesson, lessonIndex) => (
+                      <LessonCard
+                        submitted={submitted}
+                        key={lesson.id}
+                        lesson={lesson}
+                        lessonNumber={lessonIndex + 1}
+                        canMoveUp={lessonIndex > 0}
+                        canMoveDown={lessonIndex < module.lessons.length - 1}
+                        onMoveUp={() =>
+                          handleMoveLesson(module.id, lesson.id, "up")
+                        }
+                        onMoveDown={() =>
+                          handleMoveLesson(module.id, lesson.id, "down")
+                        }
+                        onDelete={() =>
+                          requestDeleteLesson(
+                            module.id,
+                            lesson.id,
+                            lessonIndex + 1,
+                          )
+                        }
+                        onChange={(updated) =>
+                          handleUpdateLesson(module.id, updated)
+                        }
+                        onDeleteMaterial={handleDeleteMaterial}
+                      />
+                    ))}
+                  </div>
+
+                  <Button
+                    variant="secondary"
+                    type="button"
+                    onClick={() => handleAddLesson(module.id)}
+                  >
+                    <MdOutlineAdd size={16} />
+                    Adicionar Aula
+                  </Button>
+                </article>
+              ))}
+            </div>
+          </section>
+        </fieldset>
+      </div>
 
       <ModuleNameModal
         open={isModuleModalOpen}
@@ -871,6 +1087,32 @@ export default function EditCoursePage() {
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
       />
+      <Dialog
+        open={leaveOpen}
+        onClose={() => setLeaveOpen(false)}
+        title="Descartar alterações?"
+        description="As alterações que ainda não foram salvas serão perdidas."
+        initialFocusRef={cancelLeaveRef}
+      >
+        <div className="mt-5 flex flex-wrap justify-end gap-2">
+          <Button
+            ref={cancelLeaveRef}
+            variant="secondary"
+            onClick={() => setLeaveOpen(false)}
+          >
+            Continuar editando
+          </Button>
+          <Button
+            variant="danger"
+            onClick={() => {
+              markSaved();
+              router.push("/admin/cursos/gerenciar");
+            }}
+          >
+            Descartar alterações
+          </Button>
+        </div>
+      </Dialog>
     </div>
   );
 }

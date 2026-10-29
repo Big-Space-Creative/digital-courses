@@ -2,13 +2,20 @@
 
 import { useCallback, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
-import ProgressBar from "@/components/ui/ProgressBar";
-import { toast } from "@/components/ui/Toast";
+import Image from "next/image";
 import { useUser } from "@/context/UserContext";
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { Badge } from "@/components/ui/Badge";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { toast } from "@/components/ui/Toast";
 import {
-  MdArrowBackIos,
-  MdOutlinePlayCircleFilled,
+  MdChevronRight,
+  MdExpandMore,
   MdOutlineAdminPanelSettings,
+  MdOutlineMenuBook,
+  MdOutlinePlayCircleFilled,
   MdPlayArrow,
 } from "react-icons/md";
 import {
@@ -35,11 +42,20 @@ export default function Home() {
 
       if (!result.success) {
         setCourse(null);
-        setLoadError(result.error);
-        toast("Curso indisponível", {
-          description: result.error,
-          variant: "error",
-        });
+        // Q10: Distinguir catálogo vazio de erro técnico/rede
+        const isCatalogEmpty =
+          result.error.toLowerCase().includes("nenhum curso publicado") ||
+          result.error.toLowerCase().includes("nenhum curso disponivel");
+
+        if (isCatalogEmpty) {
+          setLoadError(null);
+        } else {
+          setLoadError(result.error);
+          toast("Curso indisponível", {
+            description: result.error,
+            variant: "error",
+          });
+        }
         return;
       }
 
@@ -67,192 +83,313 @@ export default function Home() {
     <div className="flex justify-end">
       <Link
         href="/admin/dashboard"
-        className="inline-flex items-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-4 py-2.5 text-sm font-semibold text-orange-700 shadow-sm transition hover:bg-orange-100 hover:shadow-md"
+        className="border-accent/30 bg-accent/10 text-accent-text hover:bg-accent/15 focus-visible:ring-accent inline-flex items-center gap-2 rounded-[var(--radius-control)] border px-3.5 py-2 text-xs font-semibold transition-colors outline-none focus-visible:ring-2"
       >
-        <MdOutlineAdminPanelSettings size={20} />
-        Acessar Painel Administrativo
+        <MdOutlineAdminPanelSettings className="size-4" aria-hidden="true" />
+        Painel Administrativo
       </Link>
     </div>
   );
 
+  // 1. Loading State (using Skeleton)
   if (loading && !course) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6">
+      <div
+        className="mx-auto flex w-full max-w-5xl flex-col gap-6"
+        aria-busy="true"
+        aria-label="Carregando dados do curso"
+      >
+        <span className="sr-only">Carregando conteúdo do curso...</span>
         {adminButton}
-        <p className="animate-pulse text-gray-500">
-          Carregando trilha de aprendizado...
-        </p>
+        <div className="border-border bg-panel rounded-[var(--radius-panel)] border p-6 sm:p-8">
+          <div className="grid gap-6 md:grid-cols-[1.5fr_1fr]">
+            <div className="flex flex-col gap-3">
+              <Skeleton className="h-6 w-32 rounded-[var(--radius-xs)]" />
+              <Skeleton className="h-9 w-3/4 rounded-[var(--radius-xs)]" />
+              <Skeleton className="h-4 w-full rounded-[var(--radius-xs)]" />
+              <Skeleton className="h-4 w-2/3 rounded-[var(--radius-xs)]" />
+              <Skeleton className="mt-4 h-11 w-44 rounded-full" />
+            </div>
+            <Skeleton className="aspect-video w-full rounded-[var(--radius-panel)]" />
+          </div>
+        </div>
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-6 w-48 rounded-[var(--radius-xs)]" />
+          <Skeleton className="h-20 w-full rounded-[var(--radius-panel)]" />
+          <Skeleton className="h-20 w-full rounded-[var(--radius-panel)]" />
+        </div>
       </div>
     );
   }
 
+  // 2. Error State (Q10: erro técnico/rede ≠ vazio legítimo)
+  if (loadError) {
+    return (
+      <div className="mx-auto flex min-h-[50vh] w-full max-w-3xl flex-col items-center justify-center p-4">
+        {adminButton}
+        <ErrorState
+          title="Não foi possível carregar seu curso"
+          description={loadError}
+          onRetry={fetchCourse}
+          className="border-border bg-panel w-full rounded-[var(--radius-panel)] border p-8"
+        />
+      </div>
+    );
+  }
+
+  // 3. Empty State (Q10: alcançável quando catálogo está vazio)
   if (!course) {
     return (
-      <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col items-center justify-center gap-6 p-6">
+      <div className="mx-auto flex min-h-[50vh] w-full max-w-3xl flex-col items-center justify-center p-4">
         {adminButton}
-        <div className="w-full rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
-          <h1 className="text-secondary text-2xl font-bold">
-            Nenhum curso disponível agora
-          </h1>
-          <p className="mt-2 text-sm text-gray-500">
-            {loadError ??
-              "Assim que o administrador publicar um curso, ele aparecerá aqui."}
-          </p>
-        </div>
+        <EmptyState
+          title="Nenhum curso disponível no momento"
+          description="Assim que novos conteúdos forem publicados pelo instrutor, você os verá listados aqui."
+          icon={<MdOutlineMenuBook className="text-text-muted size-10" />}
+          className="border-border bg-panel w-full rounded-[var(--radius-panel)] border p-8 text-center"
+        />
       </div>
     );
   }
 
   const modules = course.modules ?? [];
   const totalLessons = modules.reduce(
-    (acc, moduleItem) => acc + (moduleItem.lessons?.length || 0),
+    (acc, m) => acc + (m.lessons?.length || 0),
     0,
   );
-  const completedLessons = 0;
-  const currentLesson =
+  const firstLesson =
     modules.length > 0 && modules[0].lessons?.length
       ? modules[0].lessons[0]
       : null;
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-10 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
       {adminButton}
 
-      <div className="bg-secondary flex w-full flex-col-reverse items-center justify-between gap-10 rounded-2xl p-6 md:flex-row">
-        <div className="flex flex-col gap-2 md:w-2xl">
-          <h1 className="text-3xl font-bold text-white">
-            Bem-vindo de volta, {displayName}!
-          </h1>
-          <p className="text-base text-white/60">
-            Você está cursando <strong>{course.title}</strong>.
-          </p>
-          {course.description && (
-            <p className="max-w-2xl text-sm leading-6 text-white/75">
-              {course.description}
-            </p>
-          )}
-          <ProgressBar
-            label="Aulas concluídas"
-            current={completedLessons}
-            max={totalLessons === 0 ? 1 : totalLessons}
-          />
-          {currentLesson && (
-            <Link
-              href={`/aluno/aula/${currentLesson.id}`}
-              className="bg-primary hover:bg-primary-dark mt-2 flex size-fit items-center gap-2 rounded-lg px-6 py-3 text-white transition-colors"
-            >
-              <MdOutlinePlayCircleFilled className="size-5" />
-              <p className="text-base">Continuar curso</p>
-            </Link>
-          )}
-        </div>
-
-        <div className="relative size-52 rotate-3 overflow-hidden rounded-2xl shadow-xl">
-          {course.thumbnail ? (
-            <img
-              src={course.thumbnail}
-              alt={course.title}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-orange-300 to-amber-600">
-              <span className="text-6xl font-bold text-white/50">
-                {course.title.charAt(0)}
+      {/* Hero / Curso Card (Q08: honesto, sem afirmações sem dados) */}
+      <section
+        aria-labelledby="hero-course-heading"
+        className="border-border bg-panel relative overflow-hidden rounded-[var(--radius-panel)] border p-6 shadow-[var(--shadow-panel)] transition-colors sm:p-8"
+      >
+        <div className="grid gap-6 md:grid-cols-[1.4fr_1fr] md:items-center">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <Badge variant="accent" className="text-xs font-semibold">
+                Curso disponível
+              </Badge>
+              <span className="text-text-muted text-xs">
+                {modules.length} {modules.length === 1 ? "módulo" : "módulos"} ·{" "}
+                {totalLessons} {totalLessons === 1 ? "aula" : "aulas"}
               </span>
             </div>
-          )}
-        </div>
-      </div>
 
-      <div className="flex w-full flex-col gap-5">
-        <h1 className="text-secondary border-b-2 border-black/20 pb-5 text-xl font-bold">
-          Trilha de aprendizado
-        </h1>
-
-        {modules.length === 0 && (
-          <p className="text-gray-500">Este curso ainda não possui módulos.</p>
-        )}
-
-        {modules.map((moduleItem) => {
-          const moduleLessons = moduleItem.lessons ?? [];
-          const modTotalLessons = moduleLessons.length;
-          const isOpen = openModules.includes(moduleItem.id);
-
-          return (
-            <div
-              key={moduleItem.id}
-              className="flex flex-col items-center justify-between overflow-hidden rounded-xl border border-gray-100 shadow-sm"
+            <h1
+              id="hero-course-heading"
+              className="text-text text-2xl font-bold tracking-tight text-balance sm:text-3xl"
             >
-              <button
-                type="button"
-                onClick={() => toggleModule(moduleItem.id)}
-                aria-expanded={isOpen}
-                aria-controls={`module-content-${moduleItem.id}`}
-                className="flex w-full cursor-pointer items-center justify-between bg-white p-6 transition-colors hover:bg-gray-50"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="bg-primary rounded-full p-2 text-white">
-                    <MdPlayArrow className="size-5" />
-                  </div>
-                  <div>
-                    <h2 className="font-bold text-gray-800">{moduleItem.title}</h2>
-                    <p className="text-sm text-gray-500">
-                      {modTotalLessons} {modTotalLessons === 1 ? "aula" : "aulas"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="bg-orange-200 text-primary hidden rounded-full px-3 py-1 text-xs font-semibold md:block">
-                    Acessível
-                  </div>
-                  <MdArrowBackIos
-                    className={`text-gray-400 transition-transform duration-300 ${
-                      isOpen ? "rotate-90" : "-rotate-90"
-                    }`}
+              Bem-vindo de volta, {displayName}!
+            </h1>
+
+            <p className="text-text-muted text-sm leading-relaxed sm:text-base">
+              Acesse o curso{" "}
+              <strong className="text-text font-medium">{course.title}</strong>{" "}
+              e acompanhe as aulas organizadas por módulo.
+            </p>
+
+            {course.description && (
+              <p className="text-text-muted line-clamp-2 text-xs sm:text-sm">
+                {course.description}
+              </p>
+            )}
+
+            {firstLesson ? (
+              <div className="mt-3 flex items-center gap-3">
+                {/* Q04: ButtonLink sem aninhamento <a><button> */}
+                <ButtonLink
+                  href={`/aluno/aula/${firstLesson.id}`}
+                  variant="primary"
+                  size="md"
+                  className="gap-2 font-semibold shadow-sm"
+                  aria-label={`Abrir curso: ${firstLesson.title}`}
+                >
+                  <MdOutlinePlayCircleFilled
+                    className="size-5"
+                    aria-hidden="true"
                   />
-                </div>
-              </button>
-
-              <div
-                id={`module-content-${moduleItem.id}`}
-                className={`grid w-full transition-all duration-300 ease-in-out ${
-                  isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                }`}
-              >
-                <div className="overflow-hidden bg-gray-50">
-                  <div className="flex w-full flex-col gap-2 p-4">
-                    {moduleLessons.map((lesson, idx) => (
-                      <Link
-                        href={`/aluno/aula/${lesson.id}`}
-                        key={lesson.id}
-                        className="flex items-center justify-between rounded-lg border border-transparent p-3 transition-colors hover:border-gray-200 hover:bg-white"
-                      >
-                        <div className="flex items-center gap-3">
-                          <MdPlayArrow className="size-5 text-gray-400" />
-                          <span className="text-sm font-medium text-gray-700">
-                            {idx + 1}. {lesson.title}
-                          </span>
-                        </div>
-                        <span className="text-xs font-medium text-gray-500">
-                          {lesson.duration_in_minutes
-                            ? `${lesson.duration_in_minutes} min`
-                            : "Vídeo"}
-                        </span>
-                      </Link>
-                    ))}
-
-                    {modTotalLessons === 0 && (
-                      <p className="p-3 text-sm text-gray-500">
-                        Nenhuma aula neste módulo.
-                      </p>
-                    )}
-                  </div>
-                </div>
+                  <span>Abrir curso</span>
+                </ButtonLink>
+                <span className="text-text-muted hidden truncate text-xs sm:inline">
+                  Começar pela primeira aula: {firstLesson.title}
+                </span>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            ) : (
+              <p className="text-text-muted mt-2 text-xs italic">
+                Nenhuma aula cadastrada ainda neste curso.
+              </p>
+            )}
+          </div>
+
+          {/* Thumbnail preview (Q02: Image unoptimized para MinIO/storage) */}
+          <div className="border-border bg-media relative aspect-video w-full overflow-hidden rounded-[var(--radius-control)] border">
+            {course.thumbnail ? (
+              <Image
+                src={course.thumbnail}
+                alt={`Capa do curso ${course.title}`}
+                fill
+                sizes="(max-width: 768px) 100vw, 360px"
+                className="object-cover"
+                unoptimized
+              />
+            ) : (
+              <div className="flex size-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-neutral-800 to-neutral-900 text-white/50">
+                <MdOutlineMenuBook className="size-10" />
+                <span className="text-xs font-medium">{course.title}</span>
+              </div>
+            )}
+            {firstLesson && (
+              <Link
+                href={`/aluno/aula/${firstLesson.id}`}
+                aria-label={`Iniciar aula ${firstLesson.title}`}
+                className="group focus-visible:ring-accent absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-xs transition-opacity hover:bg-black/20 focus-visible:ring-2 focus-visible:outline-none"
+              >
+                {/* Q17: reduced-motion sem transform */}
+                <span className="bg-accent flex size-14 items-center justify-center rounded-full text-[var(--on-accent)] shadow-lg transition-transform group-hover:scale-110 motion-reduce:transform-none motion-reduce:transition-none motion-reduce:group-hover:scale-100">
+                  <MdOutlinePlayCircleFilled
+                    className="size-8"
+                    aria-hidden="true"
+                  />
+                </span>
+              </Link>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Curriculum Accordion */}
+      <section aria-labelledby="curriculum-heading" className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2
+              id="curriculum-heading"
+              className="text-text text-lg font-bold tracking-tight sm:text-xl"
+            >
+              Grade curricular
+            </h2>
+            <p className="text-text-muted text-xs sm:text-sm">
+              Explore os módulos e acesse o conteúdo das aulas
+            </p>
+          </div>
+          <span className="text-text-muted text-xs">
+            {modules.length} {modules.length === 1 ? "módulo" : "módulos"}
+          </span>
+        </div>
+
+        {modules.length === 0 ? (
+          <div className="border-border bg-panel text-text-muted rounded-[var(--radius-panel)] border p-8 text-center text-sm">
+            Nenhum módulo publicado para este curso até o momento.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {modules.map((moduleItem, modIdx) => {
+              const isOpen = openModules.includes(moduleItem.id);
+              const moduleLessons = moduleItem.lessons || [];
+              const modTotalLessons = moduleLessons.length;
+
+              return (
+                <div
+                  key={moduleItem.id}
+                  className="border-border bg-panel overflow-hidden rounded-[var(--radius-panel)] border shadow-[var(--shadow-panel)] transition-colors"
+                >
+                  {/* Module Accordion Header */}
+                  <button
+                    type="button"
+                    onClick={() => toggleModule(moduleItem.id)}
+                    aria-expanded={isOpen}
+                    aria-controls={`module-content-${moduleItem.id}`}
+                    className="hover:bg-canvas focus-visible:ring-accent flex w-full cursor-pointer items-center justify-between p-4 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset sm:p-5"
+                  >
+                    <div className="flex min-w-0 items-center gap-3.5">
+                      {/* Q11: text-accent-text para contraste */}
+                      <div className="bg-accent/15 text-accent-text flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+                        {modIdx + 1}
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="text-text truncate text-sm font-semibold sm:text-base">
+                          {moduleItem.title}
+                        </h3>
+                        <p className="text-text-muted text-xs">
+                          {modTotalLessons}{" "}
+                          {modTotalLessons === 1 ? "aula" : "aulas"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="ml-2 flex shrink-0 items-center gap-3">
+                      <MdExpandMore
+                        className={`text-text-muted size-5 transition-transform duration-200 motion-reduce:transition-none ${
+                          isOpen ? "rotate-180" : ""
+                        }`}
+                        aria-hidden="true"
+                      />
+                    </div>
+                  </button>
+
+                  {/* Module Lessons List */}
+                  {isOpen && (
+                    <div
+                      id={`module-content-${moduleItem.id}`}
+                      className="border-border bg-canvas/40 border-t px-2 py-3 sm:px-4"
+                    >
+                      {modTotalLessons === 0 ? (
+                        <p className="text-text-muted p-3 text-xs italic">
+                          Nenhuma aula cadastrada neste módulo.
+                        </p>
+                      ) : (
+                        <div className="flex flex-col gap-1.5">
+                          {moduleLessons.map((lesson, idx) => (
+                            <Link
+                              key={lesson.id}
+                              href={`/aluno/aula/${lesson.id}`}
+                              className="group hover:bg-panel focus-visible:ring-accent flex items-center justify-between rounded-[var(--radius-control)] p-3 text-sm transition-colors hover:shadow-xs focus-visible:ring-2 focus-visible:outline-none"
+                            >
+                              <div className="flex min-w-0 items-center gap-3">
+                                {/* Q11 e Q17: text-accent-text e reduced-motion sem scale */}
+                                <MdPlayArrow
+                                  className="text-accent-text size-4 shrink-0 transition-transform group-hover:scale-125 motion-reduce:transform-none motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                                  aria-hidden="true"
+                                />
+                                <span className="text-text truncate text-xs font-medium sm:text-sm">
+                                  {idx + 1}. {lesson.title}
+                                </span>
+                              </div>
+
+                              <div className="ml-3 flex shrink-0 items-center gap-2">
+                                {lesson.duration_in_minutes ? (
+                                  <span className="text-text-muted text-xs font-medium">
+                                    {lesson.duration_in_minutes} min
+                                  </span>
+                                ) : (
+                                  <span className="text-text-muted text-xs">
+                                    Vídeo
+                                  </span>
+                                )}
+                                <MdChevronRight
+                                  className="text-text-muted size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
+                                  aria-hidden="true"
+                                />
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

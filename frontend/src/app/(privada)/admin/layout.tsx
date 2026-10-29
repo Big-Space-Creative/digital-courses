@@ -1,14 +1,17 @@
 import Sidebar from "./components/Sidebar";
 
-export default function StudentLayout({
+export default function AdminLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <div className="min-h-screen lg:flex">
+    <div className="theme-light bg-canvas text-text min-h-screen lg:flex">
       <Sidebar />
-      <main className="w-full overflow-x-hidden lg:h-screen lg:overflow-y-auto">
+      <main
+        id="conteudo"
+        className="w-full overflow-x-hidden lg:h-screen lg:overflow-y-auto"
+      >
         {children}
       </main>
     </div>

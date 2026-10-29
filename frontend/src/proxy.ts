@@ -7,9 +7,14 @@ const publicRoutes = [
   // Fluxo de verificação de e-mail — não exige autenticação
   { path: "/verify-email" },
   { path: "/email-verified" },
+  // Recuperação de senha — precisa ser acessível sem sessão
+  { path: "/esqueci-senha", whenAuthenticated: "redirect" },
+  { path: "/redefinir-senha" },
   // Páginas legais — públicas e sem redirecionamento
   { path: "/politica-de-privacidade" },
   { path: "/termos-de-uso" },
+  // Showcase do design system (Pullse) — público para demonstração
+  { path: "/design-system" },
 ];
 
 // Roles que têm acesso à área administrativa

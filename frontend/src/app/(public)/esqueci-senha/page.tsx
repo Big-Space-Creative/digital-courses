@@ -4,15 +4,16 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MdMusicNote, MdOutlineEmail } from "react-icons/md";
+import { MdArrowBack, MdOutlineEmail } from "react-icons/md";
 
-//Components
-import { Input } from "@/components/form/Input";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import AuthLayout from "@/components/marketing/AuthLayout";
 import { forgotPasswordAction } from "@/app/actions/auth";
 import { toast } from "@/components/ui/Toast";
 
 const forgotSchema = z.object({
-  email: z.string().email("Email inválido"),
+  email: z.string().email("E-mail inválido"),
 });
 
 type ForgotData = z.infer<typeof forgotSchema>;
@@ -27,59 +28,62 @@ export default function ForgotPassword() {
   });
 
   const handleForgot = async (data: ForgotData) => {
-    // A resposta do backend é sempre genérica (anti-enumeração de e-mail),
-    // então sempre exibimos a mesma mensagem de sucesso.
     await forgotPasswordAction(data.email);
 
     toast("Verifique seu e-mail", {
       description:
-        "Se houver uma conta com este endereço, enviamos as instruções para redefinir sua senha.",
+        "Se houver uma conta vinculada a este endereço, enviamos instruções para você criar uma nova senha.",
       variant: "success",
     });
   };
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-5">
-      <div className="flex w-full flex-col gap-5 md:w-md">
-        <div className="flex items-center">
-          <MdMusicNote className="text-primary size-6" />
-          <h1 className="text-xl font-bold">AulasViolão</h1>
-        </div>
-        <h1 className="text-secondary text-3xl font-bold">Esqueceu a senha?</h1>
-        <p className="text-base font-normal text-gray-500">
-          Informe o e-mail da sua conta e enviaremos um link para você criar uma
-          nova senha.
+    <AuthLayout contextType="recovery">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-text text-3xl font-semibold tracking-tight">
+          Esqueceu a senha?
+        </h1>
+        <p className="text-text-muted text-sm leading-relaxed">
+          Informe seu e-mail cadastrado e enviaremos um link seguro para
+          redefinição.
         </p>
-        <form
-          onSubmit={handleSubmit(handleForgot)}
-          className="flex flex-col gap-5"
-        >
-          <Input
-            label="Email"
-            type="email"
-            icon={MdOutlineEmail}
-            placeholder="email@exemplo.com"
-            error={errors.email?.message}
-            {...register("email")}
-          />
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-primary hover:bg-primary-dark active:bg-primary-dark rounded-lg py-5 text-sm font-semibold text-white transition-colors duration-300 disabled:opacity-60"
-          >
-            {isSubmitting ? "Enviando..." : "Enviar link de redefinição"}
-          </button>
-          <p className="mt-2 text-sm">
-            Lembrou a senha?{" "}
-            <Link
-              href="/login"
-              className="text-primary hover:text-primary-dark active:text-primary-dark"
-            >
-              Voltar para o login
-            </Link>
-          </p>
-        </form>
       </div>
-    </div>
+
+      <form
+        onSubmit={handleSubmit(handleForgot)}
+        className="mt-6 flex flex-col gap-4"
+        noValidate
+      >
+        <Input
+          label="E-mail cadastrado"
+          type="email"
+          autoComplete="email"
+          icon={MdOutlineEmail}
+          placeholder="email@exemplo.com"
+          error={errors.email?.message}
+          {...register("email")}
+        />
+
+        <Button
+          type="submit"
+          variant="primary"
+          size="lg"
+          loading={isSubmitting}
+          className="mt-2 w-full font-semibold"
+        >
+          {isSubmitting ? "Enviando..." : "Enviar link de recuperação"}
+        </Button>
+
+        <div className="mt-4 flex items-center justify-between border-t border-[var(--border)] pt-4">
+          <Link
+            href="/login"
+            className="text-text-muted hover:text-text focus-visible:ring-accent flex min-h-[44px] items-center gap-1.5 rounded-sm text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+          >
+            <MdArrowBack size={18} aria-hidden="true" />
+            <span>Voltar para o login</span>
+          </Link>
+        </div>
+      </form>
+    </AuthLayout>
   );
 }

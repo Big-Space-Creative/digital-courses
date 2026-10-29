@@ -3,32 +3,33 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  MdHelpOutline,
   MdLockOutline,
-  MdMusicNote,
   MdOutlineEmail,
   MdOutlinePersonOutline,
-  MdStar,
-  MdHelpOutline,
 } from "react-icons/md";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-//Components
-import { Input } from "@/components/form/Input";
+import { Input } from "@/components/ui/Input";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { Button } from "@/components/ui/Button";
+import AuthLayout from "@/components/marketing/AuthLayout";
 import { registerAction } from "@/app/actions/auth";
 import { toast } from "@/components/ui/Toast";
 
 const registerSchema = z
   .object({
     nome: z.string().min(2, "O nome deve conter pelo menos 2 caracteres"),
-    email: z.string().email("Email inválido"),
+    email: z.string().email("E-mail inválido"),
     senha: z.string().min(8, "A senha deve conter pelo menos 8 caracteres"),
     confirmaSenha: z
       .string()
-      .min(8, "A senha deve conter pelo menos 8 caracteres"),
+      .min(8, "A confirmação deve conter pelo menos 8 caracteres"),
     aceitaTermos: z.literal(true, {
-      error: "Você precisa aceitar os Termos de Uso e a Política de Privacidade para continuar.",
+      error:
+        "Você precisa aceitar os Termos de Uso e a Política de Privacidade para continuar.",
     }),
   })
   .refine((data) => data.senha === data.confirmaSenha, {
@@ -36,19 +37,17 @@ const registerSchema = z
     path: ["confirmaSenha"],
   });
 
+type RegisterData = z.infer<typeof registerSchema>;
+
 export default function Register() {
   const router = useRouter();
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm({
+  } = useForm<RegisterData>({
     resolver: zodResolver(registerSchema),
   });
-
-  type RegisterData = z.infer<typeof registerSchema>;
-
-
 
   const handleRegister = async (data: RegisterData) => {
     const res = await registerAction({
@@ -59,158 +58,143 @@ export default function Register() {
     });
 
     if (res.error) {
-      toast("Nao foi possivel cadastrar", {
+      toast("Não foi possível cadastrar", {
         description: res.error,
         variant: "error",
       });
       return;
     }
 
-    toast("Cadastro realizado!", {
+    toast("Cadastro realizado com sucesso!", {
       description: "Verifique seu e-mail para ativar sua conta.",
       variant: "success",
     });
-    // Redireciona para a página de verificação passando o e-mail como parâmetro
+
     router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
   };
 
   return (
-    <div className="flex min-h-dvh justify-between">
-      <div className="flex flex-1 flex-col justify-center gap-10 px-5 md:items-center">
-        <div className="flex items-center md:hidden">
-          <MdMusicNote className="text-primary size-6" />
-          <h1 className="text-xl font-bold">AulasViolão</h1>
-        </div>
-        <div className="flex flex-col gap-5 md:w-md">
-          <h1 className="text-secondary text-3xl font-bold">Bem-Vindo</h1>
-          <p className="text-base font-normal text-gray-500">
-            Insira seus dados para o cadastro.
-          </p>
-          <form
-            onSubmit={handleSubmit(handleRegister)}
-            className="flex flex-col gap-5"
-          >
-            <Input
-              label="Nome"
-              type="text"
-              icon={MdOutlinePersonOutline}
-              placeholder="Nome Completo"
-              error={errors.nome?.message}
-              {...register("nome")}
-            />
-            <Input
-              label="Email"
-              type="email"
-              icon={MdOutlineEmail}
-              placeholder="email@exemplo.com"
-              error={errors.email?.message}
-              {...register("email")}
-            />
-            <Input
-              label="Senha"
-              type="password"
-              icon={MdLockOutline}
-              placeholder="******"
-              error={errors.senha?.message}
-              {...register("senha")}
-            />
-            <Input
-              label="Confirma Senha"
-              type="password"
-              icon={MdLockOutline}
-              placeholder="******"
-              error={errors.confirmaSenha?.message}
-              {...register("confirmaSenha")}
-            />
+    <AuthLayout contextType="register">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-text text-3xl font-semibold tracking-tight">
+          Crie sua conta
+        </h1>
+        <p className="text-text-muted text-sm leading-relaxed">
+          Comece agora sua trilha de aprendizado prático de violão.
+        </p>
+      </div>
 
-            {/* Aceite de Termos — exigido pela LGPD Art. 8º */}
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <label className="flex cursor-pointer items-start gap-3">
-                <input
-                  type="checkbox"
-                  {...register("aceitaTermos")}
-                  className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-orange-500"
-                />
-                <span className="text-sm leading-relaxed text-gray-600">
-                  Eu li e aceito os{" "}
-                  <Link
-                    href="/termos-de-uso"
-                    target="_blank"
-                    className="font-semibold text-primary underline hover:text-primary-dark"
-                  >
-                    Termos de Uso
-                  </Link>{" "}
-                  e a{" "}
-                  <Link
-                    href="/politica-de-privacidade"
-                    target="_blank"
-                    className="font-semibold text-primary underline hover:text-primary-dark"
-                  >
-                    Política de Privacidade
-                  </Link>
-                  .
-                </span>
-              </label>
-              {errors.aceitaTermos && (
-                <p className="mt-2 text-xs text-red-500">
-                  {errors.aceitaTermos.message}
-                </p>
-              )}
-            </div>
+      <form
+        onSubmit={handleSubmit(handleRegister)}
+        className="mt-6 flex flex-col gap-4"
+        noValidate
+      >
+        <Input
+          label="Nome completo"
+          type="text"
+          autoComplete="name"
+          icon={MdOutlinePersonOutline}
+          placeholder="Seu nome"
+          error={errors.nome?.message}
+          {...register("nome")}
+        />
 
-            <button
-              type="submit"
-              className="bg-primary hover:bg-primary-dark active:bg-primary-dark rounded-lg py-5 text-sm font-semibold text-white transition-colors duration-300"
-            >
-              {isSubmitting ? "Cadastrando..." : "Cadastre-se"}
-            </button>
-            <div className="flex items-center justify-between mt-2">
-              <p className="flex gap-1 text-sm">
-                Já tem conta?
+        <Input
+          label="E-mail"
+          type="email"
+          autoComplete="email"
+          icon={MdOutlineEmail}
+          placeholder="email@exemplo.com"
+          error={errors.email?.message}
+          {...register("email")}
+        />
+
+        <Input
+          label="Senha"
+          type="password"
+          autoComplete="new-password"
+          icon={MdLockOutline}
+          placeholder="No mínimo 8 caracteres"
+          error={errors.senha?.message}
+          {...register("senha")}
+        />
+
+        <Input
+          label="Confirme sua senha"
+          type="password"
+          autoComplete="new-password"
+          icon={MdLockOutline}
+          placeholder="Repita a senha digitada"
+          error={errors.confirmaSenha?.message}
+          {...register("confirmaSenha")}
+        />
+
+        {/* Aceite de Termos — Exigência legal LGPD Art. 8º com primitivo Checkbox */}
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)] p-3.5">
+          <Checkbox
+            id="aceitaTermos"
+            error={errors.aceitaTermos?.message}
+            {...register("aceitaTermos")}
+            label={
+              <span className="text-text text-xs leading-relaxed">
+                Eu li e aceito os{" "}
                 <Link
-                  href="/login"
-                  className="text-primary hover:text-primary-dark active:text-primary-dark"
+                  href="/termos-de-uso"
+                  target="_blank"
+                  className="text-accent-text hover:text-text font-semibold underline underline-offset-2 transition-colors"
                 >
-                  Clique aqui!
+                  Termos de Uso
+                </Link>{" "}
+                e a{" "}
+                <Link
+                  href="/politica-de-privacidade"
+                  target="_blank"
+                  className="text-accent-text hover:text-text font-semibold underline underline-offset-2 transition-colors"
+                >
+                  Política de Privacidade
                 </Link>
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  toast("Precisa de ajuda?", {
-                    description: `Entre em contato conosco: ${process.env.NEXT_PUBLIC_SUPPORT_EMAIL}`,
-                    variant: "info",
-                  });
-                }}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-primary transition-colors"
-                title="Atendimento ao cliente"
-              >
-                <MdHelpOutline size={18} /> Ajuda
-              </button>
-            </div>
-          </form>
+                .
+              </span>
+            }
+          />
         </div>
-      </div>
-      <div className="bg-secondary hidden min-h-screen bg-[url(/01.jpg)] bg-cover bg-center bg-blend-overlay md:flex md:flex-1">
-        <div className="flex size-full flex-col justify-between gap-3.5 p-12">
-          <div className="hidden items-center md:flex">
-            <MdMusicNote className="text-primary size-6" />
-            <h1 className="text-xl font-semibold text-white">AulasViolão</h1>
-          </div>
-          <div className="flex flex-col gap-2.5">
-            <span className="text-primary flex gap-1">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <MdStar key={index} />
-              ))}
-            </span>
-            <p className="text-lg text-white">
-              &quot;Melhor curso de violão, sem <br />
-              duvida nenhum recomendo, 10 <br /> estrelas&quot;
-            </p>
-            <p className="text-sm text-white">Bruno lacerda</p>
-          </div>
+
+        <Button
+          type="submit"
+          variant="primary"
+          size="lg"
+          loading={isSubmitting}
+          className="mt-2 w-full font-semibold"
+        >
+          {isSubmitting ? "Criando conta..." : "Criar minha conta"}
+        </Button>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border)] pt-4">
+          <p className="text-text-muted text-sm">
+            Já tem uma conta?{" "}
+            <Link
+              href="/login"
+              className="text-accent-text hover:text-text focus-visible:ring-accent font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            >
+              Entrar
+            </Link>
+          </p>
+
+          <button
+            type="button"
+            onClick={() => {
+              toast("Precisa de ajuda?", {
+                description: `Entre em contato conosco: ${process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "contato@pullse.com.br"}`,
+                variant: "info",
+              });
+            }}
+            className="text-text-muted hover:text-accent-text focus-visible:ring-accent flex min-h-[44px] items-center gap-1.5 rounded-sm text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
+          >
+            <MdHelpOutline size={16} aria-hidden="true" />
+            <span>Ajuda</span>
+          </button>
         </div>
-      </div>
-    </div>
+      </form>
+    </AuthLayout>
   );
 }

@@ -1,16 +1,17 @@
 "use client";
+import Image from "next/image";
 
 import { useState, useTransition } from "react";
 import { useUser } from "@/context/UserContext";
 import { toast } from "@/components/ui/Toast";
-import { changePasswordAction, updateProfileNameAction } from "@/app/actions/users";
 import {
-  MdEmail,
-  MdLock,
-  MdOutlinePerson,
-  MdSecurity,
-  MdCheckCircleOutline,
-} from "react-icons/md";
+  changePasswordAction,
+  updateProfileNameAction,
+} from "@/app/actions/users";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Badge } from "@/components/ui/Badge";
 
 function initials(name?: string | null) {
   if (!name) return "";
@@ -34,22 +35,32 @@ export default function AdminProfilePage() {
       : user?.role === "instructor"
         ? "Instrutor"
         : "Membro";
-  const memberSince = user
-    ? new Date(user.createdAt ?? Date.now()).toLocaleDateString("pt-BR", {
-        month: "long",
-        year: "numeric",
-      })
-    : "—";
+  const memberSince =
+    user?.createdAt && !Number.isNaN(new Date(user.createdAt).getTime())
+      ? new Date(user.createdAt).toLocaleDateString("pt-BR", {
+          month: "long",
+          year: "numeric",
+        })
+      : "—";
 
   // ── Nome ─────────────────────────────────────────────────────────────────────
-  const [name, setName] = useState(displayName);
+  const [nameValue, setName] = useState<string | null>(null);
+  const name = nameValue ?? displayName;
+  const [nameError, setNameError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [namePending, startNameTransition] = useTransition();
 
   function handleSaveName() {
-    if (!name.trim() || name.trim() === user?.name) return;
+    if (!name.trim()) {
+      setNameError("Informe seu nome completo.");
+      return;
+    }
+    setNameError("");
+    if (name.trim() === user?.name) return;
     startNameTransition(async () => {
       const res = await updateProfileNameAction(name.trim());
       if (!res.success) {
+        setNameError(res.error ?? "Não foi possível atualizar o nome.");
         toast("Erro ao atualizar nome", {
           description: res.error ?? "Tente novamente.",
           variant: "error",
@@ -70,7 +81,9 @@ export default function AdminProfilePage() {
   const [passwordPending, startPasswordTransition] = useTransition();
 
   function handleSavePassword() {
+    setPasswordError("");
     if (!password || !passwordConfirm) {
+      setPasswordError("Preencha a nova senha e a confirmação.");
       toast("Campos obrigatórios", {
         description: "Preencha a nova senha e a confirmação.",
         variant: "error",
@@ -78,6 +91,7 @@ export default function AdminProfilePage() {
       return;
     }
     if (password !== passwordConfirm) {
+      setPasswordError("A nova senha e a confirmação precisam ser iguais.");
       toast("Senhas não conferem", {
         description: "A nova senha e a confirmação precisam ser iguais.",
         variant: "error",
@@ -85,6 +99,7 @@ export default function AdminProfilePage() {
       return;
     }
     if (password.length < 8) {
+      setPasswordError("A senha precisa ter no mínimo 8 caracteres.");
       toast("Senha muito curta", {
         description: "A senha precisa ter no mínimo 8 caracteres.",
         variant: "error",
@@ -98,6 +113,7 @@ export default function AdminProfilePage() {
         password_confirmation: passwordConfirm,
       });
       if (!res.success) {
+        setPasswordError(res.error ?? "Não foi possível atualizar a senha.");
         toast("Erro ao atualizar senha", {
           description: res.error ?? "Tente novamente.",
           variant: "error",
@@ -114,148 +130,116 @@ export default function AdminProfilePage() {
   }
 
   return (
-    <div className="bg-background min-h-screen">
-      <main className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">
-        <section className="mb-6">
-          <h1 className="text-secondary text-2xl font-bold sm:text-3xl">
-            Configurações da Conta
-          </h1>
-          <p className="mt-1 text-gray-500">
-            Gerencie seus dados pessoais e segurança.
+    <div className="mx-auto w-full max-w-4xl space-y-6 p-4 sm:p-6 lg:p-8">
+      <PageHeader
+        title="Minha conta"
+        description="Atualize seus dados pessoais e mantenha sua conta segura."
+      />
+      <section className="border-border flex flex-wrap items-center gap-4 border-b pb-6">
+        <span className="bg-panel flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full text-xl font-semibold">
+          {user?.urlPhoto ? (
+            <Image
+              unoptimized
+              width={320}
+              height={180}
+              src={user.urlPhoto}
+              alt=""
+              className="size-full object-cover"
+            />
+          ) : (
+            initials(displayName)
+          )}
+        </span>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-lg font-semibold break-words">{displayName}</h2>
+            <Badge>{displayRole}</Badge>
+          </div>
+          <p className="text-text-muted mt-1 text-sm break-all">
+            {displayEmail}
           </p>
-        </section>
-
-        {/* Header card */}
-        <section className="bg-secondary mb-8 rounded-2xl p-5 text-white shadow-sm sm:p-6">
-          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-            <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-orange-400 bg-gradient-to-br from-orange-400 to-amber-600 text-3xl font-bold text-white">
-              {user?.urlPhoto ? (
-                <img
-                  src={user.urlPhoto}
-                  alt={displayName}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                initials(displayName)
-              )}
-            </div>
-
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-2xl font-bold">{displayName}</h2>
-                <span className="bg-primary/20 text-primary border-primary/50 rounded-full border px-2 py-0.5 text-xs font-bold uppercase">
-                  {displayRole}
-                </span>
-              </div>
-              <p className="text-primary mt-1 font-medium">{displayEmail}</p>
-              <p className="mt-1 text-sm text-gray-300">
+          {user?.createdAt &&
+            !Number.isNaN(new Date(user.createdAt).getTime()) && (
+              <p className="text-text-muted mt-1 text-xs">
                 Membro desde {memberSince}
               </p>
-            </div>
+            )}
+        </div>
+      </section>
+      <section className="grid gap-6">
+        <form
+          className="border-border bg-panel space-y-5 rounded-2xl border p-4 sm:p-6"
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleSaveName();
+          }}
+          noValidate
+        >
+          <h2 className="text-lg font-semibold">Informações pessoais</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input
+              label="Nome completo"
+              autoComplete="name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              error={nameError || undefined}
+              disabled={namePending}
+            />
+            <Input
+              label="E-mail"
+              type="email"
+              value={displayEmail}
+              readOnly
+              help="A alteração de e-mail não está disponível no momento."
+            />
           </div>
-        </section>
-
-        {/* Form */}
-        <section className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
-          <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-            {/* Informações pessoais */}
-            <h3 className="text-secondary text-xl font-semibold">
-              Informações Pessoais
-            </h3>
-            <div className="mt-4 border-t border-gray-100 pt-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <label className="text-sm font-semibold text-gray-600">
-                  Nome Completo
-                  <div className="mt-2 flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-gray-700">
-                    <MdOutlinePerson className="text-gray-400" size={18} />
-                    <input
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full bg-transparent text-sm outline-none"
-                      placeholder="Seu nome completo"
-                    />
-                  </div>
-                </label>
-
-                <label className="text-sm font-semibold text-gray-600">
-                  E-mail
-                  <div className="mt-2 flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-100 px-3 py-2.5 text-gray-400">
-                    <MdEmail className="text-gray-300" size={18} />
-                    <input
-                      value={displayEmail}
-                      readOnly
-                      disabled
-                      className="w-full cursor-not-allowed bg-transparent text-sm outline-none"
-                      title="O e-mail não pode ser alterado"
-                    />
-                  </div>
-                  <span className="mt-1 block text-xs font-normal text-gray-400">
-                    ⚠ Alteração de e-mail não disponível no momento.
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            <div className="mt-5 flex justify-end">
-              <button
-                type="button"
-                onClick={handleSaveName}
-                disabled={namePending || name.trim() === user?.name}
-                className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition disabled:opacity-60"
-              >
-                <MdCheckCircleOutline size={16} />
-                {namePending ? "Salvando..." : "Salvar Nome"}
-              </button>
-            </div>
-
-            {/* Segurança */}
-            <h3 className="text-secondary mt-8 text-xl font-semibold">
-              Segurança
-            </h3>
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <label className="text-sm font-semibold text-gray-600">
-                Nova Senha
-                <div className="mt-2 flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-gray-700">
-                  <MdLock className="text-gray-400" size={18} />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Mínimo 8 caracteres"
-                    className="w-full bg-transparent text-sm outline-none"
-                  />
-                </div>
-              </label>
-
-              <label className="text-sm font-semibold text-gray-600">
-                Confirmar Senha
-                <div className="mt-2 flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-gray-700">
-                  <MdSecurity className="text-gray-400" size={18} />
-                  <input
-                    type="password"
-                    value={passwordConfirm}
-                    onChange={(e) => setPasswordConfirm(e.target.value)}
-                    placeholder="Repita a nova senha"
-                    className="w-full bg-transparent text-sm outline-none"
-                  />
-                </div>
-              </label>
-            </div>
-
-            <div className="mt-5 flex justify-end">
-              <button
-                type="button"
-                onClick={handleSavePassword}
-                disabled={passwordPending}
-                className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition disabled:opacity-60"
-              >
-                <MdLock size={16} />
-                {passwordPending ? "Salvando..." : "Alterar Senha"}
-              </button>
-            </div>
-          </article>
-        </section>
-      </main>
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              loading={namePending}
+              disabled={!user || name.trim() === user.name}
+            >
+              Salvar nome
+            </Button>
+          </div>
+        </form>
+        <form
+          className="border-border bg-panel space-y-5 rounded-2xl border p-4 sm:p-6"
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleSavePassword();
+          }}
+          noValidate
+        >
+          <h2 className="text-lg font-semibold">Segurança</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input
+              label="Nova senha"
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              help="Use pelo menos 8 caracteres."
+              error={passwordError || undefined}
+              disabled={passwordPending}
+            />
+            <Input
+              label="Confirmar nova senha"
+              type="password"
+              autoComplete="new-password"
+              value={passwordConfirm}
+              onChange={(event) => setPasswordConfirm(event.target.value)}
+              disabled={passwordPending}
+              aria-invalid={!!passwordError}
+            />
+          </div>
+          <div className="flex justify-end">
+            <Button type="submit" loading={passwordPending}>
+              Alterar senha
+            </Button>
+          </div>
+        </form>
+      </section>
     </div>
   );
 }

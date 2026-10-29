@@ -1,0 +1,92 @@
+"use client";
+import { ReactNode, RefObject, useEffect, useId, useRef } from "react";
+import { Button } from "./Button";
+export type DialogProps = {
+  open: boolean;
+  onClose: () => void;
+  title: ReactNode;
+  description?: ReactNode;
+  children: ReactNode;
+  initialFocusRef?: RefObject<HTMLElement | null>;
+  className?: string;
+  dismissible?: boolean;
+};
+/** Native modal supplies top-layer inertness, focus trapping and Escape semantics. */
+export function Dialog({
+  open,
+  onClose,
+  title,
+  description,
+  children,
+  initialFocusRef,
+  className = "",
+  dismissible = true,
+}: DialogProps) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const id = useId();
+  const closeRef = useRef(onClose);
+  useEffect(() => {
+    closeRef.current = onClose;
+  }, [onClose]);
+  const requestClose = (event: { preventDefault: () => void }) => {
+    event.preventDefault();
+    if (dismissible) closeRef.current();
+  };
+  useEffect(() => {
+    const dialog = ref.current;
+    if (!dialog || !open) return;
+    const trigger = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    dialog.showModal();
+    document.body.style.overflow = "hidden";
+    const firstField = dialog.querySelector<HTMLElement>(
+      "input:not(:disabled), select:not(:disabled), textarea:not(:disabled)",
+    );
+    (initialFocusRef?.current ?? firstField ?? dialog).focus();
+    return () => {
+      if (dialog.open) dialog.close();
+      document.body.style.overflow = overflow;
+      if (trigger?.isConnected) trigger.focus();
+    };
+  }, [open, initialFocusRef]);
+  return (
+    <dialog
+      ref={ref}
+      tabIndex={-1}
+      className={`ui-dialog ${className}`}
+      aria-labelledby={id + "-title"}
+      aria-describedby={description ? id + "-description" : undefined}
+      onCancel={requestClose}
+      onKeyDown={(event) => {
+        if (
+          event.key !== "Escape" ||
+          event.nativeEvent.isComposing ||
+          event.defaultPrevented
+        )
+          return;
+        // Cancel the default action so the browser does not also emit cancel.
+        event.stopPropagation();
+        requestClose(event);
+      }}
+    >
+      <div className="ui-dialog-heading">
+        <h2 id={id + "-title"}>{title}</h2>
+        <Button
+          variant="ghost"
+          aria-label="Fechar diálogo"
+          disabled={!dismissible}
+          onClick={requestClose}
+        >
+          ×
+        </Button>
+      </div>
+      {description && (
+        <p id={id + "-description"} className="ui-help">
+          {description}
+        </p>
+      )}
+      {children}
+    </dialog>
+  );
+}
+export default Dialog;
