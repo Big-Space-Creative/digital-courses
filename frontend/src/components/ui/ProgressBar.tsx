@@ -12,38 +12,43 @@ export default function ProgressBar({
   showPercentage = true,
 }: ProgressBarProps) {
   // Cálculo da porcentagem (garantindo que não passe de 100% nem seja menor que 0)
-  const percentage = Math.min(Math.max((current / max) * 100, 0), 100);
+  const safeMax = Number.isFinite(max) && max > 0 ? max : 0;
+  const safeCurrent = Number.isFinite(current)
+    ? Math.min(Math.max(current, 0), safeMax)
+    : 0;
+  const percentage = safeMax ? (safeCurrent / safeMax) * 100 : 0;
 
   return (
     <div className="w-full space-y-2">
       {(label || showPercentage) && (
         <div className="flex items-end justify-between">
           {label && (
-            <span className="text-surface text-sm font-medium">{label}</span>
+            <span className="text-text text-sm font-medium">{label}</span>
           )}
           {showPercentage && (
-            <span className="text-accent text-xs font-semibold">
+            <span className="text-accent-text text-xs font-semibold">
               {Math.round(percentage)}%
             </span>
           )}
         </div>
       )}
 
-      {/* Trilho — bg-surface/20 em vez de uma cor fixa: sobre o tile bg-ink
-          isso sempre lê como "um tom oposto ao tile", em ambos os temas. */}
-      <div className="bg-surface/20 h-4 w-full overflow-hidden rounded-full shadow-inner">
+      <div
+        className="bg-canvas border-border h-3 w-full overflow-hidden rounded-full border"
+        role="progressbar"
+        aria-label={label ?? "Progresso"}
+        aria-valuenow={safeCurrent}
+        aria-valuemin={0}
+        aria-valuemax={safeMax || 1}
+      >
         <div
-          className="bg-accent h-full rounded-full transition-all duration-500 ease-out"
+          className="bg-accent h-full rounded-full"
           style={{ width: `${percentage}%` }}
-          aria-valuenow={current}
-          aria-valuemin={0}
-          aria-valuemax={max}
-          role="progressbar"
         />
       </div>
 
-      <p className="text-surface/50 text-right text-[10px] italic">
-        {current} de {max} unidades
+      <p className="text-text-muted text-right text-xs">
+        {safeCurrent} de {safeMax} unidades
       </p>
     </div>
   );

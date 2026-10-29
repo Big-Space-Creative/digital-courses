@@ -36,8 +36,12 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(
       { threshold: 0.15, rootMargin: "0px 0px -10% 0px", ...options },
     );
 
+    el.dataset.revealReady = "true";
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      delete el.dataset.revealReady;
+    };
   }, [options]);
 
   return ref;

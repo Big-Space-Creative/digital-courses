@@ -61,3 +61,6 @@ src/lib/impeccable/ImpeccableLiveRoot.svelte
 src/lib/impeccable/__runtime.js
 src/lib/impeccable/[0-9a-f]*/
 # impeccable-live-ignore-end
+
+# Maestri (roles/estado local dos agentes)
+.maestri/

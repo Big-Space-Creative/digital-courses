@@ -2,16 +2,14 @@ import { HTMLAttributes, ReactNode } from "react";
 
 type GlassCardProps = {
   children: ReactNode;
-  /** "accent" tints the glass with the pulse gradient for featured surfaces. */
+  /** Legacy tone alias, retained while callers migrate to semantic panels. */
   tone?: "plain" | "accent";
-  /** Use the stronger blur tier (foreground modals / banners). */
+  /** Legacy surface tier; both tiers now use an opaque panel. */
   strong?: boolean;
 } & HTMLAttributes<HTMLDivElement>;
 
 /**
- * Translucent surface (glassmorphism). Reads correctly only over a busy /
- * gradient / image backdrop — see DESIGN.md §4. Hover lift + focus handling
- * come from the `.glass` utility in globals.css.
+ * Compatibility panel. Opaque semantic surface with a subtle border and shadow.
  */
 export default function GlassCard({
   children,
