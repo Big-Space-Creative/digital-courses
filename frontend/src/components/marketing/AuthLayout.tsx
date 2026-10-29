@@ -12,7 +12,11 @@ import PulseWave from "@/components/brand/PulseWave";
 import ThemeProvider from "@/components/marketing/ThemeProvider";
 import ThemeToggle from "@/components/marketing/ThemeToggle";
 
-export type AuthContextType = "login" | "register" | "recovery";
+export type AuthContextType =
+  | "login"
+  | "register"
+  | "recovery"
+  | "verification";
 
 type AuthLayoutProps = {
   children: ReactNode;
@@ -30,7 +34,8 @@ export default function AuthLayout({
   children,
   contextType = "login",
 }: AuthLayoutProps) {
-  const isRecovery = contextType === "recovery";
+  const isVerification = contextType === "verification";
+  const isRecovery = contextType === "recovery" || isVerification;
 
   return (
     <ThemeProvider>
@@ -82,11 +87,14 @@ export default function AuthLayout({
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl font-bold tracking-tight text-white md:text-3xl">
-                      Orientações de recuperação
+                      {isVerification
+                        ? "Confirmação de e-mail"
+                        : "Orientações de recuperação"}
                     </h2>
                     <p className="mt-2 text-sm leading-relaxed text-[#BAC2C7]">
-                      Siga estas dicas para redefinir seu acesso com total
-                      segurança e rapidez:
+                      {isVerification
+                        ? "Confirme seu e-mail para liberar o acesso às aulas:"
+                        : "Siga estas dicas para redefinir seu acesso com total segurança e rapidez:"}
                     </p>
                   </div>
 

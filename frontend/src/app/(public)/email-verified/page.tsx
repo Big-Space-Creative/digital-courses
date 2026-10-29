@@ -120,7 +120,7 @@ export default async function EmailVerifiedPage({
   const cfg = configs[status] ?? configs.invalid;
 
   return (
-    <AuthLayout>
+    <AuthLayout contextType="verification">
       <div className="flex flex-col gap-4">
         <span
           className={`flex h-14 w-14 items-center justify-center rounded-full ${cfg.tile}`}

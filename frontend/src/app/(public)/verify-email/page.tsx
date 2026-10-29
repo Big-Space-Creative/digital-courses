@@ -63,7 +63,7 @@ function VerifyEmailContent() {
   };
 
   return (
-    <AuthLayout>
+    <AuthLayout contextType="verification">
       <div className="flex flex-col gap-4">
         <span className="bg-accent/10 text-accent flex h-14 w-14 items-center justify-center rounded-full">
           <MdMailOutline
