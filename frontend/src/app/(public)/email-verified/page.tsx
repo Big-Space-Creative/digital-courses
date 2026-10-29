@@ -8,6 +8,16 @@ import { MdCheckCircle, MdError, MdInfo } from "react-icons/md";
 import AuthLayout from "@/components/marketing/AuthLayout";
 
 const API_BASE = process.env.API_BASE_URL ?? "http://backend:8000/api/v1/";
+const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() ?? "";
+const SUPPORT_HREF = SUPPORT_EMAIL.startsWith("mailto:")
+  ? SUPPORT_EMAIL
+  : `mailto:${SUPPORT_EMAIL}`;
+
+// Texto INK fixo sobre laranja (~5,9:1). Migrar para --on-accent na Fase 0.
+const CTA_CLASS =
+  "flex h-14 w-full items-center justify-center rounded-full bg-accent px-6 text-sm font-semibold text-[#1d1e1f] shadow-lg transition-transform duration-150 ease-out hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:outline-none";
+const LINK_CLASS =
+  "text-ink decoration-accent hover:text-ink/70 rounded font-medium underline underline-offset-4 transition-colors focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none";
 
 // ── Server Action: troca o one-time token por JWT e define os cookies ────────
 async function exchangeTokenAndLogin(oneTimeToken: string) {
@@ -80,33 +90,35 @@ export default async function EmailVerifiedPage({
     description: string;
     cta: { label: string; href: string };
     tile: string;
+    showSupport?: boolean;
   };
 
   const configs: Record<string, UIConfig> = {
     success: {
-      // token ausente ou expirado (mais de 5min após verificar o e-mail)
+      // token ausente, inválido ou expirado no login automático
       icon: <MdCheckCircle className="text-3xl" aria-hidden="true" />,
-      title: "E-mail verificado!",
+      title: "E-mail confirmado!",
       description:
-        "Seu e-mail foi confirmado. O login automático não foi possível (link expirado). Faça login normalmente.",
+        "Seu e-mail foi confirmado. Não foi possível entrar automaticamente desta vez. Faça login normalmente para acessar suas aulas.",
       cta: { label: "Ir para o login", href: "/login" },
       tile: "bg-accent/10 text-accent",
     },
     "already-verified": {
       icon: <MdInfo className="text-3xl" aria-hidden="true" />,
-      title: "Já verificado",
+      title: "Seu e-mail já estava confirmado",
       description:
-        "Este e-mail já havia sido confirmado anteriormente. Faça login normalmente.",
+        "Nada mais a fazer por aqui. Faça login para continuar de onde parou.",
       cta: { label: "Ir para o login", href: "/login" },
       tile: "bg-ink/8 text-ink",
     },
     invalid: {
       icon: <MdError className="text-3xl" aria-hidden="true" />,
-      title: "Link inválido ou expirado",
+      title: "Este link não funciona mais",
       description:
-        "O link de confirmação é inválido ou expirou (validade de 24h). Solicite um novo e-mail de verificação.",
+        "O link de confirmação é inválido ou expirou (validade de 24 horas). Solicite um novo e-mail de verificação.",
       cta: { label: "Solicitar novo link", href: "/verify-email" },
       tile: "bg-red-500/10 text-red-600",
+      showSupport: true,
     },
   };
 
@@ -124,19 +136,22 @@ export default async function EmailVerifiedPage({
           <h1 className="text-ink text-3xl font-semibold tracking-[-0.01em]">
             {cfg.title}
           </h1>
-          <p className="text-ink/60 text-sm leading-relaxed">
+          <p className="text-ink/70 text-sm leading-relaxed">
             {cfg.description}
           </p>
         </div>
       </div>
 
-      <Link
-        href={cfg.cta.href}
-        className="gradient-animate focus-visible:ring-accent flex h-14 w-full items-center justify-center rounded-full text-sm font-medium text-white shadow-lg transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-60"
-        style={{ backgroundImage: "var(--gradient-pulse)" }}
-      >
-        {cfg.cta.label}
-      </Link>
+      <div className="flex flex-col items-start gap-4">
+        <Link href={cfg.cta.href} className={CTA_CLASS}>
+          {cfg.cta.label}
+        </Link>
+        {cfg.showSupport && SUPPORT_EMAIL && (
+          <a href={SUPPORT_HREF} className={`${LINK_CLASS} text-sm`}>
+            Algo não funcionou? Fale com o suporte
+          </a>
+        )}
+      </div>
     </AuthLayout>
   );
 }

@@ -9,6 +9,16 @@ import { toast } from "@/components/ui/Toast";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() ?? "";
+const SUPPORT_HREF = SUPPORT_EMAIL.startsWith("mailto:")
+  ? SUPPORT_EMAIL
+  : `mailto:${SUPPORT_EMAIL}`;
+
+// Texto INK fixo sobre laranja (~5,9:1). Migrar para --on-accent na Fase 0.
+const CTA_CLASS =
+  "flex h-14 w-full items-center justify-center gap-2 rounded-full bg-accent px-6 text-sm font-semibold text-[#1d1e1f] shadow-lg transition-transform duration-150 ease-out hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-60";
+const LINK_CLASS =
+  "text-ink decoration-accent hover:text-ink/70 rounded font-medium underline underline-offset-4 transition-colors focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none";
 
 async function callResend(email: string) {
   const res = await fetch(`${API_BASE}/email/resend`, {
@@ -25,20 +35,29 @@ function VerifyEmailContent() {
 
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleResend = async () => {
     if (!email || loading || sent) return;
     setLoading(true);
+    setErrorMessage("");
     try {
       const res = await callResend(email);
-      setSent(true);
-      toast(res.success ? "E-mail reenviado!" : "Erro ao reenviar", {
-        description: res.success
-          ? "Verifique sua caixa de entrada e spam."
-          : res.message,
-        variant: res.success ? "success" : "error",
+      if (res.success) {
+        setSent(true);
+        toast("E-mail reenviado!", {
+          description: "Verifique sua caixa de entrada e spam.",
+          variant: "success",
+        });
+        return;
+      }
+      setErrorMessage(res.message || "Não conseguimos reenviar agora.");
+      toast("Erro ao reenviar", {
+        description: res.message,
+        variant: "error",
       });
     } catch {
+      setErrorMessage("Sem conexão no momento. Tente novamente em instantes.");
       toast("Erro de conexão", {
         description: "Tente novamente em instantes.",
         variant: "error",
@@ -59,10 +78,12 @@ function VerifyEmailContent() {
         </span>
         <div className="flex flex-col gap-1.5">
           <h1 className="text-ink text-3xl font-semibold tracking-[-0.01em]">
-            Verifique seu e-mail
+            Quase lá! Confirme seu e-mail
           </h1>
-          <p className="text-ink/60 text-sm leading-relaxed">
-            Enviamos um link de confirmação para:
+          <p className="text-ink/70 text-sm leading-relaxed">
+            {email
+              ? "Enviamos um link de confirmação para:"
+              : "Enviamos um link de confirmação para o seu e-mail de cadastro."}
           </p>
           {email && <p className="text-ink font-semibold break-all">{email}</p>}
         </div>
@@ -92,12 +113,17 @@ function VerifyEmailContent() {
             </strong>
           </li>
         </ol>
-        <p className="text-ink/60 mt-4 text-xs">
+        <p className="text-ink/70 mt-4 text-xs">
           O link expira em <strong className="text-ink">24 horas</strong>.
         </p>
       </div>
 
-      {sent ? (
+      {!email ? (
+        <p className="text-ink/70 text-sm leading-relaxed">
+          Não encontramos o e-mail deste cadastro, então não dá para reenviar o
+          link daqui. Entre na plataforma para continuar ou fale com o suporte.
+        </p>
+      ) : sent ? (
         <div
           role="status"
           className="bg-ink/5 text-ink flex h-14 items-center justify-center gap-2 rounded-full text-sm font-medium"
@@ -109,24 +135,40 @@ function VerifyEmailContent() {
         <button
           type="button"
           onClick={handleResend}
-          disabled={loading || !email}
-          className="gradient-animate focus-visible:ring-accent flex h-14 w-full items-center justify-center rounded-full text-sm font-medium text-white shadow-lg transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-60"
-          style={{ backgroundImage: "var(--gradient-pulse)" }}
+          disabled={loading}
+          className={CTA_CLASS}
         >
           <MdRefresh
-            className={`mr-2 ${loading ? "animate-spin motion-reduce:animate-none" : ""}`}
+            className={loading ? "animate-spin motion-reduce:animate-none" : ""}
             aria-hidden="true"
           />
-          {loading ? "Enviando..." : "Reenviar e-mail de verificação"}
+          {loading
+            ? "Enviando..."
+            : errorMessage
+              ? "Tentar novamente"
+              : "Reenviar e-mail de verificação"}
         </button>
       )}
 
-      <Link
-        href="/login"
-        className="text-accent hover:text-ink text-sm font-medium transition-colors"
-      >
-        Já confirmou? Entrar na plataforma →
-      </Link>
+      {errorMessage && (
+        <div
+          role="alert"
+          className="border-ink/15 text-ink rounded-bento-sm border bg-red-500/10 px-4 py-3 text-sm leading-relaxed"
+        >
+          {errorMessage}
+        </div>
+      )}
+
+      <div className="flex flex-col items-start gap-3 text-sm">
+        {SUPPORT_EMAIL && (
+          <a href={SUPPORT_HREF} className={LINK_CLASS}>
+            Não recebeu? Fale com o suporte
+          </a>
+        )}
+        <Link href="/login" className={LINK_CLASS}>
+          Já confirmou? Entrar na plataforma →
+        </Link>
+      </div>
     </AuthLayout>
   );
 }
