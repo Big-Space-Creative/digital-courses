@@ -1,7 +1,10 @@
-name: CI/CD - Build & Deploy AulasViolão
+name: CI/CD - Build & Deploy Pullse
 
 on:
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
   workflow_dispatch:
@@ -59,6 +62,7 @@ jobs:
           echo "repo_name=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -71,12 +75,13 @@ jobs:
         with:
           context: .
           file: Dockerfile
-          push: true
+          # Em PR só valida o build das imagens; publica apenas na main
+          push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ghcr.io/${{ steps.string.outputs.repo_name }}/backend:latest
             ghcr.io/${{ steps.string.outputs.repo_name }}/backend:${{ github.sha }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: ${{ github.event_name != 'pull_request' && 'type=gha,mode=max' || '' }}
 
       # 2. Build & Push: Nginx Web Server
       - name: Build and Push Nginx Image
@@ -84,12 +89,13 @@ jobs:
         with:
           context: .
           file: backend/docker/nginx/Dockerfile
-          push: true
+          # Em PR só valida o build das imagens; publica apenas na main
+          push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ghcr.io/${{ steps.string.outputs.repo_name }}/nginx:latest
             ghcr.io/${{ steps.string.outputs.repo_name }}/nginx:${{ github.sha }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: ${{ github.event_name != 'pull_request' && 'type=gha,mode=max' || '' }}
 
       # 3. Build & Push: Frontend Next.js (Otimizado Standalone)
       - name: Build and Push Frontend Image
@@ -97,7 +103,8 @@ jobs:
         with:
           context: ./frontend
           file: frontend/Dockerfile
-          push: true
+          # Em PR só valida o build das imagens; publica apenas na main
+          push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ghcr.io/${{ steps.string.outputs.repo_name }}/frontend:latest
             ghcr.io/${{ steps.string.outputs.repo_name }}/frontend:${{ github.sha }}
@@ -105,7 +112,7 @@ jobs:
             NEXT_PUBLIC_API_URL=https://api-aulasviolao.bigspacecreative.com.br/api/v1
             NEXT_PUBLIC_SUPPORT_EMAIL=suporte@digitalcourses.com
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: ${{ github.event_name != 'pull_request' && 'type=gha,mode=max' || '' }}
 
   # ── JOB 3: Deploy automático via SSH na VPS (opcional) ──
   # Só roda quando a variável de repositório VPS_AUTO_DEPLOY = 'true'.
@@ -113,7 +120,7 @@ jobs:
   # manualmente na VPS com scripts/deploy.sh (ver DEPLOY.md).
   deploy:
     needs: build-and-push
-    if: vars.VPS_AUTO_DEPLOY == 'true'
+    if: github.event_name != 'pull_request' && vars.VPS_AUTO_DEPLOY == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to VPS via SSH

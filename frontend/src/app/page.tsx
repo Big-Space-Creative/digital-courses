@@ -42,13 +42,15 @@ export default async function Home() {
 
         <section className="relative overflow-hidden">
           <div className="relative z-10 mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
-            <h2 className="reveal text-text text-[length:var(--text-h2)] font-semibold tracking-[-0.02em]">
-              Perguntas frequentes
-            </h2>
-            <p className="text-text-muted mt-2 text-sm md:text-base">
-              Tire suas dúvidas sobre o funcionamento da plataforma
-            </p>
-            <div className="mt-8">
+            <div className="wave-reading-surface w-fit rounded-[var(--radius-panel)] p-6 sm:p-8">
+              <h2 className="reveal text-text text-[length:var(--text-h2)] font-semibold tracking-[-0.02em]">
+                Perguntas frequentes
+              </h2>
+              <p className="text-text-muted mt-2 text-sm md:text-base">
+                Tire suas dúvidas sobre o funcionamento da plataforma
+              </p>
+            </div>
+            <div className="wave-reading-surface mt-8 rounded-[var(--radius-panel)] px-6 sm:px-8">
               <FaqAccordion />
             </div>
           </div>

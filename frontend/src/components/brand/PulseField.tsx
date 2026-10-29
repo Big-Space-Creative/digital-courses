@@ -3,20 +3,29 @@
 import { useEffect, useRef } from "react";
 import { useTheme } from "@/hooks/useTheme";
 
-type Pulse = { x: number; born: number; force: number };
+type Pluck = {
+  string: number;
+  x: number;
+  born: number;
+  force: number;
+  modes: number[];
+};
 
 const STRING_COUNT = 6;
-const LIFE_MS = 2200;
-const MAX_PULSES = 7;
-const MAX_SAMPLES = 420;
+const MODES = 4;
+const MAX_PLUCKS = 18;
+const LIFE_MS = 2600;
 const MAX_PIXELS = 4_000_000;
-const PACKET_WIDTH = 125;
-const STRING_PHASES = Array.from({ length: STRING_COUNT }, (_, i) => ({
-  sin: Math.sin(i * 0.28),
-  cos: Math.cos(i * 0.28),
-}));
+const MAX_SAMPLES = 360;
+const STRING_COOLDOWN_MS = 240;
 
-/** Seis cordas desenham a onda da Pullse e respondem a mouse, toque e rolagem. */
+const clamp = (value: number, min: number, max: number) =>
+  Math.max(min, Math.min(max, value));
+
+/**
+ * Cordas da Antigravity em uma interpretação suave: quase invisíveis em repouso,
+ * com harmônicos amortecidos e pequenos pulsos que viajam a partir do gesto.
+ */
 export default function PulseField() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { theme } = useTheme();
@@ -29,81 +38,133 @@ export default function PulseField() {
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const viewport = window.visualViewport;
     const dark = theme === "dark";
+    const restAlpha = dark ? 0.025 : 0.04;
+    const peakAlpha = dark ? 0.46 : 0.44;
+    const color = dark ? "255,145,70" : "210,100,32";
     let width = 0;
     let height = 0;
     let ratio = 0;
+    let samples = 0;
+    let maxDisplacement = 24;
     let frame = 0;
     let resizeFrame = 0;
-    let samples = 0;
     let gradient: CanvasGradient;
-    let resting: Float32Array[] = [];
-    let packetSin = new Float32Array(0);
-    let packetCos = new Float32Array(0);
-    let pulses: Pulse[] = [];
-    let lastPointerAt = -Infinity;
+    let spatialModes = new Float32Array(0);
+    let resting = new Float32Array(0);
+    let plucks: Pluck[] = [];
+    const lastActivationAt = new Array<number>(STRING_COUNT).fill(-Infinity);
+    let lastPointer: { x: number; y: number } | null = null;
+    let lastMoveAt = -Infinity;
     let lastScrollAt = -Infinity;
-    let previousX = -1000;
-    let previousY = -1000;
-    let previousScrollY = window.scrollY;
+    let lastScrollY = window.scrollY;
+
+    const baseline = (string: number) =>
+      height * (0.16 + (string / (STRING_COUNT - 1)) * 0.68);
 
     const draw = (now: number) => {
       ctx.clearRect(0, 0, width, height);
-      if (!width || !height) return;
-      pulses = pulses.filter((pulse) => now - pulse.born < LIFE_MS);
-      packetSin.fill(0);
-      packetCos.fill(0);
-
-      // A perturbação é calculada uma vez e compartilhada pelas seis cordas.
-      // A forma em repouso e o gradiente só são reconstruídos no resize.
-      const step = width / samples;
-      for (const pulse of pulses) {
-        const age = now - pulse.born;
-        const decay = (1 - age / LIFE_MS) ** 2 * pulse.force;
-        const travel = age * 0.52;
-        for (let point = 0; point <= samples; point++) {
-          const distance = Math.abs(point * step - pulse.x * width) - travel;
-          if (Math.abs(distance) > PACKET_WIDTH * 3) continue;
-          const envelope = Math.exp(-((distance / PACKET_WIDTH) ** 2)) * decay;
-          packetSin[point] += Math.sin(distance * 0.037) * envelope;
-          packetCos[point] += Math.cos(distance * 0.037) * envelope;
-        }
-      }
-
+      if (!samples) return;
+      plucks = plucks.filter((pluck) => now - pluck.born < LIFE_MS);
       ctx.strokeStyle = gradient;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
       for (let string = 0; string < STRING_COUNT; string++) {
-        const phase = STRING_PHASES[string];
+        const harmonics = new Float32Array(MODES);
+        const packets: { center: number; amplitude: number }[] = [];
+        let energy = 0;
+        const frequency = 2 * Math.PI * (1.2 + string * 0.24);
+
+        for (const pluck of plucks) {
+          if (pluck.string !== string || now < pluck.born) continue;
+          const age = (now - pluck.born) / 1000;
+          // Solução analítica: a vibração não depende da taxa de quadros.
+          const tail = Math.max(0, 1 - (now - pluck.born) / LIFE_MS);
+          const envelope = Math.exp(-age * 2.1) * tail * tail;
+          energy += Math.abs(pluck.force) * envelope;
+          for (let mode = 0; mode < MODES; mode++) {
+            harmonics[mode] +=
+              pluck.modes[mode] *
+              Math.cos(frequency * (mode + 1) * age) *
+              Math.exp(-age * mode * 0.8) *
+              envelope;
+          }
+          const travel = age * 540;
+          packets.push(
+            {
+              center: pluck.x * width - travel,
+              amplitude: pluck.force * 0.24 * envelope,
+            },
+            {
+              center: pluck.x * width + travel,
+              amplitude: pluck.force * 0.24 * envelope,
+            },
+          );
+        }
+
+        const activity = Math.min(1, energy / 6);
+        ctx.globalAlpha = restAlpha + (peakAlpha - restAlpha) * activity;
+        ctx.lineWidth = 1.1 - string * 0.09 + activity * 0.9;
         ctx.beginPath();
         for (let point = 0; point <= samples; point++) {
-          const displacement =
-            packetSin[point] * phase.cos - packetCos[point] * phase.sin;
+          const x = (point / samples) * width;
+          let displacement = 0;
+          for (let mode = 0; mode < MODES; mode++) {
+            displacement +=
+              harmonics[mode] * spatialModes[mode * (samples + 1) + point];
+          }
+          for (const packet of packets) {
+            const distance = x - packet.center;
+            if (Math.abs(distance) > 108) continue;
+            displacement +=
+              packet.amplitude * Math.exp(-((distance / 36) ** 2));
+          }
+          // Limite suave mesmo sob muitos gestos consecutivos.
           const y =
-            resting[string][point] + Math.max(-80, Math.min(80, displacement));
-          const x = point * step;
+            baseline(string) +
+            resting[string * (samples + 1) + point] +
+            Math.tanh(displacement / maxDisplacement) * maxDisplacement;
           if (point === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         }
-        ctx.lineWidth = string === 2 ? 1.8 : 0.9;
         ctx.stroke();
       }
+      ctx.globalAlpha = 1;
     };
 
     const tick = (now: number) => {
       frame = 0;
       if (document.hidden || motion.matches) return;
       draw(now);
-      if (pulses.length) frame = requestAnimationFrame(tick);
+      if (plucks.length) frame = requestAnimationFrame(tick);
     };
 
-    const pluck = (x: number, y: number, force: number) => {
-      if (motion.matches || document.hidden || !width || !height) return;
-      const coupling =
-        0.35 + 0.65 * Math.exp(-(((y - height * 0.62) / (height * 0.65)) ** 2));
-      pulses.push({
-        x: Math.max(0, Math.min(1, x / width)),
-        born: performance.now(),
-        force: Math.min(72, force) * coupling,
+    const pluck = (string: number, x: number, force: number, born: number) => {
+      if (motion.matches || document.hidden || !width) return;
+      const now = performance.now();
+      // O intervalo é por corda e compartilhado por mouse, toque e rolagem.
+      // Pulsos do arpejo também reservam o horário futuro sem criar timers.
+      if (now - lastActivationAt[string] < STRING_COOLDOWN_MS) return;
+      lastActivationAt[string] = Math.max(now, born);
+      const position = clamp(x / width, 0.04, 0.96);
+      const impulse = clamp(
+        force,
+        -maxDisplacement * 0.5,
+        maxDisplacement * 0.5,
+      );
+      plucks.push({
+        string,
+        x: position,
+        born,
+        force: impulse,
+        modes: Array.from(
+          { length: MODES },
+          (_, mode) =>
+            (impulse * Math.sin((mode + 1) * Math.PI * position)) /
+            (mode + 1) ** 1.5,
+        ),
       });
-      if (pulses.length > MAX_PULSES) pulses.shift();
+      if (plucks.length > MAX_PLUCKS) plucks.shift();
       if (!frame) frame = requestAnimationFrame(tick);
     };
 
@@ -111,18 +172,17 @@ export default function PulseField() {
       const bounds = canvas.getBoundingClientRect();
       const nextWidth = Math.max(1, bounds.width);
       const nextHeight = Math.max(1, bounds.height);
-      // Limita também a memória de telas grandes, além do DPR de celulares.
       const nextRatio = Math.min(
         window.devicePixelRatio || 1,
         2,
         Math.sqrt(MAX_PIXELS / (nextWidth * nextHeight)),
       );
-      if (width === nextWidth && height === nextHeight && ratio === nextRatio) {
+      if (width === nextWidth && height === nextHeight && ratio === nextRatio)
         return;
-      }
       width = nextWidth;
       height = nextHeight;
       ratio = nextRatio;
+      maxDisplacement = width < 640 ? 14 : 24;
       canvas.width = Math.max(1, Math.floor(width * ratio));
       canvas.height = Math.max(1, Math.floor(height * ratio));
       ctx.setTransform(
@@ -134,33 +194,32 @@ export default function PulseField() {
         0,
       );
 
-      samples = Math.min(MAX_SAMPLES, Math.max(2, Math.ceil(width / 5)));
-      packetSin = new Float32Array(samples + 1);
-      packetCos = new Float32Array(samples + 1);
-      const amplitude = Math.min(height * 0.2, width * 0.28, 155);
-      const gap = Math.min(13, Math.max(8, width * 0.027));
-      resting = Array.from({ length: STRING_COUNT }, (_, string) => {
-        const points = new Float32Array(samples + 1);
-        for (let point = 0; point <= samples; point++) {
-          const u = point / samples;
-          const envelope = Math.exp(-(((u - 0.72) / 0.22) ** 2));
-          points[point] =
-            height * 0.62 +
-            (string - 2.5) * gap +
-            Math.sin((u - 0.5) * 21 + string * 0.15) * envelope * amplitude;
+      samples = Math.min(MAX_SAMPLES, Math.max(2, Math.ceil(width / 6)));
+      spatialModes = new Float32Array(MODES * (samples + 1));
+      resting = new Float32Array(STRING_COUNT * (samples + 1));
+      for (let point = 0; point <= samples; point++) {
+        const u = point / samples;
+        for (let mode = 0; mode < MODES; mode++) {
+          spatialModes[mode * (samples + 1) + point] = Math.sin(
+            (mode + 1) * Math.PI * u,
+          );
         }
-        return points;
-      });
+        for (let string = 0; string < STRING_COUNT; string++) {
+          resting[string * (samples + 1) + point] =
+            Math.sin(u * Math.PI * 3 + string * 0.8) * 0.2;
+        }
+      }
       gradient = ctx.createLinearGradient(0, 0, width, 0);
-      gradient.addColorStop(0, "rgba(255,107,7,0)");
-      gradient.addColorStop(0.22, `rgba(255,107,7,${dark ? 0.15 : 0.13})`);
-      gradient.addColorStop(0.66, `rgba(255,107,7,${dark ? 0.52 : 0.4})`);
-      gradient.addColorStop(1, "rgba(255,107,7,0)");
+      gradient.addColorStop(0, `rgba(${color},0.15)`);
+      gradient.addColorStop(0.2, `rgba(${color},0.8)`);
+      gradient.addColorStop(0.5, `rgba(${color},1)`);
+      gradient.addColorStop(0.8, `rgba(${color},0.8)`);
+      gradient.addColorStop(1, `rgba(${color},0.15)`);
       if (!document.hidden) draw(performance.now());
     };
 
     const onResize = () => {
-      if (resizeFrame || document.hidden) return;
+      if (document.hidden || resizeFrame) return;
       resizeFrame = requestAnimationFrame(() => {
         resizeFrame = 0;
         resize();
@@ -168,37 +227,78 @@ export default function PulseField() {
     };
     const onMove = (event: PointerEvent) => {
       if (event.pointerType === "touch") return;
-      const now = performance.now();
-      if (
-        now - lastPointerAt < 90 ||
-        Math.hypot(event.clientX - previousX, event.clientY - previousY) < 28
-      ) {
+      const current = { x: event.clientX, y: event.clientY };
+      const previous = lastPointer;
+      if (!previous) {
+        lastPointer = current;
         return;
       }
-      lastPointerAt = now;
-      previousX = event.clientX;
-      previousY = event.clientY;
-      pluck(event.clientX, event.clientY, 34);
+      const distance = Math.hypot(
+        current.x - previous.x,
+        current.y - previous.y,
+      );
+      const now = performance.now();
+      if (distance < 2 || now - lastMoveAt < 70) return;
+      lastPointer = current;
+      lastMoveAt = now;
+      for (let string = 0; string < STRING_COUNT; string++) {
+        const y = baseline(string);
+        const crossed = (previous.y - y) * (current.y - y) <= 0;
+        if (crossed || Math.abs(current.y - y) < 14) {
+          pluck(
+            string,
+            current.x,
+            (current.y >= previous.y ? 1 : -1) *
+              Math.min(12, 4 + distance * 0.055),
+            now,
+          );
+        }
+      }
     };
     const onDown = (event: PointerEvent) => {
-      pluck(event.clientX, event.clientY, 72);
+      const now = performance.now();
+      lastPointer = { x: event.clientX, y: event.clientY };
+      const nearest = Math.round(
+        clamp(
+          ((event.clientY / height - 0.16) / 0.68) * (STRING_COUNT - 1),
+          0,
+          STRING_COUNT - 1,
+        ),
+      );
+      for (let string = 0; string < STRING_COUNT; string++) {
+        const distance = Math.abs(event.clientY - baseline(string));
+        const coupling = Math.exp(
+          -((distance / Math.max(64, height * 0.15)) ** 2),
+        );
+        if (string === nearest || coupling > 0.15) {
+          pluck(string, event.clientX, 6 * Math.max(coupling, 0.3), now);
+        }
+      }
     };
     const onScroll = () => {
-      const delta = Math.abs(window.scrollY - previousScrollY);
-      previousScrollY = window.scrollY;
+      const delta = window.scrollY - lastScrollY;
+      lastScrollY = window.scrollY;
       const now = performance.now();
-      if (delta < 2 || now - lastScrollAt < 190) return;
+      if (Math.abs(delta) < 2 || now - lastScrollAt < 170) return;
       lastScrollAt = now;
-      pluck(width * 0.72, height * 0.62, 44);
+      const force =
+        Math.sign(delta) * Math.min(4, 1.5 + Math.abs(delta) * 0.025);
+      for (let string = 0; string < STRING_COUNT; string++) {
+        // Datas futuras criam o arpejo sem timers para limpar no unmount.
+        pluck(string, width * (0.4 + string * 0.04), force, now + string * 24);
+      }
+    };
+    const resetPointer = () => {
+      lastPointer = null;
     };
     const reset = () => {
       cancelAnimationFrame(frame);
       cancelAnimationFrame(resizeFrame);
-      frame = 0;
-      resizeFrame = 0;
-      pulses = [];
-      previousX = previousY = -1000;
-      previousScrollY = window.scrollY;
+      frame = resizeFrame = 0;
+      plucks = [];
+      lastActivationAt.fill(-Infinity);
+      lastPointer = null;
+      lastScrollY = window.scrollY;
     };
     const onMotion = () => {
       reset();
@@ -215,6 +315,8 @@ export default function PulseField() {
     resize();
     window.addEventListener("pointermove", onMove, { passive: true });
     window.addEventListener("pointerdown", onDown, { passive: true });
+    window.addEventListener("pointercancel", resetPointer, { passive: true });
+    document.addEventListener("pointerleave", resetPointer, { passive: true });
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize, { passive: true });
     viewport?.addEventListener("resize", onResize, { passive: true });
@@ -224,6 +326,8 @@ export default function PulseField() {
       reset();
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointercancel", resetPointer);
+      document.removeEventListener("pointerleave", resetPointer);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
       viewport?.removeEventListener("resize", onResize);
@@ -232,8 +336,6 @@ export default function PulseField() {
     };
   }, [theme]);
 
-  // Mantém o canvas antes das seções e sem z-index negativo: os painéis opacos
-  // cobrem a onda, enquanto os intervalos deixam a assinatura da marca aparecer.
   return (
     <canvas
       ref={canvasRef}

@@ -29,7 +29,7 @@ export default function PlansSection({ primaryHref }: PlansSectionProps) {
   return (
     <section className="relative overflow-hidden">
       <div className="relative z-10 mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
-        <div className="reveal">
+        <div className="wave-reading-surface reveal w-fit rounded-[var(--radius-panel)] p-6 sm:p-8">
           <h2 className="text-text text-[length:var(--text-h2)] font-semibold tracking-[-0.02em]">
             Planos simples, sem letra miúda
           </h2>
@@ -127,7 +127,7 @@ export default function PlansSection({ primaryHref }: PlansSectionProps) {
           </div>
         </div>
 
-        <p className="text-text-muted reveal mt-6 text-xs">
+        <p className="wave-reading-surface text-text-muted reveal mt-6 w-fit rounded-xl px-4 py-3 text-xs">
           Cancele quando quiser, direto na sua área de aluno. Sem taxa de
           cancelamento ou fidelidade.
         </p>

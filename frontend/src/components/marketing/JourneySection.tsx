@@ -34,7 +34,7 @@ export default function JourneySection() {
     <section className="relative overflow-hidden">
       <div className="relative z-10 mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
         <div className="reveal flex flex-wrap items-end justify-between gap-4">
-          <div>
+          <div className="wave-reading-surface rounded-[var(--radius-panel)] p-6 sm:p-8">
             <h2 className="text-text text-[length:var(--text-h2)] font-semibold tracking-[-0.02em]">
               Como funciona sua jornada
             </h2>
@@ -45,11 +45,14 @@ export default function JourneySection() {
           <Badge variant="accent">Simples e progressivo</Badge>
         </div>
 
-        <div ref={lineRef} className="journey-line relative mt-12">
+        <div
+          ref={lineRef}
+          className="wave-reading-surface journey-line relative mt-8 rounded-[var(--radius-panel)] p-6 sm:p-8"
+        >
           {/* Desktop horizontal connector track */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute top-5 right-12 left-12 hidden h-0.5 border-t-2 border-dashed border-[#FF6B07]/40 md:block"
+            className="pointer-events-none absolute top-13 right-12 left-12 hidden h-0.5 border-t-2 border-dashed border-[#FF6B07]/40 md:block"
           />
 
           <ol className="relative grid gap-8 md:grid-cols-3 md:gap-10">

@@ -2,7 +2,6 @@ import Image from "next/image";
 import { MdOutlinePlayCircle, MdStar } from "react-icons/md";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import PulseWave from "@/components/brand/PulseWave";
-import PullseLogo from "@/components/brand/PullseLogo";
 
 type HeroSectionProps = {
   isAuthenticated: boolean;
@@ -22,7 +21,7 @@ const stats = [
  * - Radius: 28px max (rounded-[var(--radius-hero)])
  * - Contrast AA: Ink text (#1D1E1F) over orange #FF6B07 (never white over orange)
  * - Semantic surfaces: panel / panel-elevated (no fixed bg-ink)
- * - Photo tile: palhetas da ID visual Pullse (fundo branco de produto)
+ * - Fotografia de violão com legenda protegida por fundo e blur.
  */
 export default function HeroSection({
   isAuthenticated,
@@ -31,18 +30,13 @@ export default function HeroSection({
   return (
     <section className="relative overflow-hidden">
       <div className="relative z-10 mx-auto max-w-6xl px-5 pt-24 pb-14 md:px-8 md:pt-32 md:pb-20">
-        <div
-          className="reveal grid gap-5 md:grid-cols-[1.4fr_1fr] md:gap-6"
-          style={{
-            gridTemplateAreas: "'headline photo' 'accent photo' 'stats photo'",
-          }}
-        >
+        <div className="home-hero-grid reveal grid min-w-0 grid-cols-1 gap-5 md:grid-cols-[1.4fr_1fr] md:gap-6">
           {/* Headline tile */}
           <div
-            className="rounded-[var(--radius-hero)] border border-[var(--border)] bg-[var(--panel)] p-7 shadow-[var(--shadow-panel)] md:p-10"
+            className="min-w-0 rounded-[var(--radius-hero)] border border-[var(--border)] bg-[var(--panel)] p-6 shadow-[var(--shadow-panel)] sm:p-7 md:p-10"
             style={{ gridArea: "headline" }}
           >
-            <h1 className="text-text text-[length:var(--text-hero)] leading-[1.08] font-semibold tracking-[-0.03em] text-balance">
+            <h1 className="text-text text-[length:var(--text-hero)] leading-[1.08] font-semibold tracking-[-0.03em] text-balance max-[359px]:text-[2rem]">
               Domine o violão com uma trilha clara, do primeiro acorde à
               apresentação
             </h1>
@@ -107,32 +101,21 @@ export default function HeroSection({
             </div>
           </div>
 
-          {/* Photo tile — palhetas da marca sobre o branco da fotografia de produto */}
+          {/* A fotografia aproxima o destaque da prática musical. */}
           <div
-            className="relative flex min-h-[420px] flex-col overflow-hidden rounded-[var(--radius-hero)] border border-[var(--border)] bg-[#FEFEFE] shadow-[var(--shadow-panel)] md:min-h-0"
+            className="relative min-h-[380px] overflow-hidden rounded-[var(--radius-hero)] border border-[var(--border)] bg-[var(--media)] shadow-[var(--shadow-panel)] sm:min-h-[480px] md:min-h-0"
             style={{ gridArea: "photo" }}
           >
-            {/* Versão "logo branco no laranja" da ID visual */}
-            <div className="flex items-center justify-center bg-[#FF6B07] px-8 py-10 text-[#1D1E1F]">
-              <PullseLogo
-                tone="inverse"
-                className="h-auto w-full max-w-[280px]"
-              />
-            </div>
-            <div className="relative min-h-[200px] flex-1">
-              <Image
-                src="/brand/palhetas-pullse.webp"
-                alt="Palhetas pretas e laranja com o logo Pullse ao lado de uma lata personalizada"
-                fill
-                sizes="(min-width: 768px) 40vw, 100vw"
-                className="object-contain p-4"
-                priority
-              />
-            </div>
-            <div className="flex items-center justify-between gap-3 border-t border-black/10 px-5 py-4">
-              <p className="text-sm font-medium text-[#1D1E1F]">
-                Pegue a palheta. A gente cuida da trilha.
-              </p>
+            <Image
+              src="/01.jpg"
+              alt="Pessoa segurando um violão acústico junto ao corpo"
+              fill
+              sizes="(min-width: 1200px) 450px, (min-width: 768px) 40vw, 100vw"
+              className="object-cover object-[50%_48%]"
+              priority
+            />
+            <div className="absolute inset-x-4 bottom-4 flex items-center justify-between gap-3 rounded-2xl border border-white/15 bg-black/70 px-5 py-4 text-white backdrop-blur-xl">
+              <p className="text-sm font-medium">Um acorde de cada vez.</p>
               <PulseWave className="h-7 w-7 shrink-0" title="" loop={false} />
             </div>
           </div>
