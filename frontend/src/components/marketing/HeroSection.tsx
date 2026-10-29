@@ -1,6 +1,8 @@
 import Image from "next/image";
 import { MdOutlinePlayCircle, MdStar } from "react-icons/md";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import PulseWave from "@/components/brand/PulseWave";
+import PullseLogo from "@/components/brand/PullseLogo";
 
 type HeroSectionProps = {
   isAuthenticated: boolean;
@@ -20,7 +22,7 @@ const stats = [
  * - Radius: 28px max (rounded-[var(--radius-hero)])
  * - Contrast AA: Ink text (#1D1E1F) over orange #FF6B07 (never white over orange)
  * - Semantic surfaces: panel / panel-elevated (no fixed bg-ink)
- * - Photo /02.jpg preserved verbatim
+ * - Photo tile: palhetas da ID visual Pullse (fundo branco de produto)
  */
 export default function HeroSection({
   isAuthenticated,
@@ -105,24 +107,33 @@ export default function HeroSection({
             </div>
           </div>
 
-          {/* Photo tile — Photo /02.jpg preserved with solid text */}
+          {/* Photo tile — palhetas da marca sobre o branco da fotografia de produto */}
           <div
-            className="relative min-h-[280px] overflow-hidden rounded-[var(--radius-hero)] border border-[var(--border)] bg-[var(--media)] shadow-[var(--shadow-panel)] md:min-h-0"
+            className="relative flex min-h-[420px] flex-col overflow-hidden rounded-[var(--radius-hero)] border border-[var(--border)] bg-[#FEFEFE] shadow-[var(--shadow-panel)] md:min-h-0"
             style={{ gridArea: "photo" }}
           >
-            <Image
-              src="/02.jpg"
-              alt="Aluno tocando guitarra elétrica ao vivo, sorrindo"
-              fill
-              sizes="(min-width: 768px) 40vw, 100vw"
-              className="object-cover"
-              style={{ objectPosition: "32% 38%" }}
-              priority
-            />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-5 pt-16">
-              <p className="text-sm font-medium text-white">
-                Alunos reais, resultado real.
+            {/* Versão "logo branco no laranja" da ID visual */}
+            <div className="flex items-center justify-center bg-[#FF6B07] px-8 py-10 text-[#1D1E1F]">
+              <PullseLogo
+                tone="inverse"
+                className="h-auto w-full max-w-[280px]"
+              />
+            </div>
+            <div className="relative min-h-[200px] flex-1">
+              <Image
+                src="/brand/palhetas-pullse.webp"
+                alt="Palhetas pretas e laranja com o logo Pullse ao lado de uma lata personalizada"
+                fill
+                sizes="(min-width: 768px) 40vw, 100vw"
+                className="object-contain p-4"
+                priority
+              />
+            </div>
+            <div className="flex items-center justify-between gap-3 border-t border-black/10 px-5 py-4">
+              <p className="text-sm font-medium text-[#1D1E1F]">
+                Pegue a palheta. A gente cuida da trilha.
               </p>
+              <PulseWave className="h-7 w-7 shrink-0" title="" loop={false} />
             </div>
           </div>
         </div>

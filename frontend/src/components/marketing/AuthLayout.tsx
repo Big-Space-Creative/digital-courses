@@ -141,16 +141,8 @@ export default function AuthLayout({
             </>
           ) : (
             <>
-              <Image
-                src="/02.jpg"
-                alt="Aluno tocando guitarra elétrica ao vivo, sorrindo"
-                fill
-                sizes="45vw"
-                className="object-cover opacity-35"
-                style={{ objectPosition: "32% 38%" }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/80 to-black/60" />
-              <div className="relative z-10 flex flex-1 flex-col justify-between p-8 text-white md:p-12">
+              <div className="absolute inset-0 bg-[#1D1E1F]" />
+              <div className="relative z-10 flex flex-1 flex-col justify-between gap-8 p-8 text-white md:p-12">
                 <div className="flex items-center gap-2.5">
                   <span className="flex size-9 items-center justify-center rounded-xl bg-white/10">
                     <PulseWave className="h-7 w-7" title="" loop={false} />
@@ -158,6 +150,16 @@ export default function AuthLayout({
                   <span className="text-sm font-semibold tracking-wide text-white uppercase">
                     Sua jornada musical
                   </span>
+                </div>
+
+                <div className="relative aspect-[4/3] w-full max-h-[38vh] overflow-hidden rounded-[var(--radius-panel)] bg-[#FEFEFE]">
+                  <Image
+                    src="/brand/correia-pullse.webp"
+                    alt="Correia de violão preta com o logo Pullse bordado em laranja"
+                    fill
+                    sizes="40vw"
+                    className="object-contain p-3"
+                  />
                 </div>
 
                 <div className="space-y-6">

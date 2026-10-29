@@ -1,17 +1,6 @@
 import Image from "next/image";
 import { Badge } from "@/components/ui/Badge";
 
-const brandPhotos = [
-  {
-    src: "/brand/palhetas.webp",
-    alt: "Palhetas pretas e laranja com o logo Pullse ao lado de uma lata personalizada",
-  },
-  {
-    src: "/brand/correia.webp",
-    alt: "Correia de violão preta com o logo Pullse bordado em laranja",
-  },
-];
-
 const roadmap = [
   {
     instrument: "Violão",
@@ -56,20 +45,24 @@ export default function AboutSection() {
             {/* Fotos da identidade visual (Figma: ID Visual Pullse) — fundo branco
                 da fotografia mantido nos dois temas, como peça de produto. */}
             <div className="mt-8 grid grid-cols-2 gap-3 md:gap-4">
-              {brandPhotos.map((photo) => (
-                <div
-                  key={photo.src}
-                  className="relative aspect-[4/3] overflow-hidden rounded-[var(--radius-panel)] border border-[var(--border)] bg-white shadow-[var(--shadow-panel)]"
-                >
-                  <Image
-                    src={photo.src}
-                    alt={photo.alt}
-                    fill
-                    sizes="(min-width: 768px) 25vw, 50vw"
-                    className="object-cover"
-                  />
-                </div>
-              ))}
+              <div className="relative aspect-[4/3] overflow-hidden rounded-[var(--radius-panel)] border border-[var(--border)] bg-[#FEFEFE] shadow-[var(--shadow-panel)]">
+                <Image
+                  src="/brand/palhetas-pullse.webp"
+                  alt="Palhetas pretas e laranja com o logo Pullse ao lado de uma lata personalizada"
+                  fill
+                  sizes="(min-width: 768px) 25vw, 50vw"
+                  className="object-contain p-2"
+                />
+              </div>
+              <div className="relative aspect-[4/3] overflow-hidden rounded-[var(--radius-panel)] border border-[var(--border)] bg-[#FEFEFE] shadow-[var(--shadow-panel)]">
+                <Image
+                  src="/brand/correia-pullse.webp"
+                  alt="Correia de violão preta com o logo Pullse bordado em laranja"
+                  fill
+                  sizes="(min-width: 768px) 25vw, 50vw"
+                  className="object-contain p-2"
+                />
+              </div>
             </div>
           </div>
 
