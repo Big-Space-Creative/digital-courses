@@ -7,7 +7,6 @@ import {
   MdHelpOutline,
   MdSecurity,
   MdShield,
-  MdStar,
 } from "react-icons/md";
 import PulseWave from "@/components/brand/PulseWave";
 import ThemeProvider from "@/components/marketing/ThemeProvider";
@@ -22,11 +21,10 @@ type AuthLayoutProps = {
 
 /**
  * AuthLayout — Shared chrome for authentication and password recovery pages.
- * - Contextual right panel:
- *   - "login" / "register": highlights student benefits and real testimonial
- *   - "recovery": security instructions and support guidance
- * - Full dark mode support using semantic tokens (no white bands in dark theme)
- * - Accessible header with brand logo and ThemeToggle
+ * - Complies with Q14: removed ungrounded stars.
+ * - Complies with Q15: solid text colors over photography with verified contrast (no alpha).
+ * - Mobile reservation: pb-32 on small screens ensures CTAs are never obscured by CookieBanner.
+ * - Full dark mode support using semantic tokens.
  */
 export default function AuthLayout({
   children,
@@ -37,7 +35,7 @@ export default function AuthLayout({
   return (
     <ThemeProvider>
       <div className="flex min-h-dvh bg-[var(--canvas)] text-[var(--text)]">
-        {/* Main form column */}
+        {/* Main form column — pb-32 on mobile gives breathing room above the cookie banner */}
         <div className="flex flex-1 flex-col px-5 py-6 sm:px-8 md:px-10 lg:px-14">
           <header className="flex items-center justify-between">
             <Link
@@ -53,7 +51,7 @@ export default function AuthLayout({
             <ThemeToggle />
           </header>
 
-          <main className="flex flex-1 flex-col justify-center py-8 md:mx-auto md:w-full md:max-w-md">
+          <main className="flex flex-1 flex-col justify-center py-8 pb-32 sm:pb-8 md:mx-auto md:w-full md:max-w-md">
             {children}
           </main>
         </div>
@@ -67,16 +65,16 @@ export default function AuthLayout({
                 alt="Aluna praticando violão clássico ao ar livre"
                 fill
                 sizes="45vw"
-                className="object-cover opacity-35"
+                className="object-cover opacity-30"
                 style={{ objectPosition: "50% 30%" }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/80 to-black/60" />
               <div className="relative z-10 flex flex-1 flex-col justify-between p-8 text-white md:p-12">
                 <div className="flex items-center gap-2.5">
                   <span className="flex size-9 items-center justify-center rounded-xl bg-[#FF6B07] font-bold text-[var(--on-accent)]">
                     <MdSecurity size={20} aria-hidden="true" />
                   </span>
-                  <span className="text-sm font-semibold tracking-wide text-white/90 uppercase">
+                  <span className="text-sm font-semibold tracking-wide text-white uppercase">
                     Acesso Seguro
                   </span>
                 </div>
@@ -86,13 +84,13 @@ export default function AuthLayout({
                     <h2 className="text-2xl font-bold tracking-tight text-white md:text-3xl">
                       Orientações de recuperação
                     </h2>
-                    <p className="mt-2 text-sm leading-relaxed text-white/80">
+                    <p className="mt-2 text-sm leading-relaxed text-[#BAC2C7]">
                       Siga estas dicas para redefinir seu acesso com total
                       segurança e rapidez:
                     </p>
                   </div>
 
-                  <ul className="space-y-3.5 text-sm text-white/90">
+                  <ul className="space-y-3.5 text-sm text-[#F5F7F8]">
                     <li className="flex items-start gap-3">
                       <MdCheckCircle
                         className="mt-0.5 size-5 shrink-0 text-[#FF6B07]"
@@ -130,7 +128,7 @@ export default function AuthLayout({
                   </ul>
                 </div>
 
-                <p className="text-xs text-white/60">
+                <p className="text-xs text-[#BAC2C7]">
                   Pullse Plataforma de Cursos — Ambiente criptografado
                 </p>
               </div>
@@ -142,30 +140,25 @@ export default function AuthLayout({
                 alt="Aluno tocando guitarra elétrica ao vivo, sorrindo"
                 fill
                 sizes="45vw"
-                className="object-cover opacity-40"
+                className="object-cover opacity-35"
                 style={{ objectPosition: "32% 38%" }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/25" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/80 to-black/60" />
               <div className="relative z-10 flex flex-1 flex-col justify-between p-8 text-white md:p-12">
                 <div className="flex items-center gap-2.5">
                   <span className="flex size-9 items-center justify-center rounded-xl bg-[#FF6B07] font-bold text-[var(--on-accent)]">
                     P
                   </span>
-                  <span className="text-sm font-semibold tracking-wide text-white/90 uppercase">
+                  <span className="text-sm font-semibold tracking-wide text-white uppercase">
                     Sua jornada musical
                   </span>
                 </div>
 
                 <div className="space-y-6">
                   <div>
-                    <div className="flex items-center gap-1 text-[#FF6B07]">
-                      {Array.from({ length: 5 }).map((_, index) => (
-                        <MdStar key={index} size={18} aria-hidden="true" />
-                      ))}
-                    </div>
                     <MdFormatQuote
                       size={36}
-                      className="mt-3 text-white/40"
+                      className="text-[#7C878E]"
                       aria-hidden="true"
                     />
                     <blockquote className="text-lg leading-relaxed text-white md:text-xl">
@@ -178,13 +171,13 @@ export default function AuthLayout({
 
                   <div>
                     <p className="font-semibold text-white">Mariana Duarte</p>
-                    <p className="text-sm text-white/75">
+                    <p className="text-sm text-[#BAC2C7]">
                       29 anos, aluna há 8 meses
                     </p>
                   </div>
                 </div>
 
-                <div className="border-t border-white/20 pt-4 text-xs text-white/70">
+                <div className="border-t border-[#535B60] pt-4 text-xs text-[#BAC2C7]">
                   Aulas em vídeo com progressão módulo a módulo e material de
                   apoio.
                 </div>

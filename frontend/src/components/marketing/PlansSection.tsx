@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { MdCheck } from "react-icons/md";
 import { Badge } from "@/components/ui/Badge";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 
 type PlansSectionProps = {
   primaryHref: string;
@@ -30,7 +30,7 @@ export default function PlansSection({ primaryHref }: PlansSectionProps) {
     <section className="relative overflow-hidden">
       <div className="relative z-10 mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
         <div className="reveal">
-          <h2 className="text-text font-semibold tracking-[-0.02em] text-[var(--text-h2)]">
+          <h2 className="text-text text-[length:var(--text-h2)] font-semibold tracking-[-0.02em]">
             Planos simples, sem letra miúda
           </h2>
           <p className="text-text-muted mt-2 text-sm md:text-base">
@@ -71,12 +71,14 @@ export default function PlansSection({ primaryHref }: PlansSectionProps) {
               </ul>
             </div>
 
-            <Link
+            <ButtonLink
               href={primaryHref}
-              className="border-control-border text-text hover:bg-canvas focus-visible:ring-accent mt-8 flex min-h-[44px] w-full items-center justify-center rounded-full border bg-[var(--panel)] px-5 py-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+              variant="secondary"
+              size="md"
+              className="mt-8 w-full rounded-full"
             >
               Começar grátis
-            </Link>
+            </ButtonLink>
           </div>
 
           {/* Premium — Elevated panel with accent highlight and badge, no solid orange flood */}
@@ -103,7 +105,7 @@ export default function PlansSection({ primaryHref }: PlansSectionProps) {
                   <li key={feature} className="flex items-start gap-2.5">
                     <MdCheck
                       size={18}
-                      className="mt-0.5 shrink-0 text-[#FF6B07]"
+                      className="text-accent-text mt-0.5 shrink-0"
                       aria-hidden="true"
                     />
                     <span className="text-text text-sm leading-relaxed">
@@ -114,12 +116,14 @@ export default function PlansSection({ primaryHref }: PlansSectionProps) {
               </ul>
             </div>
 
-            <Link
+            <ButtonLink
               href={primaryHref}
-              className="focus-visible:ring-accent mt-8 flex min-h-[44px] w-full items-center justify-center rounded-full bg-[#FF6B07] px-5 py-3 text-sm font-semibold text-[var(--on-accent)] shadow-sm transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+              variant="primary"
+              size="md"
+              className="mt-8 w-full rounded-full shadow-sm"
             >
               Assinar Premium
-            </Link>
+            </ButtonLink>
           </div>
         </div>
 

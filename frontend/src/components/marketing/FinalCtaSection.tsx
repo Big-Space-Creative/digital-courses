@@ -1,6 +1,6 @@
 import Image from "next/image";
-import Link from "next/link";
 import { MdGroups } from "react-icons/md";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 
 type FinalCtaSectionProps = {
   isAuthenticated: boolean;
@@ -43,19 +43,27 @@ export default function FinalCtaSection({
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link
+              <ButtonLink
                 href={primaryHref}
-                className="focus-visible:ring-accent inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#FF6B07] px-6 py-3 text-sm font-semibold text-[var(--on-accent)] shadow-sm transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                variant="primary"
+                size="md"
+                className="gap-2 rounded-full shadow-sm"
               >
                 <MdGroups size={20} aria-hidden="true" />
-                {isAuthenticated ? "Ir para minha área" : "Criar conta grátis"}
-              </Link>
-              <Link
+                <span>
+                  {isAuthenticated
+                    ? "Ir para minha área"
+                    : "Criar conta grátis"}
+                </span>
+              </ButtonLink>
+              <ButtonLink
                 href="/login"
-                className="border-control-border text-text hover:bg-canvas focus-visible:ring-accent inline-flex min-h-[44px] items-center rounded-full border bg-[var(--panel)] px-5 py-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                variant="secondary"
+                size="md"
+                className="rounded-full"
               >
                 Fazer login
-              </Link>
+              </ButtonLink>
             </div>
           </div>
         </div>

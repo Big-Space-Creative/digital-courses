@@ -20,7 +20,7 @@ export default function ThemeToggle() {
       aria-label={
         isDark ? "Alternar para modo claro" : "Alternar para modo escuro"
       }
-      className="border-control-border bg-panel focus-visible:ring-accent relative inline-flex h-8 w-14 shrink-0 items-center rounded-full border transition-colors focus-visible:ring-2 focus-visible:outline-none"
+      className="bg-panel focus-visible:ring-accent relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full border border-[var(--control-border)] transition-colors focus-visible:ring-2 focus-visible:outline-none"
     >
       <MdLightMode
         aria-hidden="true"

@@ -1,6 +1,6 @@
 import Image from "next/image";
-import Link from "next/link";
 import { MdOutlinePlayCircle, MdStar } from "react-icons/md";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 
 type HeroSectionProps = {
   isAuthenticated: boolean;
@@ -16,7 +16,7 @@ const stats = [
 
 /**
  * Hero Section — Pullse Bento Grid.
- * - H1 typography: text-[var(--text-hero)] clamp(2.25rem, 1.75rem + 2.5vw, 3.75rem)
+ * - H1 typography: text-[length:var(--text-hero)] clamp(2.25rem, 1.75rem + 2.5vw, 3.75rem)
  * - Radius: 28px max (rounded-[var(--radius-hero)])
  * - Contrast AA: Ink text (#1D1E1F) over orange #FF6B07 (never white over orange)
  * - Semantic surfaces: panel / panel-elevated (no fixed bg-ink)
@@ -40,7 +40,7 @@ export default function HeroSection({
             className="rounded-[var(--radius-hero)] border border-[var(--border)] bg-[var(--panel)] p-7 shadow-[var(--shadow-panel)] md:p-10"
             style={{ gridArea: "headline" }}
           >
-            <h1 className="text-text leading-[1.08] font-semibold tracking-[-0.03em] text-balance text-[var(--text-hero)]">
+            <h1 className="text-text text-[length:var(--text-hero)] leading-[1.08] font-semibold tracking-[-0.03em] text-balance">
               Domine o violão com uma trilha clara, do primeiro acorde à
               apresentação
             </h1>
@@ -51,19 +51,25 @@ export default function HeroSection({
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link
+              <ButtonLink
                 href={primaryHref}
-                className="focus-visible:ring-accent inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#FF6B07] px-6 py-3 text-sm font-semibold text-[var(--on-accent)] shadow-sm transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                variant="primary"
+                size="md"
+                className="gap-2 rounded-full shadow-sm"
               >
                 <MdOutlinePlayCircle size={20} aria-hidden="true" />
-                {isAuthenticated ? "Ir para minha área" : "Começar agora"}
-              </Link>
-              <Link
+                <span>
+                  {isAuthenticated ? "Ir para minha área" : "Começar agora"}
+                </span>
+              </ButtonLink>
+              <ButtonLink
                 href="/login"
-                className="border-control-border text-text hover:bg-canvas focus-visible:ring-accent inline-flex min-h-[44px] items-center rounded-full border bg-[var(--panel)] px-5 py-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                variant="secondary"
+                size="md"
+                className="rounded-full"
               >
                 Já tenho conta
-              </Link>
+              </ButtonLink>
             </div>
           </div>
 
@@ -99,7 +105,7 @@ export default function HeroSection({
             </div>
           </div>
 
-          {/* Photo tile — Photo /02.jpg preserved */}
+          {/* Photo tile — Photo /02.jpg preserved with solid text */}
           <div
             className="relative min-h-[280px] overflow-hidden rounded-[var(--radius-hero)] border border-[var(--border)] bg-[var(--media)] shadow-[var(--shadow-panel)] md:min-h-0"
             style={{ gridArea: "photo" }}
@@ -113,7 +119,7 @@ export default function HeroSection({
               style={{ objectPosition: "32% 38%" }}
               priority
             />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-5 pt-16">
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-5 pt-16">
               <p className="text-sm font-medium text-white">
                 Alunos reais, resultado real.
               </p>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import PulseWave from "@/components/brand/PulseWave";
 import ThemeToggle from "@/components/marketing/ThemeToggle";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 
 type SiteHeaderProps = {
   isAuthenticated: boolean;
@@ -36,26 +37,32 @@ export default function SiteHeader({
         >
           <ThemeToggle />
           {isAuthenticated ? (
-            <Link
+            <ButtonLink
               href={dashboardHref}
-              className="focus-visible:ring-accent flex min-h-[44px] items-center justify-center rounded-full bg-[#FF6B07] px-3.5 py-2 text-xs font-semibold whitespace-nowrap text-[var(--on-accent)] shadow-sm transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:px-5 sm:text-sm"
+              variant="primary"
+              size="sm"
+              className="rounded-full whitespace-nowrap shadow-sm"
             >
               Minha área
-            </Link>
+            </ButtonLink>
           ) : (
             <>
-              <Link
+              <ButtonLink
                 href="/login"
-                className="text-text-muted hover:text-text focus-visible:ring-accent flex min-h-[44px] items-center justify-center rounded-full px-2.5 py-2 text-xs font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:outline-none sm:px-4 sm:text-sm"
+                variant="ghost"
+                size="sm"
+                className="rounded-full whitespace-nowrap"
               >
                 Entrar
-              </Link>
-              <Link
+              </ButtonLink>
+              <ButtonLink
                 href="/register"
-                className="focus-visible:ring-accent flex min-h-[44px] items-center justify-center rounded-full bg-[#FF6B07] px-3.5 py-2 text-xs font-semibold whitespace-nowrap text-[var(--on-accent)] shadow-sm transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:px-5 sm:text-sm"
+                variant="primary"
+                size="sm"
+                className="rounded-full whitespace-nowrap shadow-sm"
               >
                 Criar conta
-              </Link>
+              </ButtonLink>
             </>
           )}
         </nav>

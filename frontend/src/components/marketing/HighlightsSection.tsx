@@ -1,6 +1,5 @@
 import {
   MdAutoStories,
-  MdCheckCircle,
   MdLibraryMusic,
   MdOutlinePlayCircle,
   MdOutlineQueryStats,
@@ -37,8 +36,8 @@ const rest = [
 ];
 
 /**
- * HighlightsSection with real UI preview of the product curriculum & lesson player.
- * No invented user data or false metrics; illustrates the real course workflow.
+ * HighlightsSection with clearly identified illustrative preview.
+ * Complies with Q14: no fake completion status, timestamps or synthetic user metrics.
  */
 export default function HighlightsSection() {
   return (
@@ -65,47 +64,43 @@ export default function HighlightsSection() {
               {featured.description}
             </p>
 
-            {/* UI Preview Card: Product curriculum mockup */}
+            {/* UI Preview Card: Clearly marked as an illustrative example */}
             <div className="mt-6 rounded-xl border border-[var(--border)] bg-[var(--canvas)] p-4 shadow-sm">
               <div className="mb-3 flex items-center justify-between border-b border-[var(--border)] pb-2.5">
                 <div className="flex items-center gap-2">
                   <span className="size-2 rounded-full bg-[#FF6B07]" />
                   <span className="text-text text-xs font-semibold">
-                    Módulo 1: Fundamentos do Violão
+                    Estrutura da trilha
                   </span>
                 </div>
-                <Badge variant="accent">Prévia da aula</Badge>
+                <Badge variant="neutral">Exemplo ilustrativo</Badge>
               </div>
 
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--panel)] px-3 py-2 text-xs">
                   <div className="flex items-center gap-2.5">
-                    <MdCheckCircle
-                      className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+                    <MdOutlinePlayCircle
+                      className="text-accent-text size-4 shrink-0"
                       aria-hidden="true"
                     />
                     <span className="text-text font-medium">
-                      01. Postura, digitação e afinação
+                      Aulas práticas em vídeo por módulo
                     </span>
                   </div>
-                  <span className="text-text-muted font-mono text-[11px]">
-                    08:45
-                  </span>
+                  <span className="text-text-muted text-[11px]">Vídeo</span>
                 </div>
 
-                <div className="flex items-center justify-between rounded-lg border border-[#FF6B07]/40 bg-[var(--panel-elevated)] px-3 py-2 text-xs ring-1 ring-[#FF6B07]/20">
+                <div className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--panel)] px-3 py-2 text-xs">
                   <div className="flex items-center gap-2.5">
-                    <MdOutlinePlayCircle
-                      className="size-4 shrink-0 text-[#FF6B07]"
+                    <MdLibraryMusic
+                      className="text-accent-text size-4 shrink-0"
                       aria-hidden="true"
                     />
-                    <span className="text-text font-semibold">
-                      02. Primeiros acordes e troca no tempo
+                    <span className="text-text font-medium">
+                      Exercícios guiados de ritmo e dedilhado
                     </span>
                   </div>
-                  <span className="text-accent-text font-medium">
-                    Em reprodução
-                  </span>
+                  <span className="text-text-muted text-[11px]">Prática</span>
                 </div>
 
                 <div className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--panel)] px-3 py-2 text-xs">
@@ -115,12 +110,17 @@ export default function HighlightsSection() {
                       aria-hidden="true"
                     />
                     <span className="text-text-muted font-medium">
-                      Guia prático de diagramas (PDF)
+                      Diagramas de acordes e partituras
                     </span>
                   </div>
-                  <span className="text-text-muted text-[11px]">Download</span>
+                  <span className="text-text-muted text-[11px]">PDF</span>
                 </div>
               </div>
+
+              <p className="text-text-muted mt-3 text-[11px] italic">
+                Representação ilustrativa da organização de conteúdos na
+                plataforma.
+              </p>
             </div>
           </div>
 

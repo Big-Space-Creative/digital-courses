@@ -42,7 +42,7 @@ export default async function Home() {
 
         <section className="relative overflow-hidden">
           <div className="relative z-10 mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
-            <h2 className="reveal text-text font-semibold tracking-[-0.02em] text-[var(--text-h2)]">
+            <h2 className="reveal text-text text-[length:var(--text-h2)] font-semibold tracking-[-0.02em]">
               Perguntas frequentes
             </h2>
             <p className="text-text-muted mt-2 text-sm md:text-base">

@@ -37,7 +37,8 @@ const faq = [
 ];
 
 /**
- * FaqAccordion — Semantic accordion with smooth CSS grid expansion.
+ * FaqAccordion — Semantic accordion without layout animations.
+ * Complies with Q16 (reduced-motion friendly, no grid-template-rows animation).
  */
 export default function FaqAccordion() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
@@ -54,14 +55,14 @@ export default function FaqAccordion() {
                 aria-expanded={isOpen}
                 aria-controls={`faq-panel-${index}`}
                 onClick={() => setOpenIndex(isOpen ? null : index)}
-                className="focus-visible:ring-accent flex min-h-[52px] w-full items-center justify-between gap-4 py-5 text-left focus-visible:ring-2 focus-visible:outline-none"
+                className="focus-visible:ring-accent flex min-h-[52px] w-full cursor-pointer items-center justify-between gap-4 py-5 text-left focus-visible:ring-2 focus-visible:outline-none"
               >
                 <span className="text-text text-sm font-semibold md:text-base">
                   {item.question}
                 </span>
                 <MdAdd
                   size={20}
-                  className={`shrink-0 text-[#FF6B07] transition-transform duration-300 ${
+                  className={`text-accent-text shrink-0 transition-transform duration-180 ease-out motion-reduce:transition-none ${
                     isOpen ? "rotate-45" : ""
                   }`}
                   aria-hidden="true"
@@ -70,14 +71,14 @@ export default function FaqAccordion() {
             </h3>
             <div
               id={`faq-panel-${index}`}
-              className="grid transition-[grid-template-rows] duration-300 ease-out"
-              style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
+              role="region"
+              aria-label={item.question}
+              hidden={!isOpen}
+              className="transition-opacity duration-180 ease-out motion-reduce:transition-none"
             >
-              <div className="overflow-hidden">
-                <p className="text-text-muted pb-5 text-sm leading-relaxed md:text-base">
-                  {item.answer}
-                </p>
-              </div>
+              <p className="text-text-muted pb-5 text-sm leading-relaxed md:text-base">
+                {item.answer}
+              </p>
             </div>
           </div>
         );
