@@ -1,0 +1,19 @@
+# Contexto de build do frontend — manter a imagem enxuta e sem segredos locais
+node_modules
+.next
+out
+coverage
+*.tsbuildinfo
+npm-debug.log*
+
+# Variáveis locais (NEXT_PUBLIC_* chegam via build-args do CI)
+.env
+.env.*
+
+# Ferramentas de desenvolvimento/agentes
+.maestri
+.impeccable
+.git
+.gitignore
+.vscode
+.DS_Store

@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # ── Backend PHP-FPM (Laravel Application) ──
   app:
-    image: ghcr.io/big-space-creative/digital-courses/backend:latest
+    image: ghcr.io/big-space-creative/digital-courses/backend:${IMAGE_TAG:-latest}
     working_dir: /var/www
     volumes:
       - app_storage:/var/www/storage
@@ -52,7 +52,7 @@ services:
 
   # ── Nginx Web Server (Proxy do Laravel) ──
   nginx:
-    image: ghcr.io/big-space-creative/digital-courses/nginx:latest
+    image: ghcr.io/big-space-creative/digital-courses/nginx:${IMAGE_TAG:-latest}
     networks:
       - dc-overlay-network
       - network_swarm_public
@@ -96,7 +96,7 @@ services:
 
   # ── Frontend Next.js (Node.js) ──
   frontend:
-    image: ghcr.io/big-space-creative/digital-courses/frontend:latest
+    image: ghcr.io/big-space-creative/digital-courses/frontend:${IMAGE_TAG:-latest}
     networks:
       - dc-overlay-network
       - network_swarm_public
