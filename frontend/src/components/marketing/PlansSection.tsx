@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MdCheck } from "react-icons/md";
+import { Badge } from "@/components/ui/Badge";
 
 type PlansSectionProps = {
   primaryHref: string;
@@ -19,91 +20,112 @@ const premiumFeatures = [
 ];
 
 /**
- * Illustrative pricing — simulated values (confirmed with the product owner,
- * no real billing plans exist yet). The one accent-fill bento tile in this
- * composition marks Premium as the recommended plan (Rare Orange Rule: one
- * accent tile per composition).
+ * PlansSection — Honest pricing cards.
+ * - Premium card uses semantic elevated panel with an accent border and "Mais escolhido" badge (no solid orange background).
+ * - High contrast buttons (ink text on #FF6B07 for primary).
+ * - Real plan data; no invented billing switches or artificial tiers.
  */
 export default function PlansSection({ primaryHref }: PlansSectionProps) {
   return (
     <section className="relative overflow-hidden">
       <div className="relative z-10 mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
-        <h2 className="reveal text-ink text-2xl font-semibold tracking-[-0.01em] md:text-3xl">
-          Planos simples, sem letra miúda
-        </h2>
+        <div className="reveal">
+          <h2 className="text-text font-semibold tracking-[-0.02em] text-[var(--text-h2)]">
+            Planos simples, sem letra miúda
+          </h2>
+          <p className="text-text-muted mt-2 text-sm md:text-base">
+            Escolha como quer começar sua jornada musical
+          </p>
+        </div>
 
-        <div className="reveal mt-8 grid gap-5 md:grid-cols-2 md:gap-6">
-          <div className="rounded-bento-xl bg-surface-soft border-ink/10 border p-8 md:p-10">
-            <p className="text-ink text-sm font-semibold tracking-wide uppercase">
-              Gratuito
-            </p>
-            <p className="text-ink mt-3 text-3xl font-semibold tracking-[-0.01em]">
-              R$ 0
-            </p>
-            <p className="text-ink/60 mt-1 text-sm">
-              para conhecer a plataforma
-            </p>
+        <div className="reveal mt-8 grid gap-6 md:grid-cols-2 md:gap-8">
+          {/* Gratuito */}
+          <div className="flex flex-col justify-between rounded-[var(--radius-panel)] border border-[var(--border)] bg-[var(--panel)] p-7 shadow-[var(--shadow-panel)] md:p-9">
+            <div>
+              <div className="flex items-center justify-between">
+                <p className="text-text text-sm font-semibold tracking-wider uppercase">
+                  Gratuito
+                </p>
+                <Badge variant="neutral">Básico</Badge>
+              </div>
+              <p className="text-text mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
+                R$ 0
+              </p>
+              <p className="text-text-muted mt-1 text-sm">
+                para conhecer a plataforma
+              </p>
 
-            <ul className="mt-6 flex flex-col gap-3">
-              {freeFeatures.map((feature) => (
-                <li key={feature} className="flex items-start gap-2.5">
-                  <MdCheck
-                    size={18}
-                    className="text-accent mt-0.5 shrink-0"
-                    aria-hidden="true"
-                  />
-                  <span className="text-ink/75 text-sm leading-relaxed">
-                    {feature}
-                  </span>
-                </li>
-              ))}
-            </ul>
+              <ul className="mt-6 flex flex-col gap-3">
+                {freeFeatures.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2.5">
+                    <MdCheck
+                      size={18}
+                      className="text-accent-text mt-0.5 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span className="text-text text-sm leading-relaxed">
+                      {feature}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
             <Link
               href={primaryHref}
-              className="border-ink/15 text-ink hover:bg-ink/5 focus-visible:ring-accent mt-7 inline-flex w-full items-center justify-center rounded-full border px-5 py-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+              className="border-control-border text-text hover:bg-canvas focus-visible:ring-accent mt-8 flex min-h-[44px] w-full items-center justify-center rounded-full border bg-[var(--panel)] px-5 py-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
             >
               Começar grátis
             </Link>
           </div>
 
-          <div className="rounded-bento-xl bg-accent p-8 md:p-10">
-            <p className="text-sm font-semibold tracking-wide text-white uppercase">
-              Premium
-            </p>
-            <p className="mt-3 text-3xl font-semibold tracking-[-0.01em] text-white">
-              R$ 39,90<span className="text-base font-medium">/mês</span>
-            </p>
-            <p className="mt-1 text-sm text-white/80">
-              ou R$ 348/ano — economize 2 meses
-            </p>
+          {/* Premium — Elevated panel with accent highlight and badge, no solid orange flood */}
+          <div className="relative flex flex-col justify-between rounded-[var(--radius-panel)] border-2 border-[#FF6B07] bg-[var(--panel-elevated)] p-7 shadow-[var(--shadow-overlay)] md:p-9">
+            <div>
+              <div className="flex items-center justify-between">
+                <p className="text-accent-text text-sm font-semibold tracking-wider uppercase">
+                  Premium
+                </p>
+                <Badge variant="accent">Mais escolhido</Badge>
+              </div>
+              <p className="text-text mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
+                R$ 39,90
+                <span className="text-text-muted text-base font-normal">
+                  /mês
+                </span>
+              </p>
+              <p className="text-text-muted mt-1 text-sm">
+                ou R$ 348/ano — economize 2 meses
+              </p>
 
-            <ul className="mt-6 flex flex-col gap-3">
-              {premiumFeatures.map((feature) => (
-                <li key={feature} className="flex items-start gap-2.5">
-                  <MdCheck
-                    size={18}
-                    className="mt-0.5 shrink-0 text-white"
-                    aria-hidden="true"
-                  />
-                  <span className="text-sm leading-relaxed text-white/90">
-                    {feature}
-                  </span>
-                </li>
-              ))}
-            </ul>
+              <ul className="mt-6 flex flex-col gap-3">
+                {premiumFeatures.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2.5">
+                    <MdCheck
+                      size={18}
+                      className="mt-0.5 shrink-0 text-[#FF6B07]"
+                      aria-hidden="true"
+                    />
+                    <span className="text-text text-sm leading-relaxed">
+                      {feature}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
             <Link
               href={primaryHref}
-              className="bg-ink hover:bg-ink/85 text-surface mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-accent)] focus-visible:outline-none"
+              className="focus-visible:ring-accent mt-8 flex min-h-[44px] w-full items-center justify-center rounded-full bg-[#FF6B07] px-5 py-3 text-sm font-semibold text-[var(--on-accent)] shadow-sm transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
             >
               Assinar Premium
             </Link>
           </div>
         </div>
 
-        <p className="text-ink/50 reveal mt-6 text-xs">
-          Cancele quando quiser, direto na sua área de aluno. Sem fidelidade.
+        <p className="text-text-muted reveal mt-6 text-xs">
+          Cancele quando quiser, direto na sua área de aluno. Sem taxa de
+          cancelamento ou fidelidade.
         </p>
       </div>
     </section>

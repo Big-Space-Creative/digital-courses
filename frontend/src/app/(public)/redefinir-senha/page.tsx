@@ -6,10 +6,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MdLockOutline } from "react-icons/md";
+import { MdArrowBack, MdLockOutline } from "react-icons/md";
 
-//Components
-import { Input } from "@/components/form/Input";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import AuthLayout from "@/components/marketing/AuthLayout";
 import { resetPasswordAction } from "@/app/actions/auth";
 import { toast } from "@/components/ui/Toast";
@@ -58,8 +58,8 @@ function ResetPasswordForm() {
       return;
     }
 
-    toast("Senha redefinida", {
-      description: "Faça login com a sua nova senha.",
+    toast("Senha redefinida com sucesso", {
+      description: "Agora você pode fazer login com sua nova senha.",
       variant: "success",
     });
 
@@ -67,70 +67,90 @@ function ResetPasswordForm() {
   };
 
   return (
-    <AuthLayout>
-      <div className="flex flex-col gap-1.5">
-        <h1 className="text-ink text-3xl font-semibold tracking-[-0.01em]">
+    <AuthLayout contextType="recovery">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-text text-3xl font-semibold tracking-tight">
           Criar nova senha
         </h1>
         {isLinkValid ? (
-          <p className="text-ink/60 text-sm leading-relaxed">
-            Defina uma nova senha para{" "}
-            <strong className="text-ink font-semibold break-all">
+          <p className="text-text-muted text-sm leading-relaxed">
+            Defina uma nova senha de acesso para{" "}
+            <strong className="text-text font-semibold break-all">
               {email}
             </strong>
             .
           </p>
         ) : (
-          <p className="text-ink/60 text-sm leading-relaxed">
-            Este link de redefinição é inválido ou está incompleto. Solicite um
-            novo link para continuar.
+          <p className="text-text-muted text-sm leading-relaxed">
+            Este link de redefinição expirou ou é inválido. Solicite um novo
+            link para prosseguir com segurança.
           </p>
         )}
       </div>
 
       {!isLinkValid ? (
-        <Link
-          href="/esqueci-senha"
-          className="gradient-animate focus-visible:ring-accent flex h-14 w-full items-center justify-center rounded-full text-sm font-medium text-white shadow-lg transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-60"
-          style={{ backgroundImage: "var(--gradient-pulse)" }}
-        >
-          Solicitar novo link
-        </Link>
+        <div className="mt-6 flex flex-col gap-4">
+          <Link
+            href="/esqueci-senha"
+            className="focus-visible:ring-accent flex min-h-[44px] w-full items-center justify-center rounded-full bg-[#FF6B07] px-6 py-3 text-sm font-semibold text-[var(--on-accent)] shadow-sm transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+          >
+            Solicitar novo link
+          </Link>
+          <div className="border-t border-[var(--border)] pt-4">
+            <Link
+              href="/login"
+              className="text-text-muted hover:text-text focus-visible:ring-accent flex min-h-[44px] items-center gap-1.5 rounded-sm text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            >
+              <MdArrowBack size={18} aria-hidden="true" />
+              <span>Voltar para o login</span>
+            </Link>
+          </div>
+        </div>
       ) : (
         <form
           onSubmit={handleSubmit(handleReset)}
-          className="flex flex-col gap-5"
+          className="mt-6 flex flex-col gap-4"
+          noValidate
         >
           <Input
             label="Nova senha"
             type="password"
+            autoComplete="new-password"
             icon={MdLockOutline}
-            placeholder="******"
+            placeholder="No mínimo 8 caracteres"
             error={errors.password?.message}
             {...register("password")}
           />
+
           <Input
             label="Confirmar nova senha"
             type="password"
+            autoComplete="new-password"
             icon={MdLockOutline}
-            placeholder="******"
+            placeholder="Repita a nova senha"
             error={errors.password_confirmation?.message}
             {...register("password_confirmation")}
           />
-          <button
+
+          <Button
             type="submit"
-            disabled={isSubmitting}
-            className="gradient-animate focus-visible:ring-accent flex h-14 w-full items-center justify-center rounded-full text-sm font-medium text-white shadow-lg transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-60"
-            style={{ backgroundImage: "var(--gradient-pulse)" }}
+            variant="primary"
+            size="lg"
+            loading={isSubmitting}
+            className="mt-2 w-full font-semibold"
           >
             {isSubmitting ? "Salvando..." : "Redefinir senha"}
-          </button>
-          <Link
-            href="/login"
-            className="text-accent hover:text-ink mt-2 self-start text-sm font-medium transition-colors"
-          >
-            Voltar para o login
-          </Link>
+          </Button>
+
+          <div className="mt-4 flex items-center justify-between border-t border-[var(--border)] pt-4">
+            <Link
+              href="/login"
+              className="text-text-muted hover:text-text focus-visible:ring-accent flex min-h-[44px] items-center gap-1.5 rounded-sm text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            >
+              <MdArrowBack size={18} aria-hidden="true" />
+              <span>Voltar para o login</span>
+            </Link>
+          </div>
         </form>
       )}
     </AuthLayout>

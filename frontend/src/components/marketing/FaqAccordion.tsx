@@ -37,15 +37,13 @@ const faq = [
 ];
 
 /**
- * One item open at a time. Height animates via grid-template-rows
- * (0fr → 1fr) instead of the raw `height` property — see animate.md's
- * "Grid-template-rows or FLIP-style transforms" guidance.
+ * FaqAccordion — Semantic accordion with smooth CSS grid expansion.
  */
 export default function FaqAccordion() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <div className="reveal divide-ink/10 border-ink/10 divide-y border-t border-b">
+    <div className="reveal divide-y divide-[var(--border)] border-y border-[var(--border)]">
       {faq.map((item, index) => {
         const isOpen = openIndex === index;
         return (
@@ -56,14 +54,14 @@ export default function FaqAccordion() {
                 aria-expanded={isOpen}
                 aria-controls={`faq-panel-${index}`}
                 onClick={() => setOpenIndex(isOpen ? null : index)}
-                className="focus-visible:ring-accent flex w-full items-center justify-between gap-4 py-5 text-left focus-visible:ring-2 focus-visible:outline-none"
+                className="focus-visible:ring-accent flex min-h-[52px] w-full items-center justify-between gap-4 py-5 text-left focus-visible:ring-2 focus-visible:outline-none"
               >
-                <span className="text-ink text-sm font-semibold md:text-base">
+                <span className="text-text text-sm font-semibold md:text-base">
                   {item.question}
                 </span>
                 <MdAdd
                   size={20}
-                  className={`text-accent shrink-0 transition-transform duration-300 ${
+                  className={`shrink-0 text-[#FF6B07] transition-transform duration-300 ${
                     isOpen ? "rotate-45" : ""
                   }`}
                   aria-hidden="true"
@@ -76,7 +74,7 @@ export default function FaqAccordion() {
               style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
             >
               <div className="overflow-hidden">
-                <p className="text-ink/65 pb-5 text-sm leading-relaxed md:text-base">
+                <p className="text-text-muted pb-5 text-sm leading-relaxed md:text-base">
                   {item.answer}
                 </p>
               </div>

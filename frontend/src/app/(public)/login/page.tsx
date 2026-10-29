@@ -2,22 +2,24 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MdLockOutline, MdOutlineEmail, MdHelpOutline } from "react-icons/md";
+import { MdHelpOutline, MdLockOutline, MdOutlineEmail } from "react-icons/md";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-//Components
-import { Input } from "@/components/form/Input";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import AuthLayout from "@/components/marketing/AuthLayout";
 import { loginAction } from "@/app/actions/auth";
 import { toast } from "@/components/ui/Toast";
 import { useUser } from "@/context/UserContext";
 
 const loginSchema = z.object({
-  email: z.string().email("Email inválido"),
+  email: z.string().email("E-mail inválido"),
   senha: z.string().min(8, "A senha deve conter pelo menos 8 caracteres"),
 });
+
+type LoginData = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const router = useRouter();
@@ -26,31 +28,27 @@ export default function Login() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm({
+  } = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
   });
-
-  type LoginData = z.infer<typeof loginSchema>;
 
   const handleLogin = async (data: LoginData) => {
     const res = await loginAction(data);
 
     if (res.error) {
-      // E-mail não verificado → informa o usuário e redireciona para tela de verificação
       if ("email_not_verified" in res && res.email_not_verified) {
         toast("Confirme seu e-mail", {
           description:
             "Acesse sua caixa de entrada e clique no link de verificação para ativar sua conta.",
           variant: "info",
         });
-        // Pequeno delay para o usuário conseguir ler o toast antes do redirect
         setTimeout(() => {
           router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
         }, 1500);
         return;
       }
 
-      toast("Não foi possível realizar Login", {
+      toast("Não foi possível realizar o login", {
         description: res.error,
         variant: "error",
       });
@@ -67,71 +65,84 @@ export default function Login() {
   };
 
   return (
-    <AuthLayout>
-      <div className="flex flex-col gap-1.5">
-        <h1 className="text-ink text-3xl font-semibold tracking-[-0.01em]">
+    <AuthLayout contextType="login">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-text text-3xl font-semibold tracking-tight">
           Bem-vindo de volta
         </h1>
-        <p className="text-ink/60 text-sm leading-relaxed">
-          Insira seus dados para acessar suas aulas.
+        <p className="text-text-muted text-sm leading-relaxed">
+          Insira seus dados para acessar sua área de estudos.
         </p>
       </div>
+
       <form
         onSubmit={handleSubmit(handleLogin)}
-        className="flex flex-col gap-5"
+        className="mt-6 flex flex-col gap-4"
+        noValidate
       >
         <Input
-          label="Email"
+          label="E-mail"
           type="email"
+          autoComplete="email"
           icon={MdOutlineEmail}
           placeholder="email@exemplo.com"
           error={errors.email?.message}
           {...register("email")}
         />
-        <Input
-          label="Senha"
-          type="password"
-          icon={MdLockOutline}
-          placeholder="******"
-          error={errors.senha?.message}
-          {...register("senha")}
-        />
-        <Link
-          href="/esqueci-senha"
-          className="text-accent hover:text-ink -mt-2 self-end text-sm font-medium transition-colors"
-        >
-          Esqueci minha senha
-        </Link>
-        <button
+
+        <div>
+          <Input
+            label="Senha"
+            type="password"
+            autoComplete="current-password"
+            icon={MdLockOutline}
+            placeholder="Sua senha secreta"
+            error={errors.senha?.message}
+            {...register("senha")}
+          />
+          <div className="mt-1 flex justify-end">
+            <Link
+              href="/esqueci-senha"
+              className="text-accent-text hover:text-text focus-visible:ring-accent rounded-sm text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            >
+              Esqueci minha senha
+            </Link>
+          </div>
+        </div>
+
+        <Button
           type="submit"
-          disabled={isSubmitting}
-          className="gradient-animate focus-visible:ring-accent flex h-14 w-full items-center justify-center rounded-full text-sm font-medium text-white shadow-lg transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-60"
-          style={{ backgroundImage: "var(--gradient-pulse)" }}
+          variant="primary"
+          size="lg"
+          loading={isSubmitting}
+          className="mt-2 w-full font-semibold"
         >
           {isSubmitting ? "Entrando..." : "Entrar"}
-        </button>
-        <div className="mt-2 flex items-center justify-between">
-          <p className="text-ink/70 flex gap-1 text-sm">
-            Não tem conta?
+        </Button>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border)] pt-4">
+          <p className="text-text-muted text-sm">
+            Não tem uma conta?{" "}
             <Link
               href="/register"
-              className="text-accent hover:text-ink font-medium transition-colors"
+              className="text-accent-text hover:text-text focus-visible:ring-accent font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none"
             >
-              Crie uma conta!
+              Cadastre-se
             </Link>
           </p>
+
           <button
             type="button"
             onClick={() => {
               toast("Precisa de ajuda?", {
-                description: `Entre em contato conosco: ${process.env.NEXT_PUBLIC_SUPPORT_EMAIL}`,
+                description: `Entre em contato conosco: ${process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "contato@pullse.com.br"}`,
                 variant: "info",
               });
             }}
-            className="text-ink/50 hover:text-accent flex items-center gap-1 text-sm transition-colors"
-            title="Atendimento ao cliente"
+            className="text-text-muted hover:text-accent-text focus-visible:ring-accent flex min-h-[44px] items-center gap-1.5 rounded-sm text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
           >
-            <MdHelpOutline size={18} /> Ajuda
+            <MdHelpOutline size={16} aria-hidden="true" />
+            <span>Ajuda</span>
           </button>
         </div>
       </form>

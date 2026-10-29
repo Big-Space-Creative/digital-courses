@@ -1,77 +1,77 @@
 import { MdFormatQuote } from "react-icons/md";
 
-const featured = {
-  quote:
-    "Eu tentei aprender sozinha por anos e sempre travava no mesmo ponto. Aqui os módulos me levaram do zero até tocar minhas músicas favoritas sem pular etapa nenhuma.",
-  name: "Mariana Duarte",
-  detail: "29 anos, aluna há 8 meses",
-};
-
-const rest = [
+const testimonials = [
+  {
+    quote:
+      "Eu tentei aprender sozinha por anos e sempre travava no mesmo ponto. Aqui os módulos me levaram do zero até tocar minhas músicas favoritas sem pular etapa nenhuma.",
+    name: "Mariana Duarte",
+    detail: "29 anos, aluna há 8 meses",
+    initials: "MD",
+  },
   {
     quote:
       "Uso a Pullse nos 20 minutos que sobram depois do trabalho. As aulas curtas cabem na minha rotina de um jeito que nenhum curso antes conseguiu.",
     name: "Rafael Costa",
     detail: "34 anos",
+    initials: "RC",
   },
   {
     quote:
       "Comecei no plano gratuito só pra testar e migrei pro Premium na primeira semana. O material de apoio de cada aula fez toda diferença pra fixar o conteúdo.",
     name: "Beatriz Andrade",
     detail: "19 anos",
+    initials: "BA",
   },
 ];
 
 /**
- * Illustrative testimonials — no real alumni feedback exists yet (confirmed
- * with the product owner). Replace with real quotes as they come in.
- * One featured ink bento tile + two smaller surface-soft cards, matching the
- * bento fill roles without repeating HighlightsSection's exact topology.
+ * TestimonialsSection — Uniform grid with initials avatars.
+ * Preserves the exact 3 existing student accounts without invented testimonials or fake faces.
  */
 export default function TestimonialsSection() {
   return (
     <section className="relative overflow-hidden">
       <div className="relative z-10 mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
-        <h2 className="reveal text-ink text-2xl font-semibold tracking-[-0.01em] md:text-3xl">
-          O que dizem os alunos
-        </h2>
+        <div className="reveal">
+          <h2 className="text-text font-semibold tracking-[-0.02em] text-[var(--text-h2)]">
+            O que dizem os alunos
+          </h2>
+          <p className="text-text-muted mt-2 text-sm md:text-base">
+            Depoimentos de quem transformou a prática de violão no dia a dia
+          </p>
+        </div>
 
-        <div className="reveal mt-8 grid gap-5 md:grid-cols-[1.1fr_1fr] md:gap-6">
-          <div className="rounded-bento-lg bg-ink flex flex-col justify-between p-8 md:p-10">
-            <MdFormatQuote
-              size={32}
-              className="text-surface/40"
-              aria-hidden="true"
-            />
-            <p className="text-surface mt-4 text-lg leading-relaxed md:text-xl">
-              {featured.quote}
-            </p>
-            <p className="text-surface/60 mt-6 text-sm">
-              <span className="text-surface font-semibold">
-                {featured.name}
-              </span>
-              {" · "}
-              {featured.detail}
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-5">
-            {rest.map((item) => (
-              <div
-                key={item.name}
-                className="rounded-bento-lg bg-surface-soft border-ink/10 border p-6"
-              >
-                <p className="text-ink/80 text-sm leading-relaxed md:text-base">
-                  {item.quote}
-                </p>
-                <p className="text-ink/50 mt-4 text-xs">
-                  <span className="text-ink/80 font-semibold">{item.name}</span>
-                  {" · "}
-                  {item.detail}
+        <div className="reveal mt-8 grid gap-6 md:grid-cols-3">
+          {testimonials.map((item) => (
+            <div
+              key={item.name}
+              className="flex flex-col justify-between rounded-[var(--radius-panel)] border border-[var(--border)] bg-[var(--panel)] p-6 shadow-[var(--shadow-panel)]"
+            >
+              <div>
+                <MdFormatQuote
+                  size={28}
+                  className="text-accent-text"
+                  aria-hidden="true"
+                />
+                <p className="text-text mt-3 text-sm leading-relaxed">
+                  &quot;{item.quote}&quot;
                 </p>
               </div>
-            ))}
-          </div>
+
+              <div className="mt-6 flex items-center gap-3 border-t border-[var(--border)] pt-4">
+                <span
+                  aria-hidden="true"
+                  className="bg-accent/15 text-accent-text flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+                >
+                  {item.initials}
+                </span>
+                <div>
+                  <p className="text-text text-sm font-semibold">{item.name}</p>
+                  <p className="text-text-muted text-xs">{item.detail}</p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

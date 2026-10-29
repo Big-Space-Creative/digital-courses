@@ -3,17 +3,18 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  MdHelpOutline,
   MdLockOutline,
   MdOutlineEmail,
   MdOutlinePersonOutline,
-  MdHelpOutline,
 } from "react-icons/md";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-//Components
-import { Input } from "@/components/form/Input";
+import { Input } from "@/components/ui/Input";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { Button } from "@/components/ui/Button";
 import AuthLayout from "@/components/marketing/AuthLayout";
 import { registerAction } from "@/app/actions/auth";
 import { toast } from "@/components/ui/Toast";
@@ -21,13 +22,14 @@ import { toast } from "@/components/ui/Toast";
 const registerSchema = z
   .object({
     nome: z.string().min(2, "O nome deve conter pelo menos 2 caracteres"),
-    email: z.string().email("Email inválido"),
+    email: z.string().email("E-mail inválido"),
     senha: z.string().min(8, "A senha deve conter pelo menos 8 caracteres"),
     confirmaSenha: z
       .string()
-      .min(8, "A senha deve conter pelo menos 8 caracteres"),
+      .min(8, "A confirmação deve conter pelo menos 8 caracteres"),
     aceitaTermos: z.literal(true, {
-      error: "Você precisa aceitar os Termos de Uso e a Política de Privacidade para continuar.",
+      error:
+        "Você precisa aceitar os Termos de Uso e a Política de Privacidade para continuar.",
     }),
   })
   .refine((data) => data.senha === data.confirmaSenha, {
@@ -35,19 +37,17 @@ const registerSchema = z
     path: ["confirmaSenha"],
   });
 
+type RegisterData = z.infer<typeof registerSchema>;
+
 export default function Register() {
   const router = useRouter();
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm({
+  } = useForm<RegisterData>({
     resolver: zodResolver(registerSchema),
   });
-
-  type RegisterData = z.infer<typeof registerSchema>;
-
-
 
   const handleRegister = async (data: RegisterData) => {
     const res = await registerAction({
@@ -58,133 +58,140 @@ export default function Register() {
     });
 
     if (res.error) {
-      toast("Nao foi possivel cadastrar", {
+      toast("Não foi possível cadastrar", {
         description: res.error,
         variant: "error",
       });
       return;
     }
 
-    toast("Cadastro realizado!", {
+    toast("Cadastro realizado com sucesso!", {
       description: "Verifique seu e-mail para ativar sua conta.",
       variant: "success",
     });
-    // Redireciona para a página de verificação passando o e-mail como parâmetro
+
     router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
   };
 
   return (
-    <AuthLayout>
-      <div className="flex flex-col gap-1.5">
-        <h1 className="text-ink text-3xl font-semibold tracking-[-0.01em]">
+    <AuthLayout contextType="register">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-text text-3xl font-semibold tracking-tight">
           Crie sua conta
         </h1>
-        <p className="text-ink/60 text-sm leading-relaxed">
-          Insira seus dados para começar sua trilha de aprendizado.
+        <p className="text-text-muted text-sm leading-relaxed">
+          Comece agora sua trilha de aprendizado prático de violão.
         </p>
       </div>
+
       <form
         onSubmit={handleSubmit(handleRegister)}
-        className="flex flex-col gap-5"
+        className="mt-6 flex flex-col gap-4"
+        noValidate
       >
         <Input
-          label="Nome"
+          label="Nome completo"
           type="text"
+          autoComplete="name"
           icon={MdOutlinePersonOutline}
-          placeholder="Nome Completo"
+          placeholder="Seu nome"
           error={errors.nome?.message}
           {...register("nome")}
         />
+
         <Input
-          label="Email"
+          label="E-mail"
           type="email"
+          autoComplete="email"
           icon={MdOutlineEmail}
           placeholder="email@exemplo.com"
           error={errors.email?.message}
           {...register("email")}
         />
+
         <Input
           label="Senha"
           type="password"
+          autoComplete="new-password"
           icon={MdLockOutline}
-          placeholder="******"
+          placeholder="No mínimo 8 caracteres"
           error={errors.senha?.message}
           {...register("senha")}
         />
+
         <Input
-          label="Confirma Senha"
+          label="Confirme sua senha"
           type="password"
+          autoComplete="new-password"
           icon={MdLockOutline}
-          placeholder="******"
+          placeholder="Repita a senha digitada"
           error={errors.confirmaSenha?.message}
           {...register("confirmaSenha")}
         />
 
-        {/* Aceite de Termos — exigido pela LGPD Art. 8º */}
-        <div className="border-ink/10 bg-surface-soft rounded-bento-sm border p-4">
-          <label className="flex cursor-pointer items-start gap-3">
-            <input
-              type="checkbox"
-              {...register("aceitaTermos")}
-              className="accent-[var(--color-accent)] mt-0.5 h-4 w-4 shrink-0 cursor-pointer"
-            />
-            <span className="text-ink/70 text-sm leading-relaxed">
-              Eu li e aceito os{" "}
-              <Link
-                href="/termos-de-uso"
-                target="_blank"
-                className="text-ink hover:text-accent font-semibold underline transition-colors"
-              >
-                Termos de Uso
-              </Link>{" "}
-              e a{" "}
-              <Link
-                href="/politica-de-privacidade"
-                target="_blank"
-                className="text-ink hover:text-accent font-semibold underline transition-colors"
-              >
-                Política de Privacidade
-              </Link>
-              .
-            </span>
-          </label>
-          {errors.aceitaTermos && (
-            <p className="mt-2 text-xs text-red-500">
-              {errors.aceitaTermos.message}
-            </p>
-          )}
+        {/* Aceite de Termos — Exigência legal LGPD Art. 8º com primitivo Checkbox */}
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)] p-3.5">
+          <Checkbox
+            id="aceitaTermos"
+            error={errors.aceitaTermos?.message}
+            {...register("aceitaTermos")}
+            label={
+              <span className="text-text text-xs leading-relaxed">
+                Eu li e aceito os{" "}
+                <Link
+                  href="/termos-de-uso"
+                  target="_blank"
+                  className="text-accent-text hover:text-text font-semibold underline underline-offset-2 transition-colors"
+                >
+                  Termos de Uso
+                </Link>{" "}
+                e a{" "}
+                <Link
+                  href="/politica-de-privacidade"
+                  target="_blank"
+                  className="text-accent-text hover:text-text font-semibold underline underline-offset-2 transition-colors"
+                >
+                  Política de Privacidade
+                </Link>
+                .
+              </span>
+            }
+          />
         </div>
 
-        <button
+        <Button
           type="submit"
-          disabled={isSubmitting}
-          className="gradient-animate focus-visible:ring-accent flex h-14 w-full items-center justify-center rounded-full text-sm font-medium text-white shadow-lg transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-60"
-          style={{ backgroundImage: "var(--gradient-pulse)" }}
+          variant="primary"
+          size="lg"
+          loading={isSubmitting}
+          className="mt-2 w-full font-semibold"
         >
-          {isSubmitting ? "Cadastrando..." : "Cadastre-se"}
-        </button>
-        <div className="mt-2 flex items-center justify-between">
-          <p className="text-ink/70 flex gap-1 text-sm">
-            Já tem conta?
+          {isSubmitting ? "Criando conta..." : "Criar minha conta"}
+        </Button>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border)] pt-4">
+          <p className="text-text-muted text-sm">
+            Já tem uma conta?{" "}
             <Link
               href="/login"
-              className="text-accent hover:text-ink font-medium transition-colors"
+              className="text-accent-text hover:text-text focus-visible:ring-accent font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none"
             >
-              Clique aqui!
+              Entrar
             </Link>
           </p>
+
           <button
             type="button"
             onClick={() => {
               toast("Precisa de ajuda?", {
-                description: `Entre em contato conosco: ${process.env.NEXT_PUBLIC_SUPPORT_EMAIL}`,
+                description: `Entre em contato conosco: ${process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "contato@pullse.com.br"}`,
                 variant: "info",
               });
             }}
-            className="text-ink/50 hover:text-accent flex items-center gap-1 text-sm transition-colors"
-            title="Atendimento ao cliente"
+            className="text-text-muted hover:text-accent-text focus-visible:ring-accent flex min-h-[44px] items-center gap-1.5 rounded-sm text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
           >
-            <MdHelpOutline size={18} /> Ajuda
+            <MdHelpOutline size={16} aria-hidden="true" />
+            <span>Ajuda</span>
           </button>
         </div>
       </form>

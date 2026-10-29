@@ -15,14 +15,12 @@ const stats = [
 ];
 
 /**
- * The Pulse Bento grid: light headline tile, accent tile, ink tile (stat
- * grid), and a tall photo tile. Every tile is flat/opaque — no shadow, no
- * blur (Flat Bento Rule). The section itself sits on the page's light
- * surface (matching `<main>`) rather than the drenched accent-ink canvas —
- * dropped so the cursor-ripple field reads consistently everywhere on the
- * page instead of fighting a dark background. The floating `SiteHeader` is
- * mounted at the page level, not here — it needs to stay fixed across every
- * section, not just this one.
+ * Hero Section — Pullse Bento Grid.
+ * - H1 typography: text-[var(--text-hero)] clamp(2.25rem, 1.75rem + 2.5vw, 3.75rem)
+ * - Radius: 28px max (rounded-[var(--radius-hero)])
+ * - Contrast AA: Ink text (#1D1E1F) over orange #FF6B07 (never white over orange)
+ * - Semantic surfaces: panel / panel-elevated (no fixed bg-ink)
+ * - Photo /02.jpg preserved verbatim
  */
 export default function HeroSection({
   isAuthenticated,
@@ -30,22 +28,23 @@ export default function HeroSection({
 }: HeroSectionProps) {
   return (
     <section className="relative overflow-hidden">
-      <div className="relative z-10 mx-auto max-w-6xl px-5 pt-24 pb-16 md:px-8 md:pt-32 md:pb-24">
+      <div className="relative z-10 mx-auto max-w-6xl px-5 pt-24 pb-14 md:px-8 md:pt-32 md:pb-20">
         <div
           className="reveal grid gap-5 md:grid-cols-[1.4fr_1fr] md:gap-6"
           style={{
             gridTemplateAreas: "'headline photo' 'accent photo' 'stats photo'",
           }}
         >
+          {/* Headline tile */}
           <div
-            className="rounded-bento-xl bg-surface-soft border-ink/10 border p-7 md:p-10"
+            className="rounded-[var(--radius-hero)] border border-[var(--border)] bg-[var(--panel)] p-7 shadow-[var(--shadow-panel)] md:p-10"
             style={{ gridArea: "headline" }}
           >
-            <h1 className="text-ink text-3xl leading-[1.05] font-semibold tracking-[-0.02em] text-balance md:text-5xl">
+            <h1 className="text-text leading-[1.08] font-semibold tracking-[-0.03em] text-balance text-[var(--text-hero)]">
               Domine o violão com uma trilha clara, do primeiro acorde à
               apresentação
             </h1>
-            <p className="text-ink/70 mt-4 max-w-lg text-sm leading-relaxed text-pretty md:text-base">
+            <p className="text-text-muted mt-4 max-w-lg text-sm leading-relaxed text-pretty md:text-base">
               Aulas em vídeo organizadas por módulo, prática guiada e
               acompanhamento de progresso — para você tocar com confiança, no
               seu ritmo.
@@ -54,53 +53,55 @@ export default function HeroSection({
             <div className="mt-7 flex flex-wrap gap-3">
               <Link
                 href={primaryHref}
-                className="gradient-animate inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium text-white shadow-lg transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:outline-none"
-                style={{ backgroundImage: "var(--gradient-pulse)" }}
+                className="focus-visible:ring-accent inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#FF6B07] px-6 py-3 text-sm font-semibold text-[var(--on-accent)] shadow-sm transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               >
-                <MdOutlinePlayCircle size={18} />
+                <MdOutlinePlayCircle size={20} aria-hidden="true" />
                 {isAuthenticated ? "Ir para minha área" : "Começar agora"}
               </Link>
               <Link
                 href="/login"
-                className="border-ink/15 text-ink hover:bg-ink/5 focus-visible:ring-accent inline-flex items-center rounded-full border px-5 py-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                className="border-control-border text-text hover:bg-canvas focus-visible:ring-accent inline-flex min-h-[44px] items-center rounded-full border bg-[var(--panel)] px-5 py-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
               >
                 Já tenho conta
               </Link>
             </div>
           </div>
 
+          {/* Accent tile — High contrast: ink text and stars over orange (#FF6B07) */}
           <div
-            className="rounded-bento-xl bg-accent p-6 md:p-8"
+            className="rounded-[var(--radius-hero)] bg-[#FF6B07] p-6 shadow-sm md:p-8"
             style={{ gridArea: "accent" }}
           >
-            <div className="flex items-center gap-1 text-white">
+            <div className="flex items-center gap-1 text-[var(--on-accent)]">
               {Array.from({ length: 5 }).map((_, index) => (
-                <MdStar key={index} size={16} />
+                <MdStar key={index} size={18} aria-hidden="true" />
               ))}
             </div>
-            <p className="mt-3 text-sm leading-relaxed font-medium text-white md:text-base">
+            <p className="mt-3 text-sm leading-relaxed font-semibold text-[var(--on-accent)] md:text-base">
               Método aprovado por alunos iniciantes e avançados.
             </p>
           </div>
 
+          {/* Stats tile — Semantic surface (panel-elevated) */}
           <div
-            className="rounded-bento-xl bg-ink p-6 md:p-8"
+            className="rounded-[var(--radius-hero)] border border-[var(--border)] bg-[var(--panel-elevated)] p-6 shadow-[var(--shadow-panel)] md:p-8"
             style={{ gridArea: "stats" }}
           >
             <div className="grid grid-cols-2 gap-x-4 gap-y-5">
               {stats.map((stat) => (
                 <div key={stat.label}>
-                  <p className="text-surface text-xl font-semibold md:text-2xl">
+                  <p className="text-text text-xl font-semibold md:text-2xl">
                     {stat.value}
                   </p>
-                  <p className="text-surface/60 mt-1 text-xs">{stat.label}</p>
+                  <p className="text-text-muted mt-1 text-xs">{stat.label}</p>
                 </div>
               ))}
             </div>
           </div>
 
+          {/* Photo tile — Photo /02.jpg preserved */}
           <div
-            className="rounded-bento-xl relative min-h-[280px] overflow-hidden md:min-h-0"
+            className="relative min-h-[280px] overflow-hidden rounded-[var(--radius-hero)] border border-[var(--border)] bg-[var(--media)] shadow-[var(--shadow-panel)] md:min-h-0"
             style={{ gridArea: "photo" }}
           >
             <Image
@@ -112,7 +113,7 @@ export default function HeroSection({
               style={{ objectPosition: "32% 38%" }}
               priority
             />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 via-black/0 to-transparent p-5 pt-16">
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-5 pt-16">
               <p className="text-sm font-medium text-white">
                 Alunos reais, resultado real.
               </p>

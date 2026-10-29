@@ -1,14 +1,29 @@
+import { Badge } from "@/components/ui/Badge";
 
 const roadmap = [
-  { instrument: "Violão", status: "Disponível agora", available: true },
-  { instrument: "Teclado", status: "Em desenvolvimento", available: false },
-  { instrument: "Baixo", status: "Em breve", available: false },
+  {
+    instrument: "Violão",
+    status: "Disponível agora",
+    available: true,
+    variant: "accent" as const,
+  },
+  {
+    instrument: "Teclado",
+    status: "Em desenvolvimento",
+    available: false,
+    variant: "neutral" as const,
+  },
+  {
+    instrument: "Baixo",
+    status: "Em breve",
+    available: false,
+    variant: "neutral" as const,
+  },
 ];
 
 /**
- * Direct answer to "is this just guitar?" before the visitor gets to pricing —
- * transparency about current scope, framed as an early-access roadmap rather
- * than a limitation.
+ * AboutSection — Current platform instrument scope and upcoming expansion.
+ * Transparent product roadmap without ungrounded promises.
  */
 export default function AboutSection() {
   return (
@@ -16,10 +31,10 @@ export default function AboutSection() {
       <div className="relative z-10 mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
         <div className="reveal grid gap-10 md:grid-cols-[1.1fr_1fr] md:gap-14">
           <div>
-            <h2 className="text-ink text-2xl font-semibold tracking-[-0.01em] md:text-3xl">
+            <h2 className="text-text font-semibold tracking-[-0.02em] text-[var(--text-h2)]">
               Hoje é violão. Amanhã, o instrumento que você quiser.
             </h2>
-            <p className="text-ink/70 mt-4 max-w-lg text-sm leading-relaxed md:text-base">
+            <p className="text-text-muted mt-4 max-w-lg text-sm leading-relaxed md:text-base">
               A Pullse nasceu focada em violão — sem enrolação, com progressão
               real de módulo em módulo. Estamos construindo a mesma trilha para
               outros instrumentos, e quem já é assinante Premium ganha acesso
@@ -31,20 +46,12 @@ export default function AboutSection() {
             {roadmap.map((item) => (
               <li
                 key={item.instrument}
-                className="border-ink/10 flex items-center justify-between rounded-2xl border px-5 py-4"
+                className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--panel)] px-5 py-4 shadow-[var(--shadow-panel)]"
               >
-                <span className="text-ink text-sm font-semibold md:text-base">
+                <span className="text-text text-sm font-semibold md:text-base">
                   {item.instrument}
                 </span>
-                <span
-                  className={
-                    item.available
-                      ? "bg-accent/10 text-accent rounded-full px-3 py-1 text-xs font-medium"
-                      : "bg-ink/5 text-ink/60 rounded-full px-3 py-1 text-xs font-medium"
-                  }
-                >
-                  {item.status}
-                </span>
+                <Badge variant={item.variant}>{item.status}</Badge>
               </li>
             ))}
           </ul>

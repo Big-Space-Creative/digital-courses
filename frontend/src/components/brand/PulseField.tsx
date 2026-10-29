@@ -85,7 +85,11 @@ function mixColor(
   to: readonly [number, number, number],
   t: number,
 ): [number, number, number] {
-  return [lerp(from[0], to[0], t), lerp(from[1], to[1], t), lerp(from[2], to[2], t)];
+  return [
+    lerp(from[0], to[0], t),
+    lerp(from[1], to[1], t),
+    lerp(from[2], to[2], t),
+  ];
 }
 
 /**
@@ -212,7 +216,8 @@ export default function PulseField() {
       // right at t=1 would extinguish the ring a beat before `fade` does,
       // reading as a pop instead of a dissolve.
       const bandWidth =
-        BAND_WIDTH_MIN + (BAND_WIDTH_MAX - BAND_WIDTH_MIN) * Math.sin(Math.PI * t);
+        BAND_WIDTH_MIN +
+        (BAND_WIDTH_MAX - BAND_WIDTH_MIN) * Math.sin(Math.PI * t);
 
       const circumference = 2 * Math.PI * Math.max(baseRadius, 1);
       const steps = Math.min(
@@ -226,7 +231,8 @@ export default function PulseField() {
         const angle = (i / steps) * Math.PI * 2;
         // Rounded-point star, not a circle: the sine term bulges `arms`
         // lobes out of the ring so some sides read pointier than others.
-        const distortedRadius = baseRadius + STAR_WOBBLE * Math.sin(angle * w.arms + w.seed);
+        const distortedRadius =
+          baseRadius + STAR_WOBBLE * Math.sin(angle * w.arms + w.seed);
         const cosA = Math.cos(angle);
         const sinA = Math.sin(angle);
 
@@ -247,12 +253,15 @@ export default function PulseField() {
           const px = gx * CELL_SIZE;
           const py = gy * CELL_SIZE;
           const snapDist = Math.hypot(px - x, py - y);
-          const snapFalloff = Math.exp(-(snapDist * snapDist) / (2 * SNAP_SIGMA * SNAP_SIGMA));
+          const snapFalloff = Math.exp(
+            -(snapDist * snapDist) / (2 * SNAP_SIGMA * SNAP_SIGMA),
+          );
           const amplitude = snapFalloff * sample.weight * fade;
           if (amplitude < AMPLITUDE_EPSILON) continue;
 
           const [r255, g255, b255] = mixColor(ACCENT_500, coreColor, amplitude);
-          const dotRadius = DOT_BASE_RADIUS + (DOT_MAX_RADIUS - DOT_BASE_RADIUS) * amplitude;
+          const dotRadius =
+            DOT_BASE_RADIUS + (DOT_MAX_RADIUS - DOT_BASE_RADIUS) * amplitude;
 
           ctx.beginPath();
           ctx.fillStyle = `rgba(${r255}, ${g255}, ${b255}, ${amplitude * MAX_ALPHA})`;

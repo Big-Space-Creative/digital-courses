@@ -22,7 +22,7 @@ export default async function Home() {
 
   return (
     <ThemeProvider>
-      <main className="bg-surface min-h-dvh">
+      <main className="min-h-dvh bg-[var(--canvas)] text-[var(--text)]">
         <PulseField />
         <RevealScanner />
         <SiteHeader
@@ -42,9 +42,12 @@ export default async function Home() {
 
         <section className="relative overflow-hidden">
           <div className="relative z-10 mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
-            <h2 className="reveal text-ink text-2xl font-semibold tracking-[-0.01em] md:text-3xl">
+            <h2 className="reveal text-text font-semibold tracking-[-0.02em] text-[var(--text-h2)]">
               Perguntas frequentes
             </h2>
+            <p className="text-text-muted mt-2 text-sm md:text-base">
+              Tire suas dúvidas sobre o funcionamento da plataforma
+            </p>
             <div className="mt-8">
               <FaqAccordion />
             </div>
