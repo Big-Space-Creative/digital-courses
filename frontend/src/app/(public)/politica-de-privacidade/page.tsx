@@ -40,18 +40,18 @@ const SECTIONS = [
 export default function PrivacyPolicyPage() {
   return (
     <ThemeProvider>
-      <div className="bg-surface text-ink flex min-h-dvh flex-col">
+      <div className="bg-surface text-text flex min-h-dvh flex-col">
         <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-5 py-6">
           <Link href="/" className="flex items-center gap-2.5">
             <PulseWave className="pulse-glow h-8 w-8" title="" />
-            <span className="text-ink text-lg font-semibold tracking-tight">
+            <span className="text-text text-lg font-semibold tracking-tight">
               Pullse
             </span>
           </Link>
           <div className="flex items-center gap-4">
             <Link
               href="/"
-              className="text-ink/70 hover:text-accent focus-visible:ring-accent inline-flex items-center gap-1 rounded text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+              className="text-text-muted hover:text-accent-text focus-visible:ring-accent inline-flex items-center gap-1 rounded text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
             >
               <MdArrowBack aria-hidden="true" /> Voltar à home
             </Link>
@@ -63,13 +63,13 @@ export default function PrivacyPolicyPage() {
           <span className="bg-accent/10 text-accent mb-5 flex h-12 w-12 items-center justify-center rounded-full">
             <MdOutlinePrivacyTip size={24} aria-hidden="true" />
           </span>
-          <h1 className="text-ink text-3xl font-semibold tracking-[-0.01em] text-balance md:text-4xl">
+          <h1 className="text-text text-3xl font-semibold tracking-[-0.01em] text-balance md:text-4xl">
             Política de Privacidade
           </h1>
-          <p className="text-ink/60 mt-2 text-sm">
+          <p className="text-text-muted mt-2 text-sm">
             Última atualização: {lastUpdated}
           </p>
-          <p className="text-ink/80 mt-5 max-w-[68ch] text-base leading-7 text-pretty">
+          <p className="text-text-muted mt-5 max-w-[68ch] text-base leading-7 text-pretty">
             Esta política descreve como a <strong>AulasViolão</strong> trata
             seus dados pessoais em conformidade com a{" "}
             <strong>
@@ -83,7 +83,7 @@ export default function PrivacyPolicyPage() {
         <main className="mx-auto w-full max-w-5xl flex-1 px-5 pb-16">
           <div className="lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-start lg:gap-10">
             <details className="bg-surface-soft border-ink/10 rounded-bento-md mb-6 border px-5 lg:hidden">
-              <summary className="text-ink flex min-h-11 cursor-pointer items-center text-sm font-semibold">
+              <summary className="text-text flex min-h-11 cursor-pointer items-center text-sm font-semibold">
                 Nesta página
               </summary>
               <div className="pb-3">
@@ -91,7 +91,7 @@ export default function PrivacyPolicyPage() {
               </div>
             </details>
             <aside className="hidden lg:sticky lg:top-8 lg:block">
-              <p className="text-ink/70 mb-3 text-xs font-semibold tracking-wide uppercase">
+              <p className="text-text-muted mb-3 text-xs font-semibold tracking-wide uppercase">
                 Nesta página
               </p>
               <TableOfContents />
@@ -188,14 +188,14 @@ export default function PrivacyPolicyPage() {
                     <p>Utilizamos dois tipos de cookies:</p>
                     <div className="mt-3 space-y-3">
                       <div className="rounded-bento-sm border-ink/10 bg-surface-soft border p-4">
-                        <p className="text-ink flex items-center gap-2 font-semibold">
+                        <p className="text-text flex items-center gap-2 font-semibold">
                           <MdLockOutline
                             className="text-accent"
                             aria-hidden="true"
                           />{" "}
                           Cookies essenciais (necessários)
                         </p>
-                        <p className="text-ink/80 mt-1 text-sm leading-6">
+                        <p className="text-text-muted mt-1 text-sm leading-6">
                           <code className="bg-ink/8 rounded px-1 text-xs">
                             access_token
                           </code>
@@ -213,14 +213,14 @@ export default function PrivacyPolicyPage() {
                         </p>
                       </div>
                       <div className="rounded-bento-sm border-ink/10 bg-surface-soft border p-4">
-                        <p className="text-ink flex items-center gap-2 font-semibold">
+                        <p className="text-text flex items-center gap-2 font-semibold">
                           <MdBarChart
                             className="text-accent"
                             aria-hidden="true"
                           />{" "}
                           Cookies analíticos (opcionais)
                         </p>
-                        <p className="text-ink/80 mt-1 text-sm leading-6">
+                        <p className="text-text-muted mt-1 text-sm leading-6">
                           Utilizados para entender como os alunos navegam na
                           plataforma e melhorar a experiência. Exigem seu
                           consentimento prévio, concedido pelo banner de
@@ -288,7 +288,7 @@ export default function PrivacyPolicyPage() {
                       {SUPPORT_EMAIL ? (
                         <a
                           href={SUPPORT_HREF}
-                          className="text-ink decoration-accent hover:text-ink/70 font-medium underline underline-offset-2 transition-colors"
+                          className="text-text decoration-accent hover:text-text-muted font-medium underline underline-offset-2 transition-colors"
                         >
                           e-mail de suporte
                         </a>
@@ -326,13 +326,13 @@ export default function PrivacyPolicyPage() {
               <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-sm">
                 <Link
                   href="/termos-de-uso"
-                  className="text-ink decoration-accent hover:text-ink/70 font-medium underline underline-offset-4 transition-colors"
+                  className="text-text decoration-accent hover:text-text-muted font-medium underline underline-offset-4 transition-colors"
                 >
                   Termos de Uso →
                 </Link>
                 <Link
                   href="/"
-                  className="text-ink/70 hover:text-ink font-medium transition-colors"
+                  className="text-text-muted hover:text-text font-medium transition-colors"
                 >
                   Voltar à home
                 </Link>
@@ -354,7 +354,7 @@ function TableOfContents() {
           <li key={section.id}>
             <a
               href={`#${section.id}`}
-              className="text-ink/80 hover:text-ink focus-visible:ring-ink flex min-h-11 items-center rounded focus-visible:ring-2 focus-visible:outline-none"
+              className="text-text-muted hover:text-text focus-visible:ring-ink flex min-h-11 items-center rounded focus-visible:ring-2 focus-visible:outline-none"
             >
               {section.title}
             </a>
@@ -376,8 +376,8 @@ function Section({
 }) {
   return (
     <section id={id} className="scroll-mt-8 py-7">
-      <h2 className="text-ink mb-3 text-xl font-semibold">{title}</h2>
-      <div className="text-ink/80 max-w-[68ch] space-y-3 text-base leading-7">
+      <h2 className="text-text mb-3 text-xl font-semibold">{title}</h2>
+      <div className="text-text-muted max-w-[68ch] space-y-3 text-base leading-7">
         {children}
       </div>
     </section>

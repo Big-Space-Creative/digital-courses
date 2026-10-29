@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { toast, type ToastVariant } from "@/components/ui/Toast";
@@ -12,7 +12,18 @@ const TOAST_VARIANTS: { variant: ToastVariant; label: string }[] = [
   { variant: "info", label: "Informação" },
 ];
 
+const PENDING_DEMO_MS = 1500;
+
 export function DialogDemo() {
+  return (
+    <div className="flex flex-col gap-8">
+      <DismissibleDialogDemo />
+      <NonDismissibleDialogDemo />
+    </div>
+  );
+}
+
+function DismissibleDialogDemo() {
   const [open, setOpen] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
@@ -53,6 +64,64 @@ export function DialogDemo() {
           </Button>
           <Button variant="danger" onClick={handleConfirm}>
             Excluir
+          </Button>
+        </div>
+      </Dialog>
+    </div>
+  );
+}
+
+function NonDismissibleDialogDemo() {
+  const [open, setOpen] = useState(false);
+  const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    if (!pending) return;
+    const timer = window.setTimeout(() => {
+      setPending(false);
+      setOpen(false);
+      toast("Ação concluída", {
+        description: "Exemplo de ação que não pode ser interrompida.",
+        variant: "success",
+      });
+    }, PENDING_DEMO_MS);
+    return () => window.clearTimeout(timer);
+  }, [pending]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <Button variant="secondary" onClick={() => setOpen(true)}>
+          Abrir diálogo não dispensável
+        </Button>
+      </div>
+      <p className="text-text-muted max-w-[60ch] text-sm">
+        Com dismissible=&quot;false&quot;, o × fica desabilitado e Escape não
+        fecha. Use quando uma ação já foi enviada e fechar agora deixaria a
+        pessoa sem saber o resultado. Enquanto pending, o diálogo bloqueia
+        qualquer saída.
+      </p>
+      <Dialog
+        open={open}
+        dismissible={!pending}
+        onClose={() => setOpen(false)}
+        title="Confirmar envio?"
+        description="Enquanto a ação roda, o diálogo não pode ser fechado."
+      >
+        <div className="mt-6 flex flex-wrap justify-end gap-3">
+          <Button
+            variant="secondary"
+            disabled={pending}
+            onClick={() => setOpen(false)}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            loading={pending}
+            onClick={() => setPending(true)}
+          >
+            Confirmar
           </Button>
         </div>
       </Dialog>

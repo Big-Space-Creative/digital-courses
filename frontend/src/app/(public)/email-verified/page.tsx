@@ -3,21 +3,16 @@
 // definidos server-side, e o usuário é redirecionado para /aluno/home.
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { MdCheckCircle, MdError, MdInfo } from "react-icons/md";
 import AuthLayout from "@/components/marketing/AuthLayout";
+import { buttonClassName } from "@/components/ui/Button";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 
 const API_BASE = process.env.API_BASE_URL ?? "http://backend:8000/api/v1/";
 const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() ?? "";
 const SUPPORT_HREF = SUPPORT_EMAIL.startsWith("mailto:")
   ? SUPPORT_EMAIL
   : `mailto:${SUPPORT_EMAIL}`;
-
-// Texto INK fixo sobre laranja (~5,9:1). Migrar para --on-accent na Fase 0.
-const CTA_CLASS =
-  "flex h-14 w-full items-center justify-center rounded-full bg-accent px-6 text-sm font-semibold text-[#1d1e1f] shadow-lg transition-transform duration-150 ease-out hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:outline-none";
-const LINK_CLASS =
-  "text-ink decoration-accent hover:text-ink/70 rounded font-medium underline underline-offset-4 transition-colors focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none";
 
 // ── Server Action: troca o one-time token por JWT e define os cookies ────────
 async function exchangeTokenAndLogin(oneTimeToken: string) {
@@ -109,7 +104,7 @@ export default async function EmailVerifiedPage({
       description:
         "Nada mais a fazer por aqui. Faça login para continuar de onde parou.",
       cta: { label: "Ir para o login", href: "/login" },
-      tile: "bg-ink/8 text-ink",
+      tile: "bg-ink/8 text-text",
     },
     invalid: {
       icon: <MdError className="text-3xl" aria-hidden="true" />,
@@ -133,21 +128,24 @@ export default async function EmailVerifiedPage({
           {cfg.icon}
         </span>
         <div className="flex flex-col gap-1.5">
-          <h1 className="text-ink text-3xl font-semibold tracking-[-0.01em]">
+          <h1 className="text-text text-3xl font-semibold tracking-[-0.01em]">
             {cfg.title}
           </h1>
-          <p className="text-ink/70 text-sm leading-relaxed">
+          <p className="text-text-muted text-sm leading-relaxed">
             {cfg.description}
           </p>
         </div>
       </div>
 
       <div className="flex flex-col items-start gap-4">
-        <Link href={cfg.cta.href} className={CTA_CLASS}>
+        <ButtonLink href={cfg.cta.href} size="lg" className="w-full">
           {cfg.cta.label}
-        </Link>
+        </ButtonLink>
         {cfg.showSupport && SUPPORT_EMAIL && (
-          <a href={SUPPORT_HREF} className={`${LINK_CLASS} text-sm`}>
+          <a
+            href={SUPPORT_HREF}
+            className={buttonClassName({ variant: "ghost", size: "sm" })}
+          >
             Algo não funcionou? Fale com o suporte
           </a>
         )}

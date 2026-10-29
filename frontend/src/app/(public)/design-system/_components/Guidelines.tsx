@@ -28,12 +28,21 @@ const RULES: { title: string; text: string }[] = [
     text: "Nenhum dado fictício em tela de produto. Quando não houver API, a interface explica a ausência em vez de prometer.",
   },
   {
+    title: "Navegação",
+    text: "Clique que navega usa ButtonLink, uma única âncora. Nunca Button dentro de Link.",
+  },
+  {
+    title: "Diálogo",
+    text: 'Dispensável por padrão. Use dismissible="false" só enquanto uma ação está pendente.',
+  },
+  {
     title: "Copy",
     text: "Português com acentos. Um h1 por página.",
   },
 ];
 
 const IMPORT_EXAMPLE = `import { Button } from "@/components/ui/Button";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Dialog } from "@/components/ui/Dialog";
 import { Input } from "@/components/ui/Input";
 import { toast } from "@/components/ui/Toast";`;

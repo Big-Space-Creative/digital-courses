@@ -88,7 +88,7 @@ export default function DesignSystemPage() {
         <Section
           id="botoes"
           title="Botão"
-          description="Quatro variantes e três tamanhos. Todos têm alvo mínimo de 44px."
+          description="Quatro variantes e três tamanhos. Todos têm alvo mínimo de 44px. Para navegação, ButtonLink mantém a mesma aparência com uma única âncora."
         >
           <Buttons />
         </Section>
@@ -104,7 +104,7 @@ export default function DesignSystemPage() {
         <Section
           id="sobreposicoes"
           title="Diálogo e notificações"
-          description="Diálogo nativo com foco, Escape e retorno ao gatilho. Notificações no canto inferior direito."
+          description="Diálogo nativo com foco, Escape e retorno ao gatilho. Pode ser não dispensável durante uma ação pendente. Notificações no canto inferior direito."
         >
           <div className="grid gap-8 lg:grid-cols-2">
             <div className="bg-panel border-border rounded-[var(--radius-panel)] border p-6">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 
 const VARIANTS = [
   {
@@ -62,6 +63,26 @@ export default function Buttons() {
           Em loading, o botão fica desabilitado, recebe aria-busy e mantém o
           texto da ação. Quem controla o estado de carregamento é o chamador. O
           exemplo acima dura 1,5 segundo.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <h3 className="text-lg font-semibold">Link com aparência de botão</h3>
+        <div className="bg-panel border-border flex flex-wrap items-center gap-3 rounded-[var(--radius-panel)] border p-5">
+          <ButtonLink href="#botoes">Abrir curso</ButtonLink>
+          <ButtonLink href="#botoes" variant="secondary">
+            Ver currículo
+          </ButtonLink>
+          <ButtonLink href="#botoes" variant="ghost">
+            Voltar
+          </ButtonLink>
+        </div>
+        <p className="text-text-muted text-sm">
+          Use ButtonLink quando o clique navega. Ele renderiza uma única âncora
+          com a mesma aparência de Button. Não coloque Button dentro de Link: o
+          resultado é um botão dentro de uma âncora, com dois controles para uma
+          ação. Para um link externo, como mailto:, use buttonClassName na
+          própria âncora.
         </p>
       </div>
     </div>

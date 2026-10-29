@@ -30,18 +30,18 @@ const SECTIONS = [
 export default function TermsOfUsePage() {
   return (
     <ThemeProvider>
-      <div className="bg-surface text-ink flex min-h-dvh flex-col">
+      <div className="bg-surface text-text flex min-h-dvh flex-col">
         <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-5 py-6">
           <Link href="/" className="flex items-center gap-2.5">
             <PulseWave className="pulse-glow h-8 w-8" title="" />
-            <span className="text-ink text-lg font-semibold tracking-tight">
+            <span className="text-text text-lg font-semibold tracking-tight">
               Pullse
             </span>
           </Link>
           <div className="flex items-center gap-4">
             <Link
               href="/"
-              className="text-ink/70 hover:text-accent focus-visible:ring-accent inline-flex items-center gap-1 rounded text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+              className="text-text-muted hover:text-accent-text focus-visible:ring-accent inline-flex items-center gap-1 rounded text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
             >
               <MdArrowBack aria-hidden="true" /> Voltar à home
             </Link>
@@ -53,13 +53,13 @@ export default function TermsOfUsePage() {
           <span className="bg-accent/10 text-accent mb-5 flex h-12 w-12 items-center justify-center rounded-full">
             <MdOutlineGavel size={24} aria-hidden="true" />
           </span>
-          <h1 className="text-ink text-3xl font-semibold tracking-[-0.01em] text-balance md:text-4xl">
+          <h1 className="text-text text-3xl font-semibold tracking-[-0.01em] text-balance md:text-4xl">
             Termos de Uso
           </h1>
-          <p className="text-ink/60 mt-2 text-sm">
+          <p className="text-text-muted mt-2 text-sm">
             Última atualização: {lastUpdated}
           </p>
-          <p className="text-ink/80 mt-5 max-w-[68ch] text-base leading-7 text-pretty">
+          <p className="text-text-muted mt-5 max-w-[68ch] text-base leading-7 text-pretty">
             Ao criar uma conta ou utilizar os serviços da{" "}
             <strong>AulasViolão</strong>, você concorda com os termos descritos
             abaixo. Leia com atenção antes de prosseguir.
@@ -70,7 +70,7 @@ export default function TermsOfUsePage() {
         <main className="mx-auto w-full max-w-5xl flex-1 px-5 pb-16">
           <div className="lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-start lg:gap-10">
             <details className="bg-surface-soft border-ink/10 rounded-bento-md mb-6 border px-5 lg:hidden">
-              <summary className="text-ink flex min-h-11 cursor-pointer items-center text-sm font-semibold">
+              <summary className="text-text flex min-h-11 cursor-pointer items-center text-sm font-semibold">
                 Nesta página
               </summary>
               <div className="pb-3">
@@ -78,7 +78,7 @@ export default function TermsOfUsePage() {
               </div>
             </details>
             <aside className="hidden lg:sticky lg:top-8 lg:block">
-              <p className="text-ink/70 mb-3 text-xs font-semibold tracking-wide uppercase">
+              <p className="text-text-muted mb-3 text-xs font-semibold tracking-wide uppercase">
                 Nesta página
               </p>
               <TableOfContents />
@@ -192,7 +192,7 @@ export default function TermsOfUsePage() {
                       O tratamento dos seus dados pessoais é regido pela nossa{" "}
                       <Link
                         href="/politica-de-privacidade"
-                        className="text-ink decoration-accent hover:text-accent font-medium underline underline-offset-2 transition-colors"
+                        className="text-text decoration-accent hover:text-accent-text font-medium underline underline-offset-2 transition-colors"
                       >
                         Política de Privacidade
                       </Link>
@@ -242,13 +242,13 @@ export default function TermsOfUsePage() {
               <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-sm">
                 <Link
                   href="/politica-de-privacidade"
-                  className="text-ink decoration-accent hover:text-ink/70 font-medium underline underline-offset-4 transition-colors"
+                  className="text-text decoration-accent hover:text-text-muted font-medium underline underline-offset-4 transition-colors"
                 >
                   Política de Privacidade →
                 </Link>
                 <Link
                   href="/"
-                  className="text-ink/70 hover:text-ink font-medium transition-colors"
+                  className="text-text-muted hover:text-text font-medium transition-colors"
                 >
                   Voltar à home
                 </Link>
@@ -270,7 +270,7 @@ function TableOfContents() {
           <li key={section.id}>
             <a
               href={`#${section.id}`}
-              className="text-ink/80 hover:text-ink focus-visible:ring-ink flex min-h-11 items-center rounded focus-visible:ring-2 focus-visible:outline-none"
+              className="text-text-muted hover:text-text focus-visible:ring-ink flex min-h-11 items-center rounded focus-visible:ring-2 focus-visible:outline-none"
             >
               {section.title}
             </a>
@@ -292,8 +292,8 @@ function Section({
 }) {
   return (
     <section id={id} className="scroll-mt-8 py-7">
-      <h2 className="text-ink mb-3 text-xl font-semibold">{title}</h2>
-      <div className="text-ink/80 max-w-[68ch] space-y-3 text-base leading-7">
+      <h2 className="text-text mb-3 text-xl font-semibold">{title}</h2>
+      <div className="text-text-muted max-w-[68ch] space-y-3 text-base leading-7">
         {children}
       </div>
     </section>
